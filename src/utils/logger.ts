@@ -1,7 +1,12 @@
-import { readFileSync, writeFileSync } from "fs";
-import { Env } from "../types/env";
-import path from "path";
 import chalk from "chalk";
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "fs";
+import path from "path";
 
 export type LogLevel =
   | "silly"
@@ -13,11 +18,20 @@ export type LogLevel =
 
 export class Logger {
   private file: string;
-  private logsPath = path.join(__dirname, "..", process.env.LOG_FILES_DIR);
+  private logsPath = path.join(__dirname, "../..", process.env.LOG_FILES_DIR);
   private fileWriteCache: string = "";
 
   public constructor() {
     const date = new Date();
+    if (!existsSync(this.logsPath)) mkdirSync(this.logsPath);
+    else if (!lstatSync(this.logsPath).isDirectory()) {
+      console.error(
+        "[CRITICAL] logs path is not a directory, check README.md for more info"
+      );
+      process.exit(0x0001);
+    }
+
+    // TODO: make this mess better (dayjs/date-fns formatting)
     this.file = path.join(
       this.logsPath,
       `${date.getFullYear()}-${(date.getMonth() + 1)
@@ -30,6 +44,30 @@ export class Logger {
         .toString()
         .padStart(2, "0")}-${date.getSeconds().toString().padStart(2, "0")}.log`
     );
+    if (!existsSync(this.file))
+      writeFileSync(
+        this.file,
+        `#################\n# NAPI LOG FILE #\n# DATE:         #\n# ${date.getFullYear()}/${(
+          date.getMonth() + 1
+        )
+          .toString()
+          .padStart(2, "0")}/${date
+          .getDate()
+          .toString()
+          .padStart(2, "0")}    #\n# TIME:         #\n# ${date
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${date
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}:${date
+          .getSeconds()
+          .toString()
+          .padStart(2, "0")}.${date
+          .getMilliseconds()
+          .toString()
+          .padStart(4, "0")} #\n#################\n\n\n`
+      );
     this.fileWriteCache = readFileSync(this.file).toString();
   }
 
