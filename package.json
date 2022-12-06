@@ -8,7 +8,10 @@
     "start": "yarn build && node build/index.js",
     "watch": "yarn nodemon -e ts,json -x \"yarn start\" -w \"./src\"",
     "postinstall": "yarn patch-package",
-    "prepare": "yarn db:update",
+    "prepare": "husky install && yarn db:update",
+    "test": "echo TODO: finish tests",
+    "format": "echo TODO: finish formatting",
+    "checkCommitMessage": "npx --no -- commitlint --edit",
     "db:update": "yarn prisma migrate dev",
     "db:generate": "yarn prisma generate"
   },
@@ -20,8 +23,11 @@
     "yup": "^0.32.11"
   },
   "devDependencies": {
+    "@commitlint/config-conventional": "^17.3.0",
     "@types/express": "^4.17.14",
     "@types/node": "^18.11.10",
+    "commitlint": "^17.3.0",
+    "husky": "^8.0.2",
     "nodemon": "^2.0.20",
     "patch-package": "^6.5.0",
     "prisma": "^4.7.1",
