@@ -2,18 +2,18 @@
     "name": "nove-api",
     "version": "1.0.0",
     "author": "nove-org",
-    "license": "hehehe-nono-dis-not-for-u",
+    "license": "MIT",
     "scripts": {
         "build": "rm -rf build/ && tsc --build",
-        "start": "yarn build && node build/index.js",
-        "watch": "yarn nodemon -e ts,json -x \"yarn start\" -w \"./src\"",
-        "postinstall": "yarn patch-package",
-        "prepare": "husky install && yarn db:update",
+        "start": "yarn run build && node build/index.js",
+        "watch": "yarn run -s nodemon -e ts,json -x \"yarn run -s start\" -w \"./src\"",
+        "postinstall": "yarn -s patch-package",
+        "prepare": "husky install && yarn run -s db:update",
         "test": "jest",
         "format": "npx pretty-quick --staged",
-        "checkCommitMessage": "yarn commitlint -V -c --edit",
-        "db:update": "yarn prisma migrate dev",
-        "db:generate": "yarn prisma generate"
+        "checkCommitMessage": "yarn run -s commitlint -V -c --edit",
+        "db:update": "yarn run -s prisma migrate dev",
+        "db:generate": "yarn run -s prisma generate"
     },
     "dependencies": {
         "@prisma/client": "4.7.1",
