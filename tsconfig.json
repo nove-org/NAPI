@@ -2,10 +2,16 @@
   "compilerOptions": {
     "target": "es2016",
     "module": "commonjs",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+    "lib": ["esnext"],
+    "baseUrl": "./src",
+    "outDir": "./build",
+    "moduleResolution": "node",
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "./build"
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noImplicitAny": true
   }
 }
