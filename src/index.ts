@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import { Server } from "http";
 import checkEnv from "./utils/env";
 import logger from "./utils/logger";
@@ -7,6 +7,20 @@ checkEnv();
 
 const app = express();
 app.use(express.json());
+app.get("/", (req: Request, res: Response) => {
+  res.json({
+    status: 200,
+    body: {
+      error: null,
+      message: "oh hi there",
+    },
+    meta: {
+      timestamp: new Date().toISOString(),
+      version: "a1.0.0",
+      server: "localhost",
+    },
+  });
+});
 
 prisma
   .$connect()
