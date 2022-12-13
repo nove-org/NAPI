@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"
+            integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+        <style>
+            * {
+                font-size: 25px;
+            }
+        </style>
+    </head>
+    <body>
+        <span id="error" style="border-color: red; background-color: #ff4545; color: white; padding: 5px; border-width: 1px; border-radius: 5px; display: none"></span>
+
+        <div>
+            <span style="color: #3e3e3e; font-weight: bolder"> <%= client.name %></span>
+            by
+            <span style="color: #3e3e3e; font-weight: bolder"> <%= client.owner %></span>
+        </div>
+        <div style="font-size: 0.5rem"><%= client.description %></div>
+        <hr />
+        <div style="font-size: 0.5rem">
+            ToS: <a href="<%= client.link_tos %>" style="font-size: 0.5rem"><%= client.link_tos %></a><br />
+            Privacy policy: <a href="<%= client.link_privacy_policy %>" style="font-size: 0.5rem"><%= client.link_privacy_policy %></a>
+            <br />
+            <br />
+        </div>
+        <% if(client.isVerified) { %>
+        <div style="font-size: 0.5rem">This app is an official/verified by Nove app</div>
+        <% } %>
+        <hr />
+        This app asks you for the following permissions on your account:
+        <ul>
+            <% for (const _scope of scope) { %>
+            <li><%= { '*': 'EVERYTHING', }[_scope] %></li>
+            <% } %>
+        </ul>
+
+        <br />
+
+        <button id="reject">Reject</button>
+        <button id="approve">Approve access</button>
+
+        <script>
+            if (!localStorage.getItem('token')) window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
+            const state = new URLSearchParams(window.location.search).get('state');
+            const redirect_uri = new URLSearchParams(window.location.search).get('redirect_uri');
+
+            $('#reject').click(() => {
+                // error codes the same as, or close to https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-codes-for-authorization-endpoint-errors
+                window.location.href = `${redirect_uri}?error=access_denied&state=${encodeURIComponent(state)}`;
+            });
+            $('#approve').click(() => {
+                console.log('hi?');
+                fetch('/v1/oauth2/authorize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Owner ${localStorage.getItem('token')}`,
+                    },
+                    body: JSON.stringify({
+                        client_id: '<%= client.client_id %>',
+                        scope: '<%= scope.join(' ') %>',
+                    }),
+                })
+                    .then((res) => res.json())
+                    .then((res) => {
+                        window.location.href = `${redirect_uri}?code=${encodeURIComponent(res.body.code)}&state=${encodeURIComponent(state)}`;
+                    });
+            });
+        </script>
+    </body>
+</html>

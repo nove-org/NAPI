@@ -1,5 +1,7 @@
+import cors from 'cors';
 import express, { Request, Response } from 'express';
 import { Server } from 'http';
+import routes from './routes';
 import checkEnv from './utils/env';
 import logger from './utils/logger';
 import prisma from './utils/prisma';
@@ -7,6 +9,14 @@ checkEnv();
 
 const app = express();
 app.use(express.json());
+app.use(
+    cors({
+        origin: '*',
+    })
+);
+app.set('view engine', 'ejs');
+app.set('views', 'src/views');
+app.use('/', routes);
 app.get('/', (req: Request, res: Response) => {
     res.json({
         status: 200,
@@ -30,7 +40,31 @@ prisma
             logger.info(`server started on port ${process.env.PORT}`);
         });
         process.once('SIGTERM', () => shutdown(server));
-        process.once('SIGINT', () => shutdown(server));
+        // process.once('SIGINT', () => shutdown(server));
+
+        // prisma.oAuth_App
+        //     .create({
+        //         data: {
+        //             client_secret: 'J8KaEnenvoiPe8eNQ89KCf8LZ5LIBX8SsuaaEXVDY2Hl1vU9c18URxhuI6mPVVhr',
+        //             name: 'cheems.dog',
+        //             description: 'cheems.dog is a revolutionary image sharing platform',
+        //             link_homepage: 'https://cheems.dog',
+        //             owner: 'Nove Team',
+        //             link_privacy_policy: 'https://cheems.dog/privacy',
+        //             link_tos: 'https://cheems.dog/tos',
+        //             redirect_uris: ['https://cheems.dog/auth/callback'],
+        //             isVerified: true,
+        //         },
+        //     })
+        //     .then(console.log)
+        //     .catch(console.error);
+
+        prisma.oAuth_App
+            .findFirst({
+                where: { client_secret: 'J8KaEnenvoiPe8eNQ89KCf8LZ5LIBX8SsuaaEXVDY2Hl1vU9c18URxhuI6mPVVhr' },
+            })
+            .then(console.log)
+            .catch(console.error);
     })
     .catch((err) => {
         logger.error(`failed to connect to database: ${err}`);
