@@ -2,18 +2,66 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+    id        String   @id @default(uuid())
+    email     String   @unique
+    username  String
+    password  String
+    token     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    oauth_authorizations OAuth_Authorization[]
+    oauth_codes OAuth_Code[]
+}
+
+model OAuth_App {
+    client_id           String   @id @default(uuid())
+    client_secret       String
+    name                String
+    description         String
+    link_homepage       String
+    owner               String
+    link_privacy_policy String
+    link_tos            String
+    redirect_uris       String[]
+    isVerified          Boolean
+    createdAt           DateTime @default(now())
+    updatedAt           DateTime @updatedAt
+
+    oauth_authorizations OAuth_Authorization[]
+    oauth_codes OAuth_Code[]
+}
+
+model OAuth_Authorization {
+    id            String    @id @default(uuid())
+    user_id       String
+    user          User      @relation(fields: [user_id], references: [id])
+    app_id        String
+    app           OAuth_App @relation(fields: [app_id], references: [client_id])
+    scopes        String[]
+    redirect_uri  String
+    token         String
+    refresh_token String
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+}
+
+model OAuth_Code {
+    code    String    @id
+    app_id  String
+    app     OAuth_App @relation(fields: [app_id], references: [client_id])
+    user_id String
+    user    User      @relation(fields: [user_id], references: [id])
+    scopes  String[]
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
 }
