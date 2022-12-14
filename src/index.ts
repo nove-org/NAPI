@@ -14,6 +14,7 @@ app.use(
         origin: '*',
     })
 );
+app.use(express.static('src/static'));
 app.set('view engine', 'ejs');
 app.set('views', 'src/views');
 app.use('/', routes);
