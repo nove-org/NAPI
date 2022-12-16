@@ -4,20 +4,29 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Document</title>
+        <title>Sign in to your Nove account</title>
         <script
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"
             integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA=="
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
+        <link rel="stylesheet" href="/css/main.css" />
+        <link rel="stylesheet" href="/css/login.css" />
     </head>
     <body>
-        <span id="error" style="border-color: red; background-color: #ff4545; color: white; padding: 5px; border-width: 1px; border-radius: 5px; display: none"></span>
-        <form id="form">
-            <input type="text" name="username" placeholder="Username" /><br />
-            <input type="password" name="password" placeholder="Password" /><br />
-            <button type="submit">Login</button><br />
-        </form>
+        <main>
+            <section class="login">
+                <img src="/data/logo.png" width="48" height="48" alt="Nove logo" />
+                <h1>Sign in</h1>
+                <p>To continue please sign in to your Nove account</p>
+                <header id="error"></header>
+                <form id="form">
+                    <input type="text" name="username" placeholder="Username" /><br />
+                    <input type="password" name="password" placeholder="Password" /><br />
+                    <button type="submit">Login</button><br />
+                </form>
+            </section>
+        </main>
 
         <script>
             $('#form').on('submit', submit);

@@ -1,0 +1,76 @@
+/* 
+ * Made by Nove Group with love.
+ * Visit our GitHub: https://github.com/nove-org
+ * Copyright (c) 2022 Nove Group - All rights reserved.
+ */
+
+@use 'brand' as o
+
+main
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    height: 100vh
+    padding: 0 20px
+
+section.login
+    display: flex
+    flex-direction: column
+    align-items: center
+    max-width: 350px
+    & img
+        padding: 10px
+        border-radius: 20%
+        border: 1px solid o.$border
+        background: o.$secondary
+        margin: 0 0 20px 0
+    & h1
+        line-height: 1.1
+        margin: 0 0 5px 0
+        font-size: 28px
+        font-weight: 800
+    & p
+        line-height: 1.1
+        margin: 0 0 20px 0
+        font-size: 18px
+        font-weight: 300
+        text-align: center
+    & header#error
+        width: 100%
+        word-wrap: break-word
+        font-size: 12px
+        margin: 10px 0
+    & form#form
+        margin: 0
+        padding: 0
+        width: 100%
+        & input
+            margin: 5px 0
+            padding: 10px
+            border-radius: 7px
+            border: 1px solid o.$border
+            background: o.$secondary
+            color: black
+            font-size: 16px
+            transition-duration: .2s
+            outline: 0
+            width: calc( 100% - 11px * 2 )
+            &:hover
+                border: 1px solid o.$brand
+            &:focus
+                border: 1px solid o.$brand
+                background: #00000000
+
+        & button
+            padding: 10px 30px
+            margin: 5px 0
+            border-radius: 7px
+            font-size: 16px
+            font-weight: 700
+            color: white
+            background: o.$brand
+            border: 1px solid o.$brand
+            transition-duration: .2s
+            &:hover
+                background: #00000000

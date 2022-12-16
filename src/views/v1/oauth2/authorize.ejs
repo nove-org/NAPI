@@ -4,49 +4,46 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Document</title>
+        <title>Authorize</title>
         <script
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"
             integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA=="
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
-        <style>
-            * {
-                font-size: 25px;
-            }
-        </style>
+        <link rel="stylesheet" href="/css/main.css" />
+        <link rel="stylesheet" href="/css/auth.css" />
     </head>
     <body>
-        <span id="error" style="border-color: red; background-color: #ff4545; color: white; padding: 5px; border-width: 1px; border-radius: 5px; display: none"></span>
+        <main>
+            <span id="error"></span>
+            <section class="info">
+                <header>
+                    <strong><%= client.name %></strong>
+                    by
+                    <strong><%= client.owner %></strong>
+                </header>
+                <p><%= client.description %></p>
+            </section>
+            <section class="notes">
+                <p>
+                    Before you authorize read <a href="<%= client.link_privacy_policy %>">privacy policy</a> and <a href="<%= client.link_tos %>">terms of service</a> of this app.
+                </p>
 
-        <div>
-            <span style="color: #3e3e3e; font-weight: bolder"> <%= client.name %></span>
-            by
-            <span style="color: #3e3e3e; font-weight: bolder"> <%= client.owner %></span>
-        </div>
-        <div style="font-size: 0.5rem"><%= client.description %></div>
-        <hr />
-        <div style="font-size: 0.5rem">
-            ToS: <a href="<%= client.link_tos %>" style="font-size: 0.5rem"><%= client.link_tos %></a><br />
-            Privacy policy: <a href="<%= client.link_privacy_policy %>" style="font-size: 0.5rem"><%= client.link_privacy_policy %></a>
-            <br />
-            <br />
-        </div>
-        <% if(client.isVerified) { %>
-        <div style="font-size: 0.5rem">This app is an official/verified by Nove app</div>
-        <% } %>
-        <hr />
-        This app asks you for the following permissions on your account:
-        <ul>
-            <% for (const _scope of scope) { %>
-            <li><%= { '*': 'EVERYTHING', }[_scope] %></li>
-            <% } %>
-        </ul>
+                <% if(client.isVerified) { %>
+                <div>This app is verified or managed by Nove</div>
+                <% } %>
 
-        <br />
+                <p>This app asks you for the following permissions</p>
+                <ul>
+                    <% for (const _scope of scope) { %>
+                    <li><%= { '*': 'Everything', }[_scope] %></li>
+                    <% } %>
+                </ul>
+            </section>
 
-        <button id="reject">Reject</button>
-        <button id="approve">Approve access</button>
+            <button id="reject">Reject</button>
+            <button id="approve">Approve access</button>
+        </main>
 
         <script>
             if (!localStorage.getItem('token')) window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
