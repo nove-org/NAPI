@@ -14,35 +14,49 @@
         <link rel="stylesheet" href="/css/auth.css" />
     </head>
     <body>
+        <nav>
+            <!--
+                ! FEATURE REQUEST: Implement account username here ASAP
+            -->
+            <header>Grant this app access to your (wnm210) Nove account</header>
+        </nav>
         <main>
-            <span id="error"></span>
-            <section class="info">
-                <header>
-                    <strong><%= client.name %></strong>
-                    by
-                    <strong><%= client.owner %></strong>
-                </header>
-                <p><%= client.description %></p>
+            <section class="authorize">
+                <div class="info">
+                    <header>
+                        <img src="/data/logo.png" width="48" height="48" alt="Nove logo" />
+                        <h1>
+                            Authorize <% if(client.isVerified) { %>
+                            <div class="mark">
+                                <svg width="12" height="12" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M95 21L36.3647 80L6 49.4464" stroke="currentColor" stroke-width="14" />
+                                </svg>
+                                <span class="tooltiptext">Verified or managed by Nove</span>
+                            </div>
+                            <% } %> <%= client.name %>
+                        </h1>
+                        <p>By <%= client.owner %></p>
+                    </header>
+                </div>
+                <div class="notes">
+                    <p>
+                        Before you grant access read <a href="<%= client.link_privacy_policy %>">privacy policy</a> and <a href="<%= client.link_tos %>">terms of service</a> of
+                        this app.
+                    </p>
+
+                    <p>This app asks you for the following permissions:</p>
+                    <ul>
+                        <% for (const _scope of scope) { %>
+                        <li>— <%= { '*': 'Everything', }[_scope] %></li>
+                        <% } %>
+                    </ul>
+                </div>
+
+                <div class="buttons">
+                    <button id="reject">Reject</button>
+                    <button id="approve">Approve access</button>
+                </div>
             </section>
-            <section class="notes">
-                <p>
-                    Before you authorize read <a href="<%= client.link_privacy_policy %>">privacy policy</a> and <a href="<%= client.link_tos %>">terms of service</a> of this app.
-                </p>
-
-                <% if(client.isVerified) { %>
-                <div>This app is verified or managed by Nove</div>
-                <% } %>
-
-                <p>This app asks you for the following permissions</p>
-                <ul>
-                    <% for (const _scope of scope) { %>
-                    <li><%= { '*': 'Everything', }[_scope] %></li>
-                    <% } %>
-                </ul>
-            </section>
-
-            <button id="reject">Reject</button>
-            <button id="approve">Approve access</button>
         </main>
 
         <script>
