@@ -1,5 +1,9 @@
 node_modules/
 build/
 logs/
+
 .env
+
 src/static/css/*
+
+yarn-error.log
