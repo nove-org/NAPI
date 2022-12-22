@@ -42,26 +42,27 @@ model OAuth_App {
 }
 
 model OAuth_Authorization {
-    id            String    @id @default(uuid())
-    user_id       String
-    user          User      @relation(fields: [user_id], references: [id])
-    app_id        String
-    app           OAuth_App @relation(fields: [app_id], references: [client_id])
-    scopes        String[]
-    redirect_uri  String
-    token         String
-    refresh_token String
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
+    id                    String    @id @default(uuid())
+    user_id               String
+    user                  User      @relation(fields: [user_id], references: [id])
+    app_id                String
+    app                   OAuth_App @relation(fields: [app_id], references: [client_id])
+    scopes                String[]
+    redirect_uri          String
+    token                 String
+    token_expires         DateTime
+    refresh_token         String
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
 }
 
 model OAuth_Code {
-    code    String    @id
-    app_id  String
-    app     OAuth_App @relation(fields: [app_id], references: [client_id])
-    user_id String
-    user    User      @relation(fields: [user_id], references: [id])
-    scopes  String[]
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
+    code      String    @id
+    app_id    String
+    app       OAuth_App @relation(fields: [app_id], references: [client_id])
+    user_id   String
+    user      User      @relation(fields: [user_id], references: [id])
+    scopes    String[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
 }
