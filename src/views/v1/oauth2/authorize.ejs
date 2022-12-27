@@ -47,7 +47,7 @@
                     <p>This app asks you for the following permissions:</p>
                     <ul>
                         <% for (const _scope of scope) { %>
-                        <li>— <%= { '*': 'Everything', }[_scope] %></li>
+                        <li><%= { '*': 'Everything', 'account.basic': 'Basic account information', 'account.email': 'Email connected with your account' }[_scope] %></li>
                         <% } %>
                     </ul>
                 </div>
@@ -69,7 +69,6 @@
                 window.location.href = `${redirect_uri}?error=access_denied&state=${encodeURIComponent(state)}`;
             });
             $('#approve').click(() => {
-                console.log('hi?');
                 fetch('/v1/oauth2/authorize', {
                     method: 'POST',
                     headers: {

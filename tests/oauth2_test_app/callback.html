@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"
+            integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    </head>
+    <body>
+        <span id="data"></span>
+        <script>
+            const code = new URLSearchParams(window.location.search).get('code');
+            console.log(code);
+
+            fetch(
+                `http://localhost:8049/v1/oauth2/token?${new URLSearchParams({
+                    client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47',
+                    scope: 'account.basic account.email',
+                    code,
+                    redirect_uri: 'http://localhost:3000/callback.html',
+                    grant_type: 'authorization_code',
+                    client_secret: 'J8KaEnenvoiPe8eNQ89KCf8LZ5LIBX8SsuaaEXVDY2Hl1vU9c18URxhuI6mPVVhr',
+                }).toString()}`,
+                {
+                    method: 'POST',
+                }
+            )
+                .then((res) => res.json())
+                .then((data) => {
+                    console.log(data);
+                    fetch(`http://localhost:8049/v1/users/me`, {
+                        method: 'GET',
+                        headers: {
+                            Authorization: `Bearer ${data.body.access_token}`,
+                        },
+                    })
+                        .then((res) => res.json())
+                        .then((data) => {
+                            $('#data').text(JSON.stringify(data.body, null, 2));
+                        });
+                });
+        </script>
+    </body>
+</html>
