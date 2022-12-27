@@ -1,9 +1,11 @@
 import { compareSync } from 'bcrypt';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
+import { authorizeBearer } from '../../middlewares/auth';
 import createError from '../../utils/createError';
 import createResponse from '../../utils/createResponse';
 import { removeProps } from '../../utils/masker';
+import { checkPermissions } from '../../utils/permissions';
 import prisma from '../../utils/prisma';
 import { validate } from '../../utils/schema';
 
@@ -41,5 +43,10 @@ router.post(
         createResponse(res, 200, removeProps(user, ['password']));
     }
 );
+
+router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
+    if (checkPermissions(req.oauth.scopes, ['account.email'])) createResponse(res, 200, removeProps(req.user, ['password']));
+    else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
+});
 
 export default router;

@@ -17,8 +17,13 @@
         <nav>
             <!--
                 ! FEATURE REQUEST: Implement account username here ASAP
+                will be added later, after a better backend authorization system is implemented
             -->
-            <header>Grant this app access to your (wnm210) Nove account</header>
+            <header>
+                Grant this app access to your
+                <!-- (ACCOUNT_NAME) -->
+                Nove account
+            </header>
         </nav>
         <main>
             <section class="authorize">
@@ -47,7 +52,7 @@
                     <p>This app asks you for the following permissions:</p>
                     <ul>
                         <% for (const _scope of scope) { %>
-                        <li>— <%= { '*': 'Everything', }[_scope] %></li>
+                        <li><%= { '*': 'Everything', 'account.basic': 'Basic account information', 'account.email': 'Email connected with your account' }[_scope] %></li>
                         <% } %>
                     </ul>
                 </div>
@@ -69,7 +74,6 @@
                 window.location.href = `${redirect_uri}?error=access_denied&state=${encodeURIComponent(state)}`;
             });
             $('#approve').click(() => {
-                console.log('hi?');
                 fetch('/v1/oauth2/authorize', {
                     method: 'POST',
                     headers: {

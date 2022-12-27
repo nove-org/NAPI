@@ -61,8 +61,11 @@ prisma
         //     .catch(console.error);
 
         prisma.oAuth_App
-            .findFirst({
-                where: { client_secret: 'J8KaEnenvoiPe8eNQ89KCf8LZ5LIBX8SsuaaEXVDY2Hl1vU9c18URxhuI6mPVVhr' },
+            .update({
+                where: { client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47' },
+                data: {
+                    redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html'],
+                },
             })
             .then(console.log)
             .catch(console.error);
