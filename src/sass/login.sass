@@ -4,7 +4,7 @@
  * Copyright (c) 2022 Nove Group - All rights reserved.
  */
 
-@use 'brand' as o
+@use 'brand' as *
 
 main
     display: flex
@@ -22,8 +22,8 @@ section.login
     & img
         padding: 10px
         border-radius: 20%
-        border: 1px solid o.$border
-        background: o.$secondary
+        border: 1px solid $border
+        background: $secondary
         margin: 0 0 20px 0
     & h1
         line-height: 1.1
@@ -49,17 +49,17 @@ section.login
             margin: 5px 0
             padding: 10px
             border-radius: 7px
-            border: 1px solid o.$border
-            background: o.$secondary
+            border: 1px solid $border
+            background: $secondary
             color: black
             font-size: 16px
             transition-duration: .2s
             outline: 0
             width: calc( 100% - 11px * 2 )
             &:hover
-                border: 1px solid o.$brand
+                border: 1px solid $brand
             &:focus
-                border: 1px solid o.$brand
+                border: 1px solid $brand
                 background: #00000000
 
         & button
@@ -69,8 +69,8 @@ section.login
             font-size: 16px
             font-weight: 700
             color: white
-            background: o.$brand
-            border: 1px solid o.$brand
+            background: $brand
+            border: 1px solid $brand
             transition-duration: .2s
             &:hover
                 background: #00000000
