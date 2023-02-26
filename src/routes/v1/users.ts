@@ -98,10 +98,7 @@ router.patch(
 
         await prisma.user.update({
             where: { id: req.user.id },
-            data: {
-                bio: req.body?.bio,
-                username: req.body?.username,
-            },
+            data,
         });
 
         return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
