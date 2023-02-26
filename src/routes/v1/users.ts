@@ -1,7 +1,7 @@
 import { compareSync } from 'bcrypt';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
-import { authorizeBearer } from '../../middlewares/auth';
+import { authorizeBearer, authorizeOwner } from '../../middlewares/auth';
 import createError from '../../utils/createError';
 import createResponse from '../../utils/createResponse';
 import { removeProps } from '../../utils/masker';
@@ -50,7 +50,7 @@ router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: 
     else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
 });
 
-router.patch('/password', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
+router.patch('/password', authorizeOwner, async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!(await bcrypt.compare(oldPassword, req.user.password))) {
@@ -69,7 +69,7 @@ router.patch('/password', authorizeBearer(['account.basic']), async (req: Reques
     return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
 });
 
-router.patch('/email', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
+router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
     const { email } = req.body;
 
     await prisma.user.update({
