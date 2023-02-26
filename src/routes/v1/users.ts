@@ -50,19 +50,7 @@ router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: 
     else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
 });
 
-router.delete('/:id', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    const deletedUser = await prisma.user.findFirst({ where: { id } });
-
-    if (!deletedUser) return createError(res, 401, { code: 'invalid_user', message: 'Invalid User', type: 'authorization' });
-
-    await prisma.user.delete({ where: { id } });
-
-    return createResponse(res, 200, { success: true });
-});
-
-router.put('/password', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
+router.patch('/password', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!(await bcrypt.compare(oldPassword, req.user.password))) {
@@ -81,7 +69,7 @@ router.put('/password', authorizeBearer(['account.basic']), async (req: Request,
     return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
 });
 
-router.put('/email', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
+router.patch('/email', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
     const { email } = req.body;
 
     await prisma.user.update({
