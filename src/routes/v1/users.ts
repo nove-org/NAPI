@@ -8,11 +8,8 @@ import { removeProps } from '../../utils/masker';
 import { checkPermissions } from '../../utils/permissions';
 import prisma from '../../utils/prisma';
 import { validate } from '../../utils/schema';
+import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
-interface UserUpdate {
-    bio?: string;
-    username?: string;
-}
 
 const router = Router();
 
@@ -91,7 +88,7 @@ router.patch(
     validate(z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional() }), 'body'),
     authorizeOwner,
     async (req: Request, res: Response) => {
-        const data: UserUpdate = {};
+        let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
         if (req.body.bio?.length) data['bio'] = req.body.bio;
         if (req.body.username?.length) data['username'] = req.body.username;
