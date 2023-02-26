@@ -87,22 +87,13 @@ router.patch(
     validate(z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional() })),
     authorizeOwner,
     async (req: Request, res: Response) => {
-        if (req.body?.bio) {
-            await prisma.user.update({
-                where: { id: req.user.id },
-                data: {
-                    bio: req.body?.bio,
-                },
-            });
-        }
-        if (req.body?.username) {
-            await prisma.user.update({
-                where: { id: req.user.id },
-                data: {
-                    username: req.body?.username,
-                },
-            });
-        }
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data: {
+                bio: req.body?.bio,
+                username: req.body?.username,
+            },
+        });
 
         return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
     }
