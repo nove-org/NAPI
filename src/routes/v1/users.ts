@@ -8,6 +8,7 @@ import { removeProps } from '../../utils/masker';
 import { checkPermissions } from '../../utils/permissions';
 import prisma from '../../utils/prisma';
 import { validate } from '../../utils/schema';
+import bcrypt from 'bcrypt';
 
 const router = Router();
 
@@ -47,6 +48,50 @@ router.post(
 router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
     if (checkPermissions(req.oauth.scopes, ['account.email'])) createResponse(res, 200, removeProps(req.user, ['password']));
     else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
+});
+
+router.delete('/:id', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const deletedUser = await prisma.user.findFirst({ where: { id } });
+
+    if (!deletedUser) return createError(res, 401, { code: 'invalid_user', message: 'Invalid User', type: 'authorization' });
+
+    await prisma.user.delete({ where: { id } });
+
+    return createResponse(res, 200, { success: true });
+});
+
+router.put('/password', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!(await bcrypt.compare(oldPassword, req.user.password))) {
+        return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+    }
+
+    const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+
+    await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+            password: hashedPassword,
+        },
+    });
+
+    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+});
+
+router.put('/email', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+            email,
+        },
+    });
+
+    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
 });
 
 export default router;
