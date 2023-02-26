@@ -9,6 +9,10 @@ import { checkPermissions } from '../../utils/permissions';
 import prisma from '../../utils/prisma';
 import { validate } from '../../utils/schema';
 import bcrypt from 'bcrypt';
+interface UserUpdate {
+    bio?: string;
+    username?: string;
+}
 
 const router = Router();
 
@@ -84,9 +88,14 @@ router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
 
 router.patch(
     '/me',
-    validate(z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional() })),
+    validate(z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional() }), 'body'),
     authorizeOwner,
     async (req: Request, res: Response) => {
+        const data: UserUpdate = {};
+
+        if (req.body.bio?.length) data['bio'] = req.body.bio;
+        if (req.body.username?.length) data['username'] = req.body.username;
+
         await prisma.user.update({
             where: { id: req.user.id },
             data: {
