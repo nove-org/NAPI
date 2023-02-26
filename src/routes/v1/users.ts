@@ -8,6 +8,7 @@ import { removeProps } from '../../utils/masker';
 import { checkPermissions } from '../../utils/permissions';
 import prisma from '../../utils/prisma';
 import { validate } from '../../utils/schema';
+import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const router = Router();
@@ -81,5 +82,24 @@ router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
 
     return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
 });
+
+router.patch(
+    '/me',
+    validate(z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional() }), 'body'),
+    authorizeOwner,
+    async (req: Request, res: Response) => {
+        let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
+
+        if (req.body.bio?.length) data['bio'] = req.body.bio;
+        if (req.body.username?.length) data['username'] = req.body.username;
+
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data,
+        });
+
+        return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+    }
+);
 
 export default router;
