@@ -94,7 +94,12 @@ router.patch(
         if (req.body.username?.length) data['username'] = req.body.username;
         if (req.body.language?.length) {
           //TODO: available languages
-          if (!['pl', 'en'].includes(req.body.language)) return; createError(res, 400, removeProps(req.user, ['password', 'token']));
+          if (!['pl', 'en'].includes(req.body.language)) return createError(res, 400, {
+            code: 'invalid_language',
+            message: 'This page does not support this language',
+            param: 'body:language'
+            type: 'account' // TODO: error type
+          });
           data['language'] = req.body.language;
         }
 
