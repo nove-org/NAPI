@@ -94,8 +94,8 @@ router.patch(
         if (req.body.username?.length) data['username'] = req.body.username;
         if (req.body.language?.length) {
           //TODO: available languages
-          if (!['pl', 'en'].includes(req.body.language)) return createError(res, 400, removeProps(req.user, ['password', 'token']))
-          data['language'] = req.body.language
+          if (!['pl', 'en'].includes(req.body.language)) return; createError(res, 400, removeProps(req.user, ['password', 'token']));
+          data['language'] = req.body.language;
         }
 
         await prisma.user.update({
