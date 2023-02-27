@@ -95,10 +95,10 @@ router.patch(
         if (req.body.language?.length) {
           //TODO: available languages
           if (!['pl', 'en'].includes(req.body.language)) return createError(res, 400, {
-            code: 'invalid_language',
+            code: 'invalid_parameter',
             message: 'This page does not support this language',
             param: 'body:language',
-            type: 'account' // TODO: error type
+            type: 'validation'
           });
           data['language'] = req.body.language;
         }
