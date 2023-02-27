@@ -97,7 +97,7 @@ router.patch(
           if (!['pl', 'en'].includes(req.body.language)) return createError(res, 400, {
             code: 'invalid_language',
             message: 'This page does not support this language',
-            param: 'body:language'
+            param: 'body:language',
             type: 'account' // TODO: error type
           });
           data['language'] = req.body.language;
