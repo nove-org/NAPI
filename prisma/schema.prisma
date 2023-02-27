@@ -16,6 +16,7 @@ model User {
     bio       String
     avatar    String
     username  String
+    language  String
     password  String
     token     String
     createdAt DateTime @default(now())
