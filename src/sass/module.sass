@@ -6,18 +6,23 @@
 
 @use 'brand' as *
 
-section.error
-    width: 100%
+section.module
+    width: calc( 100% - 10px * 2 )
     height: 100vh
     display: flex
     flex-direction: column
     align-items: center
     justify-content: center
+    padding: 0 10px
+    & svg
+        margin-bottom: 20px
     & h1
         font-weight: 700
+        text-align: center
         font-size: 28px
         margin: 0
     & p
         margin: 0
         font-weight: 300
+        text-align: center
         font-size: 32px
