@@ -1,6 +1,5 @@
 import cors from 'cors';
 import express, { Request, Response } from 'express';
-import upload from 'express-fileupload';
 import { Server } from 'http';
 import routes from './routes';
 import checkEnv from './utils/env';
@@ -9,7 +8,6 @@ import prisma from './utils/prisma';
 checkEnv();
 
 const app = express();
-app.use(upload());
 app.use(express.json());
 app.use(
     cors({

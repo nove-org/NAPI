@@ -10,7 +10,9 @@ import prisma from '../../utils/prisma';
 import { validate } from '../../utils/schema';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
-import { UploadedFile } from 'express-fileupload';
+import { multerUploadSingle } from '../../utils/multipart';
+import { readFileSync } from 'fs';
+import { STORAGE_PATH } from '../../utils/CONSTS';
 
 const router = Router();
 
@@ -114,25 +116,40 @@ router.patch(
     }
 );
 
-router.patch('/avatar', authorizeOwner, async (req: Request, res: Response) => {
-    const photo = req.files?.avatar as UploadedFile;
+router.patch(
+    '/avatar',
+    validate(z.object({ file: z.any() })),
+    /*authorizeOwner,*/
+    multerUploadSingle(),
+    async (req: Request, res: Response) => {
+        const file = req.file as Express.Multer.File;
 
-    if (!photo.data || photo.data instanceof Buffer === false || !['image/png', 'image/jpeg'].includes(photo.mimetype))
-        return createError(res, 400, {
-            code: 'invalid_parameter',
-            message: 'This file cannot be used as an avatar.',
-            param: 'body:avatar',
-            type: 'validation',
-        });
+        if (!file)
+            return createError(res, 400, {
+                code: 'invalid_parameter',
+                message: 'You have to send any image.',
+                param: 'body:avatar',
+                type: 'validation',
+            });
 
-    await prisma.user.update({
-        where: { id: req.user?.id },
-        data: {
-            avatar: `${photo.data}`,
-        },
+        return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+    }
+);
+
+router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const user = await prisma.user.findFirst({
+        where: { id },
     });
 
-    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+    if (!user) return createError(res, 400, { code: 'Invalid ID', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
+
+    const file = readFileSync(`./storage/users/avatars/${id}.webp`);
+
+    if (!file) return res.sendFile(`../../storage/avatars/defaults/AVATAR.webp`);
+
+    return res.sendFile(`${STORAGE_PATH}/${id}.webp`);
 });
 
 export default router;
