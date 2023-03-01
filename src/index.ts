@@ -60,7 +60,7 @@ prisma
         //     .then(console.log)
         //     .catch(console.error);
 
-        prisma.oAuth_App
+        /* prisma.oAuth_App
             .update({
                 where: { client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47' },
                 data: {
@@ -68,9 +68,9 @@ prisma
                 },
             })
             .then(console.log)
-            .catch(console.error);
+            .catch(console.error); */
     })
-    .catch((err) => {
+    .catch((err: Error) => {
         logger.error(`failed to connect to database: ${err}`);
         process.exit(0x000a);
     });
@@ -85,7 +85,7 @@ function shutdown(server: Server) {
                 logger.info(`disconnected from database`);
                 process.exit(0x0003);
             })
-            .catch((err) => {
+            .catch((err: Error) => {
                 logger.error(`failed to gracefully disconnect from database: ${err}`);
                 process.exit(0x000a);
             });

@@ -3,6 +3,7 @@ src/static/css/*
 node_modules/
 build/
 logs/
+storage/users/avatars/*.webp
 
 .env
 yarn-error.log

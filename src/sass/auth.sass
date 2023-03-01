@@ -4,7 +4,7 @@
  * Copyright (c) 2022 Nove Group - All rights reserved.
  */
 
-@use 'brand' as o
+@use 'brand' as *
 
 nav
     position: absolute
@@ -13,11 +13,11 @@ nav
     opacity: 0.5
     padding: 5px
     width: calc( 100% - 5px * 2 )
-    background: o.$secondary
-    border-bottom: 1px solid o.$border
+    background: $secondary
+    border-bottom: 1px solid $border
     & header
         font-size: 14px
-        color: o.$font2
+        color: $font2
 
 main
     display: flex
@@ -42,24 +42,24 @@ section.authorize
             padding: 7px 10px
             border-radius: 7px
             outline: 0
-            border: 1px solid o.$border
-            color: o.$font
+            border: 1px solid $border
+            color: $font
             background: 0
             font-size: 15px
             font-weight: 500
             cursor: pointer
             transition-duration: .15s
             &:hover
-                border: 1px solid o.$brand
-                color: o.$brand
+                border: 1px solid $brand
+                color: $brand
     & div.info
         text-align: center
         & header
             & img
                 padding: 10px
                 border-radius: 20%
-                border: 1px solid o.$border
-                background: o.$secondary
+                border: 1px solid $border
+                background: $secondary
                 margin: 0 0 20px 0
             & h1
                 line-height: 1.1
@@ -76,11 +76,11 @@ section.authorize
                     & span
                         visibility: hidden
                         width: 200px
-                        background-color: o.$secondary
-                        color: o.$font
+                        background-color: $secondary
+                        color: $font
                         font-weight: 300
                         font-size: 14px
-                        border: 1px solid o.$border
+                        border: 1px solid $border
                         text-align: center
                         padding: 5px 0
                         border-radius: 6px
@@ -99,17 +99,17 @@ section.authorize
                         margin-left: -5px
                         border-width: 5px
                         border-style: solid
-                        border-color: o.$border transparent transparent transparent
+                        border-color: $border transparent transparent transparent
                     &:hover span
                         visibility: visible
                         opacity: 1
                     & svg
-                        border: 1px solid o.$brand
+                        border: 1px solid $brand
                         padding: 4px
                         border-radius: 8px
                         margin-left: 10px
                         margin-right: 6px
-                        color: o.$brand
+                        color: $brand
                         position: relative
                         display: inline-block
             & p
@@ -121,9 +121,9 @@ section.authorize
     & div.notes
         & p
             font-size: 16px
-            color: o.$font2
+            color: $font2
             & a
-                color: o.$brand
+                color: $brand
         & ul
             margin: 0 0 30px 0
             padding: 0
