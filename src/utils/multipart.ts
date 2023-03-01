@@ -56,7 +56,7 @@ export const multerUploadSingle = (fieldName: string = 'file') => {
                 })
                 .catch((err) => {
                     console.log(err);
-                    if (err) return createError(res, 500, { code: 'Server error', message: 'An error occurred while procesing the photo.', type: 'internal' });
+                    if (err) return createError(res, 500, { code: 'server_error', message: 'An error occurred while procesing the photo.', type: 'internal' });
                 });
 
             next();

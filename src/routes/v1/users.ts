@@ -118,9 +118,9 @@ router.patch(
 
 router.patch(
     '/avatar',
-    validate(z.object({ file: z.any() })),
-    authorizeOwner,
     multerUploadSingle(),
+    authorizeOwner,
+    validate(z.object({ file: z.any() })),
     async (req: Request, res: Response) => {
         const file = req.file as Express.Multer.File;
 
@@ -143,7 +143,7 @@ router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
         where: { id },
     });
 
-    if (!user) return createError(res, 400, { code: 'Invalid ID', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
+    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
 
     const file = readFileSync(`./storage/users/avatars/${id}.webp`);
 
