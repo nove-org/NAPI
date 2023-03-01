@@ -54,6 +54,13 @@ router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: 
     else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
 });
 
+router.get('/:id', async (req: Request, res: Response) => {
+    // TODO: check if user exists
+    createResponse(res, 200, removeProps(await prisma.user.findFirst({where:{id:req.params.id}}), ['password', 'email']));
+});
+
+
+
 router.patch('/password', authorizeOwner, async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
 
