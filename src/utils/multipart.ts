@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
         cb(null, UPLOADS_TEMP_PATH);
     },
     filename: function (req, file, cb) {
-        cb(null, '1234');
+        cb(null, req.user.id);
     },
 });
 
@@ -49,10 +49,10 @@ export const multerUploadSingle = (fieldName: string = 'file') => {
                 });
             }
 
-            exec(`cd ${UPLOADS_TEMP_PATH} && convert 1234 -resize 1024x1024\! 1234.webp`)
+            exec(`cd ${UPLOADS_TEMP_PATH} && convert ${req.user.id} -resize 1024x1024\! ${req.user.id}.webp`)
                 .then(() => {
-                    unlinkSync(`${UPLOADS_TEMP_PATH}/1234`);
-                    move(`${UPLOADS_TEMP_PATH}/1234.webp`, join(STORAGE_PATH, `1234.webp`), { overwrite: true });
+                    unlinkSync(`${UPLOADS_TEMP_PATH}/${req.user.id}`);
+                    move(`${UPLOADS_TEMP_PATH}/${req.user.id}.webp`, join(STORAGE_PATH, `${req.user.id}.webp`), { overwrite: true });
                 })
                 .catch((err) => {
                     console.log(err);
