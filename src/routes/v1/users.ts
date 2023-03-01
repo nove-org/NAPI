@@ -10,6 +10,9 @@ import prisma from '../../utils/prisma';
 import { validate } from '../../utils/schema';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { multerUploadSingle } from '../../utils/multipart';
+import { readFileSync } from 'fs';
+import { STORAGE_PATH } from '../../utils/CONSTS';
 
 const router = Router();
 
@@ -93,14 +96,15 @@ router.patch(
         if (req.body.bio?.length) data['bio'] = req.body.bio;
         if (req.body.username?.length) data['username'] = req.body.username;
         if (req.body.language?.length) {
-          //TODO: available languages
-          if (!['pl', 'en'].includes(req.body.language)) return createError(res, 400, {
-            code: 'invalid_parameter',
-            message: 'This page does not support this language',
-            param: 'body:language',
-            type: 'validation'
-          });
-          data['language'] = req.body.language;
+            //TODO: available languages
+            if (!['pl', 'en'].includes(req.body.language))
+                return createError(res, 400, {
+                    code: 'invalid_parameter',
+                    message: 'This page does not support this language',
+                    param: 'body:language',
+                    type: 'validation',
+                });
+            data['language'] = req.body.language;
         }
 
         await prisma.user.update({
@@ -111,5 +115,41 @@ router.patch(
         return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
     }
 );
+
+router.patch(
+    '/avatar',
+    multerUploadSingle(),
+    authorizeOwner,
+    validate(z.object({ file: z.any() })),
+    async (req: Request, res: Response) => {
+        const file = req.file as Express.Multer.File;
+
+        if (!file)
+            return createError(res, 400, {
+                code: 'invalid_parameter',
+                message: 'You have to send any image.',
+                param: 'body:avatar',
+                type: 'validation',
+            });
+
+        return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+    }
+);
+
+router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const user = await prisma.user.findFirst({
+        where: { id },
+    });
+
+    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
+
+    const file = readFileSync(`./storage/users/avatars/${id}.webp`);
+
+    if (!file) return res.sendFile(`../../storage/avatars/defaults/AVATAR.webp`);
+
+    return res.sendFile(`${STORAGE_PATH}/${id}.webp`);
+});
 
 export default router;
