@@ -119,7 +119,7 @@ router.patch(
 router.patch(
     '/avatar',
     validate(z.object({ file: z.any() })),
-    /*authorizeOwner,*/
+    authorizeOwner,
     multerUploadSingle(),
     async (req: Request, res: Response) => {
         const file = req.file as Express.Multer.File;
