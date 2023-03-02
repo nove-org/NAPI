@@ -129,13 +129,13 @@ router.patch(
     }
 );
 
-router.patch('/avatar', multerUploadSingle(), authorizeOwner, validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
+router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File;
 
     if (!file)
         return createError(res, 400, {
             code: 'invalid_parameter',
-            message: 'You have to send any image.',
+            message: 'Send an image',
             param: 'body:avatar',
             type: 'validation',
         });
