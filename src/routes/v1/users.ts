@@ -61,7 +61,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       where: { id },
     });
 
-    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user doesn\'t exists!', type: 'validation', param: 'param:id' });
+    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does n9t exist!', type: 'validation', param: 'param:id' });
     
     return createResponse(res, 200, removeProps(user, ['password', 'token', 'email']));
 });
