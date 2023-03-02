@@ -135,7 +135,7 @@ router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object(
     if (!file)
         return createError(res, 400, {
             code: 'invalid_parameter',
-            message: 'Send an image',
+            message: 'You have to send an image',
             param: 'body:avatar',
             type: 'validation',
         });
