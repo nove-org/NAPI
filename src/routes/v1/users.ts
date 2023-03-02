@@ -11,7 +11,7 @@ import { validate } from '../../utils/schema';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { multerUploadSingle } from '../../utils/multipart';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync } from 'fs';
 import { STORAGE_PATH } from '../../utils/CONSTS';
 import { join } from 'path';
 
