@@ -55,8 +55,15 @@ router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: 
 });
 
 router.get('/:id', async (req: Request, res: Response) => {
-    // TODO: check if user exists
-    createResponse(res, 200, removeProps(await prisma.user.findFirst({where:{id:req.params.id}}), ['password', 'email']));
+    const { id } = req.params;
+
+    const user = await prisma.user.findFirst({
+      where: { id },
+    });
+
+    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
+    
+    return createResponse(res, 200, removeProps(user, ['password', 'token']));
 });
 
 
