@@ -13,6 +13,7 @@ import bcrypt from 'bcrypt';
 import { multerUploadSingle } from '../../utils/multipart';
 import { readFileSync, existsSync } from 'fs';
 import { STORAGE_PATH } from '../../utils/CONSTS';
+import { join } from 'path';
 
 const router = Router();
 
@@ -149,13 +150,11 @@ router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
         where: { id },
     });
 
-    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
+    // if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
 
-    const file = existsSync(`${STORAGE_PATH}/${id}.webp`) ? readFileSync(`${STORAGE_PATH}/${id}.webp`) : readFileSync(`./storage/avatars/defaults/AVATAR.webp`);
+    const path = existsSync(`${STORAGE_PATH}/${id}.webp`) ? `${STORAGE_PATH}/${id}.webp` : `${join(STORAGE_PATH, '..')}/defaults/AVATAR.webp`;
 
-    if (!file) return res.sendFile(`../../storage/avatars/defaults/AVATAR.webp`);
-
-    return res.sendFile(`${STORAGE_PATH}/${id}.webp`);
+    return res.sendFile(path);
 });
 
 export default router;
