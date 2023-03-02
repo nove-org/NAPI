@@ -11,8 +11,9 @@ import { validate } from '../../utils/schema';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { multerUploadSingle } from '../../utils/multipart';
-import { readFileSync } from 'fs';
+import { existsSync } from 'fs';
 import { STORAGE_PATH } from '../../utils/CONSTS';
+import { join } from 'path';
 
 const router = Router();
 
@@ -58,15 +59,13 @@ router.get('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const user = await prisma.user.findFirst({
-      where: { id },
+        where: { id },
     });
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
-    
+
     return createResponse(res, 200, removeProps(user, ['password', 'token', 'email']));
 });
-
-
 
 router.patch('/password', authorizeOwner, async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
@@ -130,25 +129,19 @@ router.patch(
     }
 );
 
-router.patch(
-    '/avatar',
-    multerUploadSingle(),
-    authorizeOwner,
-    validate(z.object({ file: z.any() })),
-    async (req: Request, res: Response) => {
-        const file = req.file as Express.Multer.File;
+router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
+    const file = req.file as Express.Multer.File;
 
-        if (!file)
-            return createError(res, 400, {
-                code: 'invalid_parameter',
-                message: 'You have to send any image.',
-                param: 'body:avatar',
-                type: 'validation',
-            });
+    if (!file)
+        return createError(res, 400, {
+            code: 'invalid_parameter',
+            message: 'You have to send an image',
+            param: 'body:avatar',
+            type: 'validation',
+        });
 
-        return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
-    }
-);
+    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+});
 
 router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -159,11 +152,9 @@ router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
 
-    const file = readFileSync(`./storage/users/avatars/${id}.webp`);
+    const path = existsSync(`${STORAGE_PATH}/${id}.webp`) ? `${STORAGE_PATH}/${id}.webp` : `${join(STORAGE_PATH, '..')}/defaults/AVATAR.webp`;
 
-    if (!file) return res.sendFile(`../../storage/avatars/defaults/AVATAR.webp`);
-
-    return res.sendFile(`${STORAGE_PATH}/${id}.webp`);
+    return res.sendFile(path);
 });
 
 export default router;
