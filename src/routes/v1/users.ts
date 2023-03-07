@@ -6,7 +6,7 @@ import createError from '../../utils/createError';
 import createResponse from '../../utils/createResponse';
 import { removeProps } from '../../utils/masker';
 import { checkPermissions } from '../../utils/permissions';
-import prisma from '../../utils/prisma';
+import prisma, { getUniqueKey } from '../../utils/prisma';
 import { validate } from '../../utils/schema';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
@@ -55,7 +55,7 @@ router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: 
     else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
 });
 
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/user/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const user = await prisma.user.findFirst({
@@ -67,7 +67,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     return createResponse(res, 200, removeProps(user, ['password', 'token', 'email']));
 });
 
-router.patch('/password', authorizeOwner, async (req: Request, res: Response) => {
+router.patch('/password', validate(z.object({ oldPassword: z.string(), newPassword: z.string() })), authorizeOwner, async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!(await bcrypt.compare(oldPassword, req.user.password))) {
@@ -84,6 +84,57 @@ router.patch('/password', authorizeOwner, async (req: Request, res: Response) =>
     });
 
     return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+});
+
+router.patch('/passwordrecovery', validate(z.object({ email: z.string() })), async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    const user = await prisma.user.findFirst({ where: { email } });
+
+    if (!user) return createError(res, 400, { code: 'invalid_email', message: 'account with this email address was not found', param: 'body:email', type: 'authorization' });
+
+    const data = await prisma.recovery.create({ data: { userId: user.id, code: await getUniqueKey(prisma.recovery, 'code'), expiresAt: new Date(Date.now() + 259200000) } });
+
+    console.log(data);
+
+    //TODO: send email (/v1/users/passwordkey?code=data.code)
+
+    createResponse(res, 200, { success: true });
+});
+
+router.get('/passwordkey', async (req: Request, res: Response) => {
+    const code = req.query.code as string;
+
+    console.log(code);
+
+    if (!code) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+
+    const recovery = await prisma.recovery.findFirst({ where: { code } });
+
+    if (!recovery) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+
+    return createResponse(res, 200, { recoveryKey: code });
+});
+
+router.patch('/passwordreset', validate(z.object({ newPassword: z.string(), recoveryKey: z.string() })), async (req: Request, res: Response) => {
+    const { newPassword, recoveryKey } = req.body;
+
+    const recovery = await prisma.recovery.findFirst({ where: { code: recoveryKey } });
+
+    if (!recovery) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+
+    const user = await prisma.user.findFirst({ where: { id: recovery.userId } });
+
+    if (!user) return createError(res, 400, { code: 'invalid_user', message: 'this account is probably deleted', param: 'query:code', type: 'authorization' });
+
+    const password = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+
+    await prisma.user.update({
+        where: { id: recovery.userId },
+        data: { password },
+    });
+
+    return createResponse(res, 200, { success: true });
 });
 
 router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
