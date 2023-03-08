@@ -55,37 +55,6 @@ router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: 
     else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
 });
 
-router.get('/user/:id', async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    const user = await prisma.user.findFirst({
-        where: { id },
-    });
-
-    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
-
-    return createResponse(res, 200, removeProps(user, ['password', 'token', 'email']));
-});
-
-router.patch('/password', validate(z.object({ oldPassword: z.string(), newPassword: z.string() })), authorizeOwner, async (req: Request, res: Response) => {
-    const { oldPassword, newPassword } = req.body;
-
-    if (!(await bcrypt.compare(oldPassword, req.user.password))) {
-        return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
-
-    await prisma.user.update({
-        where: { id: req.user.id },
-        data: {
-            password: hashedPassword,
-        },
-    });
-
-    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
-});
-
 router.patch('/passwordrecovery', validate(z.object({ email: z.string() })), async (req: Request, res: Response) => {
     const { email } = req.body;
 
@@ -135,6 +104,37 @@ router.patch('/passwordreset', validate(z.object({ newPassword: z.string(), reco
     });
 
     return createResponse(res, 200, { success: true });
+});
+
+router.get('/:id', async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const user = await prisma.user.findFirst({
+        where: { id },
+    });
+
+    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
+
+    return createResponse(res, 200, removeProps(user, ['password', 'token', 'email']));
+});
+
+router.patch('/password', validate(z.object({ oldPassword: z.string(), newPassword: z.string() })), authorizeOwner, async (req: Request, res: Response) => {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!(await bcrypt.compare(oldPassword, req.user.password))) {
+        return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+    }
+
+    const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+
+    await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+            password: hashedPassword,
+        },
+    });
+
+    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
 });
 
 router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
