@@ -62,7 +62,7 @@ router.patch('/passwordRecovery', validate(z.object({ email: z.string() })), asy
 
     if (!user) return createError(res, 400, { code: 'invalid_email', message: 'account with this email address was not found', param: 'body:email', type: 'authorization' });
 
-    const data = await prisma.recovery.create({ data: { userId: user.id, code: await getUniqueKey(prisma.recovery, 'code'), expiresAt: new Date(Date.now() + 259200000) } });
+    const data = await prisma.recovery.create({ data: { userId: user.id, code: await getUniqueKey(prisma.recovery, 'code'), expiresAt: new Date(Date.now() + 86400000) } });
 
     console.log(data);
 
