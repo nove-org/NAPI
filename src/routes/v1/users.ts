@@ -82,6 +82,11 @@ router.get('/passwordKey', async (req: Request, res: Response) => {
 
     if (!recovery) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
 
+    if (recovery.expiresAt.getTime() < Date.now()) {
+        await prisma.recovery.delete({ where: { code: recovery.code } });
+        return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+    }
+
     return createResponse(res, 200, { recoveryKey: code });
 });
 
