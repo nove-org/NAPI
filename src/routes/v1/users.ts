@@ -55,7 +55,7 @@ router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: 
     else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
 });
 
-router.patch('/passwordrecovery', validate(z.object({ email: z.string() })), async (req: Request, res: Response) => {
+router.patch('/passwordRecovery', validate(z.object({ email: z.string() })), async (req: Request, res: Response) => {
     const { email } = req.body;
 
     const user = await prisma.user.findFirst({ where: { email } });
@@ -71,7 +71,7 @@ router.patch('/passwordrecovery', validate(z.object({ email: z.string() })), asy
     createResponse(res, 200, { success: true });
 });
 
-router.get('/passwordkey', async (req: Request, res: Response) => {
+router.get('/passwordKey', async (req: Request, res: Response) => {
     const code = req.query.code as string;
 
     console.log(code);
@@ -85,7 +85,7 @@ router.get('/passwordkey', async (req: Request, res: Response) => {
     return createResponse(res, 200, { recoveryKey: code });
 });
 
-router.patch('/passwordreset', validate(z.object({ newPassword: z.string(), recoveryKey: z.string() })), async (req: Request, res: Response) => {
+router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), recoveryKey: z.string() })), async (req: Request, res: Response) => {
     const { newPassword, recoveryKey } = req.body;
 
     const recovery = await prisma.recovery.findFirst({ where: { code: recoveryKey } });
