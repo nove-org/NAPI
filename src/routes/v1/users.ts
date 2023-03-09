@@ -108,6 +108,8 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
         data: { password },
     });
 
+    await prisma.recovery.delete({ where: { code: recoveryKey } });
+
     return createResponse(res, 200, { success: true });
 });
 
