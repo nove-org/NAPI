@@ -103,6 +103,9 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
 
     const password = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
 
+    if (password === user.password)
+        return createError(res, 400, { code: 'invalid_password', message: 'New password cannot be the same as the current one', type: 'validation', param: 'body:password' });
+
     await prisma.user.update({
         where: { id: recovery.userId },
         data: { password },
