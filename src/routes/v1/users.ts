@@ -14,6 +14,7 @@ import { multerUploadSingle } from '../../utils/multipart';
 import { existsSync } from 'fs';
 import { STORAGE_PATH } from '../../utils/CONSTS';
 import { join } from 'path';
+import { randomString } from '../../utils/crypto';
 
 const router = Router();
 
@@ -62,7 +63,9 @@ router.patch('/passwordRecovery', validate(z.object({ email: z.string() })), asy
 
     if (!user) return createError(res, 400, { code: 'invalid_email', message: 'account with this email address was not found', param: 'body:email', type: 'authorization' });
 
-    const data = await prisma.recovery.create({ data: { userId: user.id, code: await getUniqueKey(prisma.recovery, 'code'), expiresAt: new Date(Date.now() + 86400000) } });
+    const data = await prisma.recovery.create({
+        data: { userId: user.id, code: await getUniqueKey(prisma.recovery, 'code', randomString), expiresAt: new Date(Date.now() + 86400000) },
+    });
 
     console.log(data);
 
@@ -103,7 +106,7 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
 
     const password = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
 
-    if (password === user.password)
+    if (compareSync(newPassword, user.password))
         return createError(res, 400, { code: 'invalid_password', message: 'New password cannot be the same as the current one', type: 'validation', param: 'body:password' });
 
     await prisma.user.update({
