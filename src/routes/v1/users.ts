@@ -6,13 +6,15 @@ import createError from '../../utils/createError';
 import createResponse from '../../utils/createResponse';
 import { removeProps } from '../../utils/masker';
 import { checkPermissions } from '../../utils/permissions';
-import prisma from '../../utils/prisma';
+import prisma, { getUniqueKey } from '../../utils/prisma';
 import { validate } from '../../utils/schema';
 import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { multerUploadSingle } from '../../utils/multipart';
-import { readFileSync } from 'fs';
+import { existsSync } from 'fs';
 import { STORAGE_PATH } from '../../utils/CONSTS';
+import { join } from 'path';
+import { randomString } from '../../utils/crypto';
 
 const router = Router();
 
@@ -54,14 +56,82 @@ router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: 
     else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
 });
 
-router.get('/:id', async (req: Request, res: Response) => {
-    // TODO: check if user exists
-    createResponse(res, 200, removeProps(await prisma.user.findFirst({where:{id:req.params.id}}), ['password', 'email']));
+router.patch('/passwordRecovery', validate(z.object({ email: z.string() })), async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    const user = await prisma.user.findFirst({ where: { email } });
+
+    if (!user) return createError(res, 400, { code: 'invalid_email', message: 'account with this email address was not found', param: 'body:email', type: 'authorization' });
+
+    const data = await prisma.recovery.create({
+        data: { userId: user.id, code: await getUniqueKey(prisma.recovery, 'code', randomString), expiresAt: new Date(Date.now() + 86400000) },
+    });
+
+    console.log(data);
+
+    //TODO: send email (/v1/users/passwordkey?code=data.code)
+
+    createResponse(res, 200, { success: true });
 });
 
+router.get('/passwordKey', async (req: Request, res: Response) => {
+    const code = req.query.code as string;
 
+    console.log(code);
 
-router.patch('/password', authorizeOwner, async (req: Request, res: Response) => {
+    if (!code) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+
+    const recovery = await prisma.recovery.findFirst({ where: { code } });
+
+    if (!recovery) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+
+    if (recovery.expiresAt.getTime() < Date.now()) {
+        await prisma.recovery.delete({ where: { code: recovery.code } });
+        return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+    }
+
+    return createResponse(res, 200, { recoveryKey: code });
+});
+
+router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), recoveryKey: z.string() })), async (req: Request, res: Response) => {
+    const { newPassword, recoveryKey } = req.body;
+
+    const recovery = await prisma.recovery.findFirst({ where: { code: recoveryKey } });
+
+    if (!recovery) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+
+    const user = await prisma.user.findFirst({ where: { id: recovery.userId } });
+
+    if (!user) return createError(res, 400, { code: 'invalid_user', message: 'this account is probably deleted', param: 'query:code', type: 'authorization' });
+
+    const password = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+
+    if (compareSync(newPassword, user.password))
+        return createError(res, 400, { code: 'invalid_password', message: 'New password cannot be the same as the current one', type: 'validation', param: 'body:password' });
+
+    await prisma.user.update({
+        where: { id: recovery.userId },
+        data: { password },
+    });
+
+    await prisma.recovery.delete({ where: { code: recoveryKey } });
+
+    return createResponse(res, 200, { success: true });
+});
+
+router.get('/:id', async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const user = await prisma.user.findFirst({
+        where: { id },
+    });
+
+    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
+
+    return createResponse(res, 200, removeProps(user, ['password', 'token', 'email']));
+});
+
+router.patch('/password', validate(z.object({ oldPassword: z.string(), newPassword: z.string() })), authorizeOwner, async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!(await bcrypt.compare(oldPassword, req.user.password))) {
@@ -123,25 +193,19 @@ router.patch(
     }
 );
 
-router.patch(
-    '/avatar',
-    multerUploadSingle(),
-    authorizeOwner,
-    validate(z.object({ file: z.any() })),
-    async (req: Request, res: Response) => {
-        const file = req.file as Express.Multer.File;
+router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
+    const file = req.file as Express.Multer.File;
 
-        if (!file)
-            return createError(res, 400, {
-                code: 'invalid_parameter',
-                message: 'You have to send any image.',
-                param: 'body:avatar',
-                type: 'validation',
-            });
+    if (!file)
+        return createError(res, 400, {
+            code: 'invalid_parameter',
+            message: 'You have to send an image',
+            param: 'body:avatar',
+            type: 'validation',
+        });
 
-        return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
-    }
-);
+    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+});
 
 router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -152,11 +216,9 @@ router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
 
-    const file = readFileSync(`./storage/users/avatars/${id}.webp`);
+    const path = existsSync(`${STORAGE_PATH}/${id}.webp`) ? `${STORAGE_PATH}/${id}.webp` : `${join(STORAGE_PATH, '..')}/defaults/AVATAR.webp`;
 
-    if (!file) return res.sendFile(`../../storage/avatars/defaults/AVATAR.webp`);
-
-    return res.sendFile(`${STORAGE_PATH}/${id}.webp`);
+    return res.sendFile(path);
 });
 
 export default router;

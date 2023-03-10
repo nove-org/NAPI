@@ -69,6 +69,22 @@ prisma
             })
             .then(console.log)
             .catch(console.error); */
+
+        // prisma.user
+        //     .create({
+        //         data: {
+        //             id: '00000000',
+        //             email: 'marcin@gmail.com',
+        //             bio: 'To ja',
+        //             avatar: '',
+        //             language: 'pl',
+        //             password: '1234',
+        //             token: 'TOJESTROKENWIECTEGOUZYWAJ',
+        //             username: 'marcin',
+        //         },
+        //     })
+        //     .then(console.log)
+        //     .catch(console.error);
     })
     .catch((err: Error) => {
         logger.error(`failed to connect to database: ${err}`);

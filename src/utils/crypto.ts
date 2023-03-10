@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-export function randomString(length: number, charset: string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'): string {
+export function randomString(length: number = 48, charset: string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'): string {
     const charsLength = charset.length;
     if (charsLength > 256) {
         throw new Error("Argument 'chars' should not have more than 256 characters" + ', otherwise unpredictability will be broken');
