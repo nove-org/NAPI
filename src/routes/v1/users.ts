@@ -1,20 +1,19 @@
-import { compareSync } from 'bcrypt';
+import { Prisma } from '@prisma/client';
+import bcrypt, { compareSync } from 'bcrypt';
 import { Request, Response, Router } from 'express';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { z } from 'zod';
 import { authorizeBearer, authorizeOwner } from '../../middlewares/auth';
+import { STORAGE_PATH } from '../../utils/CONSTS';
 import createError from '../../utils/createError';
 import createResponse from '../../utils/createResponse';
+import { randomString } from '../../utils/crypto';
 import { removeProps } from '../../utils/masker';
+import { multerUploadSingle } from '../../utils/multipart';
 import { checkPermissions } from '../../utils/permissions';
 import prisma, { getUniqueKey } from '../../utils/prisma';
 import { validate } from '../../utils/schema';
-import { Prisma } from '@prisma/client';
-import bcrypt from 'bcrypt';
-import { multerUploadSingle } from '../../utils/multipart';
-import { existsSync } from 'fs';
-import { STORAGE_PATH } from '../../utils/CONSTS';
-import { join } from 'path';
-import { randomString } from '../../utils/crypto';
 
 const router = Router();
 
@@ -52,8 +51,12 @@ router.post(
 );
 
 router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
-    if (checkPermissions(req.oauth.scopes, ['account.email'])) createResponse(res, 200, removeProps(req.user, ['password']));
-    else createResponse(res, 200, removeProps(req.user, ['password', 'email']));
+    if (checkPermissions(req.oauth.scopes, ['account.email']))
+        createResponse(res, 200, {
+            avatar: `${req.protocol}://${req.get('host')}/v1/users/${req.user.id}/avatar.webp`,
+            ...removeProps(req.user, ['password']),
+        });
+    else createResponse(res, 200, { avatar: `${req.protocol}://${req.get('host')}/v1/users/${req.user.id}/avatar.webp`, ...removeProps(req.user, ['password', 'email']) });
 });
 
 router.patch('/passwordRecovery', validate(z.object({ email: z.string() })), async (req: Request, res: Response) => {
@@ -128,7 +131,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
-    return createResponse(res, 200, removeProps(user, ['password', 'token', 'email']));
+    return createResponse(res, 200, { ...removeProps(user, ['password', 'token', 'email']), avatar: `${req.protocol}://${req.get('host')}/v1/users/${user.id}/avatar.webp` });
 });
 
 router.patch('/password', validate(z.object({ oldPassword: z.string(), newPassword: z.string() })), authorizeOwner, async (req: Request, res: Response) => {
