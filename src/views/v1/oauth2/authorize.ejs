@@ -87,7 +87,8 @@
                 })
                     .then((res) => res.json())
                     .then((res) => {
-                        window.location.href = `${redirect_uri}?code=${encodeURIComponent(res.body.code)}&state=${encodeURIComponent(state)}`;
+                        console.log(`${redirect_uri}?code=${encodeURIComponent(res.body.data.code)}&state=${encodeURIComponent(state)}`)
+                        window.location.href = `${redirect_uri}?code=${encodeURIComponent(res.body.data.code)}&state=${encodeURIComponent(state)}`;
                     });
             });
         </script>

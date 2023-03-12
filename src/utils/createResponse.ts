@@ -19,7 +19,7 @@ export default function createResponse(res: Response, status: HTTPStatus, body: 
         status: status,
         body: {
             error: null,
-            ...body,
+            data: body,
         },
         meta: {
             timestamp: new Date().toISOString(),

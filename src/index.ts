@@ -60,15 +60,15 @@ prisma
         //     .then(console.log)
         //     .catch(console.error);
 
-        /* prisma.oAuth_App
+        prisma.oAuth_App
             .update({
                 where: { client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47' },
                 data: {
-                    redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html'],
+                    redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html', 'http://localhost:7100/v1/oauth2/callback'],
                 },
             })
             .then(console.log)
-            .catch(console.error); */
+            .catch(console.error);
 
         // prisma.user
         //     .create({
