@@ -36,11 +36,20 @@ section.login
         font-size: 18px
         font-weight: 300
         text-align: center
-    & header#error
+    & section#error
         width: 100%
-        word-wrap: break-word
-        font-size: 12px
-        margin: 10px 0
+        & header#error
+            width: 100%
+            word-wrap: break-word
+            font-size: 14px
+            margin: 10px 0
+            padding: 7px 10px
+            width: calc( 100% - 10px * 2 )
+            border: 1px solid $brand
+            background: rgba($brand, 0.3)
+            border-radius: 7px
+            color: black
+            font-weight: 600
     & form#form
         margin: 0
         padding: 0
@@ -63,14 +72,17 @@ section.login
                 background: #00000000
 
         & button
-            padding: 10px 30px
-            margin: 5px 0
+            padding: 10px 15px
             border-radius: 7px
-            font-size: 16px
-            font-weight: 700
-            color: white
-            background: $brand
-            border: 1px solid $brand
-            transition-duration: .2s
+            outline: 0
+            margin: 5px 0
+            border: 1px solid $border
+            color: $font
+            background: 0
+            font-size: 15px
+            font-weight: 500
+            cursor: pointer
+            transition-duration: .15s
             &:hover
-                background: #00000000
+                border: 1px solid $brand
+                color: $brand

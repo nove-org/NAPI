@@ -14,7 +14,8 @@
         "format": "npx pretty-quick --staged",
         "checkCommitMessage": "yarn run -s commitlint -V -c --edit",
         "db:update": "yarn run -s prisma migrate dev",
-        "db:generate": "yarn run -s prisma generate"
+        "db:generate": "yarn run -s prisma generate",
+        "db": "yarn run -s prisma generate && yarn run -s prisma migrate dev"
     },
     "dependencies": {
         "@prisma/client": "^4.11.0",
