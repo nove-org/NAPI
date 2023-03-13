@@ -53,7 +53,7 @@
                         if (data.body.error) {
                             $('#error').text(JSON.stringify(data.body.error)).show();
                         } else {
-                            localStorage.setItem('token', data.body.token);
+                            localStorage.setItem('token', data.body.data.token);
 
                             const redirect = '<%= redirect || "__CLOSE__" %>' || '__CLOSE__';
                             if (redirect == '__CLOSE__') window.close();
