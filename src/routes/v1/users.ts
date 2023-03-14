@@ -4,7 +4,7 @@ import { Request, Response, Router } from 'express';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { z } from 'zod';
-import { authorizeBearer, authorizeOwner } from '../../middlewares/auth';
+import { authorize, authorizeOwner } from '../../middlewares/auth';
 import { STORAGE_PATH } from '../../utils/CONSTS';
 import createError from '../../utils/createError';
 import createResponse from '../../utils/createResponse';
@@ -50,14 +50,20 @@ router.post(
     }
 );
 
-router.get('/me', authorizeBearer(['account.basic']), async (req: Request, res: Response) => {
-    if (checkPermissions(req.oauth.scopes, ['account.email']))
-        createResponse(res, 200, {
-            avatar: `${req.protocol}://${req.get('host')}/v1/users/${req.user.id}/avatar.webp`,
-            ...removeProps(req.user, ['password']),
-        });
-    else createResponse(res, 200, { avatar: `${req.protocol}://${req.get('host')}/v1/users/${req.user.id}/avatar.webp`, ...removeProps(req.user, ['password', 'email']) });
-});
+router.get(
+    '/me',
+    authorize({
+        requiredScopes: ['account.basic'],
+    }),
+    async (req: Request, res: Response) => {
+        if (!req.oauth || checkPermissions(req.oauth.scopes, ['account.email']))
+            createResponse(res, 200, {
+                avatar: `${req.protocol}://${req.get('host')}/v1/users/${req.user.id}/avatar.webp`,
+                ...removeProps(req.user, ['password']),
+            });
+        else createResponse(res, 200, { avatar: `${req.protocol}://${req.get('host')}/v1/users/${req.user.id}/avatar.webp`, ...removeProps(req.user, ['password', 'email']) });
+    }
+);
 
 router.patch('/passwordRecovery', validate(z.object({ email: z.string() })), async (req: Request, res: Response) => {
     const { email } = req.body;
