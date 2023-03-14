@@ -56,8 +56,9 @@
                         } else {
                             localStorage.setItem('token', data.body.data.token);
 
-                            const redirect = '<%= redirect || "__CLOSE__" %>' || '__CLOSE__';
-                            if (redirect == '__CLOSE__') window.close();
+                            const redirect = new URLSearchParams(window.location.search).get('redirectBack');
+                            if (!redirect) window.location.href = 'https://nove.team/account';
+                            else if (redirect == '__CLOSE__') window.close();
                             else window.location.href = redirect;
                         }
                     });
