@@ -21,7 +21,7 @@
             </header>
         </nav>
         <main>
-            <section class="authorize">
+            <section class="authorize" id="main">
                 <div class="info">
                     <header>
                         <img src="/data/logo.png" width="48" height="48" alt="Nove logo" />
@@ -57,35 +57,74 @@
                     <button id="approve">Grant access</button>
                 </div>
             </section>
+            <div id="loading">Please wait...</div>
         </main>
 
         <script>
-            if (!localStorage.getItem('token')) window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
-            const state = new URLSearchParams(window.location.search).get('state');
-            const redirect_uri = new URLSearchParams(window.location.search).get('redirect_uri');
+            async function main() {
+                const loading = document.getElementById('loading');
+                const main = document.getElementById('main');
 
-            document.getElementById('reject').addEventListener('click', () => {
-                // error codes the same as, or close to https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-codes-for-authorization-endpoint-errors
-                window.location.href = `${redirect_uri}?error=access_denied&state=${encodeURIComponent(state)}`;
-            });
-            document.getElementById('approve').addEventListener('click', () => {
-                fetch('/v1/oauth2/authorize', {
-                    method: 'POST',
+                main.style.display = 'none';
+
+                if (!localStorage.getItem('token')) {
+                    window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
+                    return;
+                }
+
+                const user = await fetch('/v1/users/me', {
+                    method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Owner ${localStorage.getItem('token')}`,
                     },
-                    body: JSON.stringify({
-                        client_id: '<%= client.client_id %>',
-                        scope: '<%= scope.join(' ') %>',
-                    }),
                 })
-                    .then((res) => res.json())
                     .then((res) => {
-                        console.log(`${redirect_uri}?code=${encodeURIComponent(res.body.data.code)}&state=${encodeURIComponent(state)}`)
-                        window.location.href = `${redirect_uri}?code=${encodeURIComponent(res.body.data.code)}&state=${encodeURIComponent(state)}`;
+                        if (!res.ok) {
+                            if (res.status === 401) window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
+                            else loading.innerText = 'An error occurred. Please try again later. <span onclick="window.close">Close this window</span>';
+                            return null;
+                        }
+
+                        return res.json();
+                    })
+                    .catch((err) => {
+                        loading.innerText = 'An error occurred. Please try again later. <span onclick="window.close">Close this window</span>';
                     });
-            });
+
+                console.log(user);
+
+                main.style.display = 'flex';
+                loading.style.display = 'none';
+
+                const state = new URLSearchParams(window.location.search).get('state');
+                const redirect_uri = new URLSearchParams(window.location.search).get('redirect_uri');
+
+                document.getElementById('reject').addEventListener('click', () => {
+                    // error codes the same as, or close to https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-codes-for-authorization-endpoint-errors
+                    window.location.href = `${redirect_uri}?error=access_denied&state=${encodeURIComponent(state)}`;
+                });
+                document.getElementById('approve').addEventListener('click', () => {
+                    fetch('/v1/oauth2/authorize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Owner ${localStorage.getItem('token')}`,
+                        },
+                        body: JSON.stringify({
+                            client_id: '<%= client.client_id %>',
+                            scope: '<%= scope.join(" ") %>',
+                        }),
+                    })
+                        .then((res) => res.json())
+                        .then((res) => {
+                            console.log(`${redirect_uri}?code=${encodeURIComponent(res.body.data.code)}&state=${encodeURIComponent(state)}`);
+                            window.location.href = `${redirect_uri}?code=${encodeURIComponent(res.body.data.code)}&state=${encodeURIComponent(state)}`;
+                        });
+                });
+            }
+
+            main();
         </script>
     </body>
 </html>
