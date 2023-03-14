@@ -5,11 +5,6 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Authorize</title>
-        <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"
-            integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA=="
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"></script>
         <link rel="stylesheet" href="/css/main.css" />
         <link rel="stylesheet" href="/css/auth.css" />
     </head>
@@ -69,11 +64,11 @@
             const state = new URLSearchParams(window.location.search).get('state');
             const redirect_uri = new URLSearchParams(window.location.search).get('redirect_uri');
 
-            $('#reject').click(() => {
+            document.getElementById('reject').addEventListener('click', () => {
                 // error codes the same as, or close to https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-codes-for-authorization-endpoint-errors
                 window.location.href = `${redirect_uri}?error=access_denied&state=${encodeURIComponent(state)}`;
             });
-            $('#approve').click(() => {
+            document.getElementById('approve').addEventListener('click', () => {
                 fetch('/v1/oauth2/authorize', {
                     method: 'POST',
                     headers: {
