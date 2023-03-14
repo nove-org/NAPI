@@ -97,12 +97,13 @@
                 main.style.display = 'flex';
                 loading.style.display = 'none';
 
-                const state = new URLSearchParams(window.location.search).get('state');
-                const redirect_uri = new URLSearchParams(window.location.search).get('redirect_uri');
+                const query = new URLSearchParams(window.location.search);
+                const state = query.get('state');
+                const redirect_uri = query.get('redirect_uri');
 
                 document.getElementById('reject').addEventListener('click', () => {
                     // error codes the same as, or close to https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-codes-for-authorization-endpoint-errors
-                    window.location.href = `${redirect_uri}?error=access_denied&state=${encodeURIComponent(state)}`;
+                    window.location.href = new URL(`?error=access_denied${state ? '&state=' + encodeURIComponent(state) : ''}`, redirect_uri).href;
                 });
                 document.getElementById('approve').addEventListener('click', () => {
                     fetch('/v1/oauth2/authorize', {
@@ -112,14 +113,16 @@
                             Authorization: `Owner ${localStorage.getItem('token')}`,
                         },
                         body: JSON.stringify({
-                            client_id: '<%= client.client_id %>',
-                            scope: '<%= scope.join(" ") %>',
+                            client_id: query.get('client_id'),
+                            scope: query.get('scope'),
                         }),
                     })
                         .then((res) => res.json())
                         .then((res) => {
-                            console.log(`${redirect_uri}?code=${encodeURIComponent(res.body.data.code)}&state=${encodeURIComponent(state)}`);
-                            window.location.href = `${redirect_uri}?code=${encodeURIComponent(res.body.data.code)}&state=${encodeURIComponent(state)}`;
+                            window.location.href = new URL(
+                                `?code=${encodeURIComponent(res.body.data.code)}${state ? '&state=' + encodeURIComponent(state) : ''}`,
+                                redirect_uri
+                            ).href;
                         });
                 });
             }
