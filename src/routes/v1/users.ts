@@ -58,10 +58,10 @@ router.get(
     async (req: Request, res: Response) => {
         if (!req.oauth || checkPermissions(req.oauth.scopes, ['account.email']))
             createResponse(res, 200, {
-                avatar: `${req.protocol}://${req.get('host')}/v1/users/${req.user.id}/avatar.webp`,
+                avatar: `${req.protocol}://${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`,
                 ...removeProps(req.user, ['password']),
             });
-        else createResponse(res, 200, { avatar: `${req.protocol}://${req.get('host')}/v1/users/${req.user.id}/avatar.webp`, ...removeProps(req.user, ['password', 'email']) });
+        else createResponse(res, 200, { avatar: `${req.protocol}://${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`, ...removeProps(req.user, ['password', 'email']) });
     }
 );
 
@@ -137,7 +137,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
-    return createResponse(res, 200, { ...removeProps(user, ['password', 'token', 'email']), avatar: `${req.protocol}://${req.get('host')}/v1/users/${user.id}/avatar.webp` });
+    return createResponse(res, 200, { ...removeProps(user, ['password', 'token', 'email']), avatar: `${req.protocol}://${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp` });
 });
 
 router.patch('/password', validate(z.object({ oldPassword: z.string(), newPassword: z.string() })), authorizeOwner, async (req: Request, res: Response) => {
