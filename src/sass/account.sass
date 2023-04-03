@@ -1,0 +1,120 @@
+/* 
+ * Made by Nove Group with love.
+ * Visit our GitHub: https://github.com/nove-org
+ * Copyright (c) 2022 Nove Group - All rights reserved.
+ */
+
+@use 'brand' as *
+
+body
+    padding: 0 20px
+    width: calc( 100% - 20px * 2 )
+
+form.hero
+    display: flex
+    flex-direction: column
+    max-width: 500px
+    margin: 20px auto
+    & aside
+        width: 100%
+        & h1
+            font-size: 32px
+        & header
+            font-size: 14px
+            font-weight: 700
+            text-transform: uppercase
+            margin: 15px 0 5px 0
+        & label
+            width: 128px
+            height: 128px
+            clear: both
+            display: block
+            border-radius: 50%
+            cursor: pointer
+            transition-duration: .1s
+            &:hover
+                opacity: .9
+            & img
+                border-radius: 50%
+        & input,textarea
+            width: calc( 100% - 10px )
+            padding: 0
+            margin: 0
+            background: 0
+            font-size: 24px
+            border: 0
+            outline: 0
+        & textarea
+            width: 100%
+            font-size: 20px
+            min-height: 200px
+            max-width: 500px
+    & div.content
+        width: 100%
+        & h1
+            font-size: 36px
+            margin-bottom: 10px
+            &:not(:first-child)
+                margin: 10px 0
+        & header
+            font-size: 18px
+        & input
+            margin: 10px 0
+            width: calc( 100% - 15px * 2 )
+            padding: 15px
+            border: 1px solid $border
+            background: $secondary
+            border-radius: 5px
+
+nav.box
+    width: 100%
+    min-height: 52px
+    max-height: 52px
+    max-width: 500px
+    margin: 10px auto
+    height: 52px
+    padding-bottom: 10px
+    border-bottom: 1px solid $border2
+    display: flex
+    align-items: center
+    & header
+        font-size: 20px
+        font-weight: 600
+        display: flex
+        align-items: center
+        & span
+            margin-left: 10px
+            font-size: 16px
+            font-weight: 300
+    & img
+        margin-right: 2.5px
+
+main.container
+    min-height: calc( 100vh - 53px * 2 )
+
+footer.text
+    width: 100%
+    margin: 10px auto
+    margin-top: 50px
+    padding-top: 10px
+    max-width: 500px
+    min-height: 52px
+    max-height: 52px
+    height: 52px
+    border-top: 1px solid $border2
+    display: flex
+    align-items: center
+    flex-direction: row-reverse
+    color: $font2
+
+@media screen and (max-width: 400px)
+    nav.box
+        & img
+            margin-right: 7px
+        & header
+            flex-direction: column
+            align-items: flex-start
+            & span
+                margin-left: 0
+                &.separator
+                    display: none

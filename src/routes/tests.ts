@@ -4,6 +4,10 @@ const router = Router();
 
 //! This is just for testing purposes, please change it ASAP to proper error handler
 
+router.get('/account', (req: Request, res: Response) => {
+    res.render('account');
+});
+
 router.get('/error', (req: Request, res: Response) => {
     res.render('error');
 });

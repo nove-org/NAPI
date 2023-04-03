@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Manage your account</title>
+        <link rel="stylesheet" href="../static/css/main.css" />
+        <link rel="stylesheet" href="../static/css/account.css" />
+    </head>
+    <body>
+        <nav class="box">
+            <img src="../static/data/logo.png" alt="Logo" width="32" height="32" />
+            <header>Nove Group <span class="separator">|</span> <span class="title">Manage your account</span></header>
+        </nav>
+
+        <main class="container">
+            <form class="hero">
+                <aside>
+                    <h1>Profile</h1>
+
+                    <header>Avatar</header>
+                    <label for="avatarFile">
+                        <img src="https://wnm210.com/cdn/assets/avatar.png" alt="Your avatar" width="128" height="128" />
+                    </label>
+                    <input type="file" accept="image/*" name="avatarFile" id="avatarFile" style="display: none" />
+
+                    <header>Username</header>
+                    <input type="text" name="username" value="wnm210" placeholder="Username" />
+
+                    <header>Bio</header>
+                    <textarea name="bio" placeholder="Bio">Lorem ipsum dolor sit amet...</textarea>
+                </aside>
+
+                <div class="content">
+                    <h1>Account information</h1>
+
+                    <header>Change your e-mail</header>
+                    <input type="text" name="email" value="wnm210@nove.team" placeholder="E-mail" />
+
+                    <header>Change your password</header>
+                    <input type="password" name="oldPassword" placeholder="Old password" />
+                    <input type="password" name="newPassword" placeholder="New password" />
+
+                    <h1>Two-factor authentication</h1>
+                    <p>Currently not available, work-in-progress. Please check back later.</p>
+                </div>
+            </form>
+        </main>
+
+        <footer class="text" id="footer">Copyright 2023 Nove Group. All rights reserved.</footer>
+
+        <script>
+            document.getElementById('footer').innerText = `Copyright ${new Date().getFullYear()} Nove Group. All rights reserved.`;
+        </script>
+    </body>
+</html>
