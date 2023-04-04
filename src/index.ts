@@ -60,15 +60,49 @@ prisma
         //     .then(console.log)
         //     .catch(console.error);
 
-        /* prisma.oAuth_App
-            .update({
-                where: { client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47' },
-                data: {
-                    redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html'],
-                },
-            })
-            .then(console.log)
-            .catch(console.error); */
+        // prisma.oAuth_App
+        //     .create({
+        //         data: {
+        //             client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47',
+        //             client_secret: 'J8KaEnenvoiPe8eNQ89KCf8LZ5LIBX8SsuaaEXVDY2Hl1vU9c18URxhuI6mPVVhr',
+        //             name: 'cheems.dog',
+        //             description: 'cheems.dog is a revolutionary image sharing platform',
+        //             link_homepage: 'https://cheems.dog',
+        //             owner: 'Nove Team',
+        //             link_privacy_policy: 'https://cheems.dog/privacy',
+        //             link_tos: 'https://cheems.dog/tos',
+        //             redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html', 'http://localhost:7100/v1/oauth2/callback'],
+        //             isVerified: true,
+        //         },
+        //     })
+        //     .then(console.log)
+        //     .catch(console.error);
+
+        // prisma.oAuth_App
+        //     .update({
+        //         where: { client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47' },
+        //         data: {
+        //             redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html', 'http://localhost:7100/v1/oauth2/callback'],
+        //         },
+        //     })
+        //     .then(console.log)
+        //     .catch(console.error);
+
+        // prisma.user
+        //     .create({
+        //         data: {
+        //             id: '00000000',
+        //             email: 'marcin@gmail.com',
+        //             bio: 'To ja',
+        //             avatar: '',
+        //             language: 'pl',
+        //             password: '1234',
+        //             token: 'TOJESTROKENWIECTEGOUZYWAJ',
+        //             username: 'marcin',
+        //         },
+        //     })
+        //     .then(console.log)
+        //     .catch(console.error);
     })
     .catch((err: Error) => {
         logger.error(`failed to connect to database: ${err}`);

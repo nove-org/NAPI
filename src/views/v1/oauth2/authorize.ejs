@@ -5,11 +5,6 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Authorize</title>
-        <script
-            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"
-            integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA=="
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"></script>
         <link rel="stylesheet" href="/css/main.css" />
         <link rel="stylesheet" href="/css/auth.css" />
     </head>
@@ -20,13 +15,13 @@
                 will be added later, after a better backend authorization system is implemented
             -->
             <header>
-                Grant this app access to your
+                Grant this app access to
                 <!-- (ACCOUNT_NAME) -->
-                Nove account
+                your Nove account
             </header>
         </nav>
         <main>
-            <section class="authorize">
+            <section class="authorize" id="main">
                 <div class="info">
                     <header>
                         <img src="/data/logo.png" width="48" height="48" alt="Nove logo" />
@@ -59,37 +54,80 @@
 
                 <div class="buttons">
                     <button id="reject">Reject</button>
-                    <button id="approve">Approve access</button>
+                    <button id="approve">Grant access</button>
                 </div>
             </section>
+            <div id="loading">Please wait...</div>
         </main>
 
         <script>
-            if (!localStorage.getItem('token')) window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
-            const state = new URLSearchParams(window.location.search).get('state');
-            const redirect_uri = new URLSearchParams(window.location.search).get('redirect_uri');
+            async function main() {
+                const loading = document.getElementById('loading');
+                const main = document.getElementById('main');
 
-            $('#reject').click(() => {
-                // error codes the same as, or close to https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-codes-for-authorization-endpoint-errors
-                window.location.href = `${redirect_uri}?error=access_denied&state=${encodeURIComponent(state)}`;
-            });
-            $('#approve').click(() => {
-                fetch('/v1/oauth2/authorize', {
-                    method: 'POST',
+                main.style.display = 'none';
+
+                if (!localStorage.getItem('token')) {
+                    window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
+                    return;
+                }
+
+                const user = await fetch('/v1/users/me', {
+                    method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Owner ${localStorage.getItem('token')}`,
                     },
-                    body: JSON.stringify({
-                        client_id: '<%= client.client_id %>',
-                        scope: '<%= scope.join(' ') %>',
-                    }),
                 })
-                    .then((res) => res.json())
                     .then((res) => {
-                        window.location.href = `${redirect_uri}?code=${encodeURIComponent(res.body.code)}&state=${encodeURIComponent(state)}`;
+                        if (!res.ok) {
+                            if (res.status === 401) window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
+                            else loading.innerText = 'An error occurred. Please try again later. <span onclick="window.close">Close this window</span>';
+                            return null;
+                        }
+
+                        return res.json();
+                    })
+                    .catch((err) => {
+                        loading.innerText = 'An error occurred. Please try again later. <span onclick="window.close">Close this window</span>';
                     });
-            });
+
+                console.log(user);
+
+                main.style.display = 'flex';
+                loading.style.display = 'none';
+
+                const query = new URLSearchParams(window.location.search);
+                const state = query.get('state');
+                const redirect_uri = query.get('redirect_uri');
+
+                document.getElementById('reject').addEventListener('click', () => {
+                    // error codes the same as, or close to https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-codes-for-authorization-endpoint-errors
+                    window.location.href = new URL(`?error=access_denied${state ? '&state=' + encodeURIComponent(state) : ''}`, redirect_uri).href;
+                });
+                document.getElementById('approve').addEventListener('click', () => {
+                    fetch('/v1/oauth2/authorize', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Owner ${localStorage.getItem('token')}`,
+                        },
+                        body: JSON.stringify({
+                            client_id: query.get('client_id'),
+                            scope: query.get('scope'),
+                        }),
+                    })
+                        .then((res) => res.json())
+                        .then((res) => {
+                            window.location.href = new URL(
+                                `?code=${encodeURIComponent(res.body.data.code)}${state ? '&state=' + encodeURIComponent(state) : ''}`,
+                                redirect_uri
+                            ).href;
+                        });
+                });
+            }
+
+            main();
         </script>
     </body>
 </html>

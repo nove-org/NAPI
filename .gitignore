@@ -3,6 +3,7 @@ prisma/migrations/*
 node_modules/
 build/
 logs/
+storage/users/avatars/*.webp
 
 .env
 yarn-error.log
