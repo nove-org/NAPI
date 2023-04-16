@@ -7,7 +7,7 @@ import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import { removeProps } from '../../../utils/masker';
 import { multerUploadSingle } from '../../../utils/multipart';
-import { checkPermissions } from '../../../utils/permissions';
+import { checkPermission } from '../../../utils/permissions';
 import prisma from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 
@@ -16,10 +16,10 @@ const router = Router();
 router.get(
     '/me',
     authorize({
-        requiredScopes: ['account.basic'],
+        requiredScopes: ['account.read.basic'],
     }),
     async (req: Request, res: Response) => {
-        if (!req.oauth || checkPermissions(req.oauth.scopes, ['account.email']))
+        if (!req.oauth || checkPermission(req.oauth.scopes, 'account.read.email'))
             createResponse(res, 200, {
                 avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`,
                 ...removeProps(req.user, ['password']),

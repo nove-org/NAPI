@@ -1,15 +1,21 @@
 import _ from 'lodash';
 import micromatch from 'micromatch';
 
-export const permissions = ['account.basic', 'account.email'];
+export const ALL_PERMISSIONS = ['account.read.basic', 'account.read.email', 'account.write.basic', 'account.write.email', 'account.write.avatar'] as const;
+export type TPermission = typeof ALL_PERMISSIONS[number];
 
-export const mergePermissions = (...permissions: Array<Array<string>>): Array<string> => {
+export const mergePermissions = (...permissions: Array<Array<TPermission>>): Array<TPermission> => {
     return _.union(...permissions);
 };
 
-// TODO: fix this, function broken
-export const checkPermissions = (has: Array<string>, required: Array<string>): boolean => {
-    return true;
-    if (required.includes('*')) return _.difference(micromatch(permissions, required), has).length === 0;
-    else return micromatch(has, required).some((x: string) => has.includes(x));
-};
+export function checkPermission(userPermissions: TPermission[], permissionToCheck: TPermission) {
+    return !micromatch.match(ALL_PERMISSIONS, permissionToCheck).some((permission) => {
+        return !userPermissions.some((userPermission) => {
+            return micromatch.isMatch(permission, userPermission);
+        });
+    });
+}
+
+export function checkPermissions(userPermissions: TPermission[], permissionsToCheck: TPermission[]) {
+    return permissionsToCheck.every((permission) => checkPermission(userPermissions, permission));
+}
