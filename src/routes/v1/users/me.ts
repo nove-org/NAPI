@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { authorize, authorizeOwner } from '../../../middlewares/auth';
+import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import { removeProps } from '../../../utils/masker';
@@ -42,24 +43,17 @@ router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
 
 router.patch(
     '/me',
-    validate(z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional(), language: z.string().optional() }), 'body'),
+    validate(
+        z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional(), language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).optional() }),
+        'body'
+    ),
     authorizeOwner,
     async (req: Request, res: Response) => {
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
         if (req.body.bio?.length) data['bio'] = req.body.bio;
         if (req.body.username?.length) data['username'] = req.body.username;
-        if (req.body.language?.length) {
-            //TODO: available languages
-            if (!['pl', 'en'].includes(req.body.language))
-                return createError(res, 400, {
-                    code: 'invalid_parameter',
-                    message: 'This page does not support this language',
-                    param: 'body:language',
-                    type: 'validation',
-                });
-            data['language'] = req.body.language;
-        }
+        if (req.body.language?.length) data['language'] = req.body.language;
 
         await prisma.user.update({
             where: { id: req.user.id },
