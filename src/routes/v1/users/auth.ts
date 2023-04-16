@@ -1,8 +1,10 @@
-import { compareSync } from 'bcrypt';
+import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
+import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
+import { randomString } from '../../../utils/crypto';
 import { removeProps } from '../../../utils/masker';
 import prisma from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
@@ -32,6 +34,61 @@ router.post(
             });
         if (!compareSync(req.body.password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+        createResponse(res, 200, removeProps(user, ['password']));
+    }
+);
+
+router.post(
+    '/register',
+    validate(
+        z.object({
+            email: z.string().min(1).max(128).email(),
+            username: z.string().min(1).max(64),
+            password: z.string().min(1).max(64),
+            language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).min(1).max(5).optional(),
+        })
+    ),
+    async (
+        req: Request<
+            {},
+            {},
+            {
+                email: string;
+                username: string;
+                password: string;
+                language?: string;
+            }
+        >,
+        res: Response
+    ) => {
+        if ((await prisma.user.count({ where: { email: req.body.email } })) > 0)
+            return createError(res, 409, {
+                code: 'email_already_exists',
+                message: 'email already exists',
+                param: 'body:email',
+                type: 'register',
+            });
+        if ((await prisma.user.count({ where: { username: req.body.username } })) > 0)
+            return createError(res, 409, {
+                code: 'username_already_exists',
+                message: 'username already exists',
+                param: 'body:username',
+                type: 'register',
+            });
+
+        const user = await prisma.user.create({
+            data: {
+                email: req.body.email,
+                username: req.body.username,
+                password: hashSync(req.body.password, genSaltSync()),
+                bio: "Hey, I'm new here!",
+                language: req.body.language || 'en',
+                token: randomString(48),
+            },
+        });
+
+        // TODO: email verification
+
         createResponse(res, 200, removeProps(user, ['password']));
     }
 );
