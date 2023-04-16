@@ -1,5 +1,5 @@
 prisma/migrations/*
-src/static/css/*
+# src/static/css/*
 node_modules/
 build/
 logs/

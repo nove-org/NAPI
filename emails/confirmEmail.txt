@@ -1,0 +1,3 @@
+Confirm your e-mail to create Nove account</h1>
+
+Hello, your e-mail address has been provided while creating a new Nove account. In order to confirm that request please follow this link LINK. If that wasn't you, just ignore this e-mail.</p>
