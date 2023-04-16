@@ -17,12 +17,6 @@ import { validate } from '../../utils/schema';
 
 const router = Router();
 
-router.get('/login', (req: Request, res: Response) => {
-    res.render('v1/users/login', {
-        redirect: req.query.redirectBack || '__CLOSE__',
-    });
-});
-
 router.post(
     '/login',
     validate(
