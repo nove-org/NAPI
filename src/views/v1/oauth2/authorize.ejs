@@ -68,7 +68,7 @@
                 main.style.display = 'none';
 
                 if (!localStorage.getItem('token')) {
-                    window.location.href = `/v1/users/login?redirectBack=${encodeURIComponent(window.location.href)}`;
+                    window.location.href = `https://nove.team/login?redirectBack=${encodeURIComponent(window.location.href)}`;
                     return;
                 }
 
