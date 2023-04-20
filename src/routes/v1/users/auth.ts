@@ -16,7 +16,7 @@ router.post(
     validate(
         z.object({
             username: z.string().min(1).max(64),
-            password: z.string().min(1).max(64),
+            password: z.string().min(1).max(128),
         })
     ),
     async (req: Request, res: Response) => {
@@ -44,7 +44,7 @@ router.post(
         z.object({
             email: z.string().min(1).max(128).email(),
             username: z.string().min(1).max(64),
-            password: z.string().min(1).max(64),
+            password: z.string().min(1).max(128),
             language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).min(1).max(5).optional(),
         })
     ),
