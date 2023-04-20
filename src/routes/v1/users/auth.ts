@@ -1,4 +1,5 @@
 import { compareSync, genSaltSync, hashSync } from 'bcrypt';
+import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
@@ -8,7 +9,6 @@ import { randomString } from '../../../utils/crypto';
 import { removeProps } from '../../../utils/masker';
 import prisma from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
-
 const router = Router();
 
 router.post(
@@ -61,18 +61,26 @@ router.post(
         >,
         res: Response
     ) => {
-        if ((await prisma.user.count({ where: { email: req.body.email } })) > 0)
+        if (await prisma.user.count({ where: { email: req.body.email } }))
             return createError(res, 409, {
                 code: 'email_already_exists',
                 message: 'email already exists',
                 param: 'body:email',
                 type: 'register',
             });
-        if ((await prisma.user.count({ where: { username: req.body.username } })) > 0)
+        if (await prisma.user.count({ where: { username: req.body.username } }))
             return createError(res, 409, {
                 code: 'username_already_exists',
                 message: 'username already exists',
                 param: 'body:username',
+                type: 'register',
+            });
+
+        if (passwordStrength(req.body.password).id < 2 || req.body.password === req.body.email || req.body.password === req.body.username)
+            return createError(res, 400, {
+                code: 'weak_password',
+                message: 'password is too weak',
+                param: 'body:password',
                 type: 'register',
             });
 
