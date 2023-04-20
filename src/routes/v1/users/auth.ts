@@ -43,7 +43,7 @@ router.post(
     validate(
         z.object({
             email: z.string().min(5).max(128).email(),
-            username: z.string().min(4).max(64),
+            username: z.string().min(3).max(64),
             password: z.string().min(8).max(128),
             language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).min(1).max(5).optional(),
         })
