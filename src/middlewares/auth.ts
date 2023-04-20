@@ -1,9 +1,11 @@
+import { OAuth_App, OAuth_Authorization, User } from '@prisma/client';
 import { NextFunction, Request, Response } from 'express';
 import util from 'node:util';
 import createError from '../utils/createError';
 import { removeProps } from '../utils/masker';
-import { checkPermissions } from '../utils/permissions';
+import { TPermission, checkPermissions } from '../utils/permissions';
 import prisma from '../utils/prisma';
+import { Modify } from '../utils/types';
 
 /**
  *
@@ -29,7 +31,7 @@ let authorizeOwner = async function (req: Request, res: Response, next: NextFunc
  *
  * @deprecated Please use `authorize` instead
  */
-let authorizeBearer = function (requiredScopes: string[] = []) {
+let authorizeBearer = function (requiredScopes: TPermission[] = []) {
     return async (req: Request, res: Response, next: NextFunction) => {
         const [method, token] = req.headers.authorization?.split(' ') || [];
 
@@ -38,7 +40,7 @@ let authorizeBearer = function (requiredScopes: string[] = []) {
         if (!token)
             return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
 
-        const authorization = await prisma.oAuth_Authorization.findFirst({
+        const authorization = (await prisma.oAuth_Authorization.findFirst({
             where: {
                 token: token,
             },
@@ -46,7 +48,15 @@ let authorizeBearer = function (requiredScopes: string[] = []) {
                 app: true,
                 user: true,
             },
-        });
+        })) as Modify<
+            OAuth_Authorization & {
+                app: OAuth_App;
+                user: User;
+            },
+            {
+                scopes: TPermission[];
+            }
+        >;
         console.log(authorization, token, req.headers.authorization?.split(' '));
         if (!authorization)
             return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
@@ -61,7 +71,7 @@ let authorizeBearer = function (requiredScopes: string[] = []) {
     };
 };
 
-function authorize({ requiredScopes = [], disableBearer = false, disableOwner = false }: { requiredScopes?: string[]; disableBearer?: boolean; disableOwner?: boolean }) {
+function authorize({ requiredScopes = [], disableBearer = false, disableOwner = false }: { requiredScopes?: TPermission[]; disableBearer?: boolean; disableOwner?: boolean }) {
     return async (req: Request, res: Response, next: NextFunction) => {
         const [method, token] = req.headers.authorization?.split(' ') || [];
 
@@ -77,7 +87,7 @@ function authorize({ requiredScopes = [], disableBearer = false, disableOwner = 
                     type: 'authorization',
                 });
 
-            const authorization = await prisma.oAuth_Authorization.findFirst({
+            const authorization = (await prisma.oAuth_Authorization.findFirst({
                 where: {
                     token: token,
                 },
@@ -85,8 +95,15 @@ function authorize({ requiredScopes = [], disableBearer = false, disableOwner = 
                     app: true,
                     user: true,
                 },
-            });
-            console.log(authorization, token, req.headers.authorization?.split(' '));
+            })) as Modify<
+                OAuth_Authorization & {
+                    app: OAuth_App;
+                    user: User;
+                },
+                {
+                    scopes: TPermission[];
+                }
+            >;
             if (!authorization)
                 return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
             if (authorization.token_expires < new Date())
