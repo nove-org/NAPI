@@ -1,12 +1,10 @@
 import { Router } from 'express';
 import v1 from './v1';
-import tests from './tests';
+import localStorage from './localStorage';
 
 const router = Router();
 
 router.use('/v1', v1);
-
-//! This is just for testing purposes, please change it ASAP to proper error handler
-router.use('/tests', tests);
+router.use('/ls', localStorage); //! hotfix for not accessible localStorage
 
 export default router;

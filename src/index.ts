@@ -1,4 +1,5 @@
 import cors from 'cors';
+import bcrypt from 'bcrypt';
 import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import routes from './routes';
@@ -28,7 +29,7 @@ app.get('/', (req: Request, res: Response) => {
         meta: {
             timestamp: new Date().toISOString(),
             version: 'a1.0.0',
-            server: 'localhost',
+            server: 'nove_dev1',
         },
     });
 });
@@ -82,7 +83,9 @@ prisma
         //     .update({
         //         where: { client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47' },
         //         data: {
-        //             redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html', 'http://localhost:7100/v1/oauth2/callback'],
+        //             link_tos: 'https://cheems.dog/terms',
+        //             description: 'cheems.dog is a revolutionary file sharing platform',
+        //             redirect_uris: ['http://localhost:7100/v1/oauth2/callback', 'https://api.cheems.dog/v1/oauth2/callback'],
         //         },
         //     })
         //     .then(console.log)
@@ -91,14 +94,13 @@ prisma
         // prisma.user
         //     .create({
         //         data: {
-        //             id: '00000000',
-        //             email: 'marcin@gmail.com',
-        //             bio: 'To ja',
-        //             avatar: '',
-        //             language: 'pl',
-        //             password: '1234',
-        //             token: 'TOJESTROKENWIECTEGOUZYWAJ',
-        //             username: 'marcin',
+        //             id: 'mesikesi',
+        //             email: 'mesik@nove.team',
+        //             bio: 'Bio',
+        //             language: 'en',
+        //             password: bcrypt.hashSync('delicate-carnivore-fame', bcrypt.genSaltSync()),
+        //             token: 'VQswj5Usu5yjBWsPJ4knw6xrVz4DYzPJDUNGTvTc6UUogtZwaDKyPADHGdSU7it4BZQnpxLZmeVSteuJvwth6mapz3yCeXcWJK2eVcj68dTJr4ae3WARJsUcaDoyjPVP',
+        //             username: 'mesik',
         //         },
         //     })
         //     .then(console.log)
