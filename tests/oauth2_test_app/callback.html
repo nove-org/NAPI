@@ -20,7 +20,7 @@
             fetch(
                 `http://localhost:8049/v1/oauth2/token?${new URLSearchParams({
                     client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47',
-                    scope: 'account.basic account.email',
+                    scope: 'account.read.basic account.read.email',
                     code,
                     redirect_uri: 'http://localhost:3000/callback.html',
                     grant_type: 'authorization_code',
