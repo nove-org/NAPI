@@ -42,24 +42,6 @@ prisma
             logger.info(`server started on port ${process.env.PORT}`);
         });
         process.once('SIGTERM', () => shutdown(server));
-        // process.once('SIGINT', () => shutdown(server));
-
-        // prisma.oAuth_App
-        //     .create({
-        //         data: {
-        //             client_secret: 'J8KaEnenvoiPe8eNQ89KCf8LZ5LIBX8SsuaaEXVDY2Hl1vU9c18URxhuI6mPVVhr',
-        //             name: 'cheems.dog',
-        //             description: 'cheems.dog is a revolutionary image sharing platform',
-        //             link_homepage: 'https://cheems.dog',
-        //             owner: 'Nove Team',
-        //             link_privacy_policy: 'https://cheems.dog/privacy',
-        //             link_tos: 'https://cheems.dog/tos',
-        //             redirect_uris: ['https://cheems.dog/auth/callback'],
-        //             isVerified: true,
-        //         },
-        //     })
-        //     .then(console.log)
-        //     .catch(console.error);
 
         // prisma.oAuth_App
         //     .create({
@@ -69,7 +51,7 @@ prisma
         //             name: 'cheems.dog',
         //             description: 'cheems.dog is a revolutionary image sharing platform',
         //             link_homepage: 'https://cheems.dog',
-        //             owner: 'Nove Team',
+        //             owner: 'Nove Group',
         //             link_privacy_policy: 'https://cheems.dog/privacy',
         //             link_tos: 'https://cheems.dog/tos',
         //             redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html', 'http://localhost:7100/v1/oauth2/callback'],
@@ -79,28 +61,16 @@ prisma
         //     .then(console.log)
         //     .catch(console.error);
 
-        // prisma.oAuth_App
-        //     .update({
-        //         where: { client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47' },
-        //         data: {
-        //             link_tos: 'https://cheems.dog/terms',
-        //             description: 'cheems.dog is a revolutionary file sharing platform',
-        //             redirect_uris: ['http://localhost:7100/v1/oauth2/callback', 'https://api.cheems.dog/v1/oauth2/callback'],
-        //         },
-        //     })
-        //     .then(console.log)
-        //     .catch(console.error);
-
         // prisma.user
         //     .create({
         //         data: {
-        //             id: 'mesikesi',
-        //             email: 'mesik@nove.team',
+        //             id: '01234567',
+        //             email: 'hello@nove.team',
         //             bio: 'Bio',
         //             language: 'en',
-        //             password: bcrypt.hashSync('delicate-carnivore-fame', bcrypt.genSaltSync()),
-        //             token: 'VQswj5Usu5yjBWsPJ4knw6xrVz4DYzPJDUNGTvTc6UUogtZwaDKyPADHGdSU7it4BZQnpxLZmeVSteuJvwth6mapz3yCeXcWJK2eVcj68dTJr4ae3WARJsUcaDoyjPVP',
-        //             username: 'mesik',
+        //             password: bcrypt.hashSync('PASSWORD', bcrypt.genSaltSync()),
+        //             token: 'TOKEN',
+        //             username: 'USERNAME',
         //         },
         //     })
         //     .then(console.log)
