@@ -7,3 +7,4 @@ storage/users/avatars/*.webp
 
 .env
 yarn-error.log
+src/static/css/*

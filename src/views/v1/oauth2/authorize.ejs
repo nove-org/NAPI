@@ -4,50 +4,41 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Authorize</title>
+        <title>Authorize — Nove</title>
+        <link rel="icon" type="image/x-icon" href="/data/logo.png" />
         <link rel="stylesheet" href="/css/main.css" />
         <link rel="stylesheet" href="/css/auth.css" />
+        <link rel="stylesheet" href="/css/loader.css" />
     </head>
     <body>
-        <nav>
-            <!--
-                ! FEATURE REQUEST: Implement account username here ASAP
-                will be added later, after a better backend authorization system is implemented
-            -->
-            <header>
-                Grant this app access to
-                <!-- (ACCOUNT_NAME) -->
-                your Nove account
-            </header>
-        </nav>
-        <main>
-            <section class="authorize" id="main">
+        <main id="main">
+            <section class="authorize">
                 <div class="info">
                     <header>
-                        <img src="/data/logo.png" width="48" height="48" alt="Nove logo" />
-                        <h1>
-                            Authorize <% if(client.isVerified) { %>
-                            <div class="mark">
-                                <svg width="12" height="12" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M95 21L36.3647 80L6 49.4464" stroke="currentColor" stroke-width="14" />
-                                </svg>
-                                <span class="tooltiptext">Verified or managed by Nove</span>
-                            </div>
-                            <% } %> <%= client.name %>
-                        </h1>
+                        <img src="/data/logo.png" width="64" height="64" alt="Nove logo" />
+                        <h1>Authorize <%= client.name %></h1>
+                        <% if(client.isVerified) { %>
+                        <div class="mark">
+                            <svg width="12" height="12" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M95 21L36.3647 80L6 49.4464" stroke="currentColor" stroke-width="14" />
+                            </svg>
+                            This app is official Nove app or verified by Nove
+                        </div>
+                        <% } %>
+
                         <p>By <%= client.owner %></p>
                     </header>
                 </div>
                 <div class="notes">
                     <p>
-                        Before you grant access read <a href="<%= client.link_privacy_policy %>">privacy policy</a> and <a href="<%= client.link_tos %>">terms of service</a> of
-                        this app.
+                        Before you grant this app access read <a href="<%= client.link_privacy_policy %>">privacy policy</a> and
+                        <a href="<%= client.link_tos %>">terms of service</a> of this app.
                     </p>
 
                     <p>This app asks you for the following permissions:</p>
                     <ul>
                         <% for (const _scope of scope) { %>
-                        <li><%= { '*': 'Everything', 'account.basic': 'Basic account information', 'account.email': 'Email connected with your account' }[_scope] %></li>
+                        <li><%= { '*': 'Everything', 'account.read.basic': 'Basic account information', 'account.read.email': 'Email connected with your account' }[_scope] %></li>
                         <% } %>
                     </ul>
                 </div>
@@ -57,15 +48,24 @@
                     <button id="approve">Grant access</button>
                 </div>
             </section>
-            <div id="loading">Please wait...</div>
         </main>
+
+        <div id="loading">
+            <div class="loaderWindow">
+                <div class="loader">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <p class="text">Loading data from our servers...</p>
+            </div>
+        </div>
 
         <script>
             async function main() {
                 const loading = document.getElementById('loading');
                 const main = document.getElementById('main');
-
-                main.style.display = 'none';
 
                 if (!localStorage.getItem('token')) {
                     window.location.href = `https://nove.team/login?redirectBack=${encodeURIComponent(window.location.href)}`;
@@ -92,10 +92,7 @@
                         loading.innerText = 'An error occurred. Please try again later. <span onclick="window.close">Close this window</span>';
                     });
 
-                console.log(user);
-
-                main.style.display = 'flex';
-                loading.style.display = 'none';
+                setTimeout(() => ((main.style.display = 'flex'), (loading.style.display = 'none')), 1000);
 
                 const query = new URLSearchParams(window.location.search);
                 const state = query.get('state');
@@ -105,6 +102,7 @@
                     // error codes the same as, or close to https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow#error-codes-for-authorization-endpoint-errors
                     window.location.href = new URL(`?error=access_denied${state ? '&state=' + encodeURIComponent(state) : ''}`, redirect_uri).href;
                 });
+
                 document.getElementById('approve').addEventListener('click', () => {
                     fetch('/v1/oauth2/authorize', {
                         method: 'POST',

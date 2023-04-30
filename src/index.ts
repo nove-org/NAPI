@@ -1,4 +1,5 @@
 import cors from 'cors';
+import bcrypt from 'bcrypt';
 import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import routes from './routes';
@@ -28,7 +29,7 @@ app.get('/', (req: Request, res: Response) => {
         meta: {
             timestamp: new Date().toISOString(),
             version: 'a1.0.0',
-            server: 'localhost',
+            server: 'nove_dev1',
         },
     });
 });
@@ -41,24 +42,6 @@ prisma
             logger.info(`server started on port ${process.env.PORT}`);
         });
         process.once('SIGTERM', () => shutdown(server));
-        // process.once('SIGINT', () => shutdown(server));
-
-        // prisma.oAuth_App
-        //     .create({
-        //         data: {
-        //             client_secret: 'J8KaEnenvoiPe8eNQ89KCf8LZ5LIBX8SsuaaEXVDY2Hl1vU9c18URxhuI6mPVVhr',
-        //             name: 'cheems.dog',
-        //             description: 'cheems.dog is a revolutionary image sharing platform',
-        //             link_homepage: 'https://cheems.dog',
-        //             owner: 'Nove Team',
-        //             link_privacy_policy: 'https://cheems.dog/privacy',
-        //             link_tos: 'https://cheems.dog/tos',
-        //             redirect_uris: ['https://cheems.dog/auth/callback'],
-        //             isVerified: true,
-        //         },
-        //     })
-        //     .then(console.log)
-        //     .catch(console.error);
 
         // prisma.oAuth_App
         //     .create({
@@ -68,7 +51,7 @@ prisma
         //             name: 'cheems.dog',
         //             description: 'cheems.dog is a revolutionary image sharing platform',
         //             link_homepage: 'https://cheems.dog',
-        //             owner: 'Nove Team',
+        //             owner: 'Nove Group',
         //             link_privacy_policy: 'https://cheems.dog/privacy',
         //             link_tos: 'https://cheems.dog/tos',
         //             redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html', 'http://localhost:7100/v1/oauth2/callback'],
@@ -78,27 +61,16 @@ prisma
         //     .then(console.log)
         //     .catch(console.error);
 
-        // prisma.oAuth_App
-        //     .update({
-        //         where: { client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47' },
-        //         data: {
-        //             redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html', 'http://localhost:7100/v1/oauth2/callback'],
-        //         },
-        //     })
-        //     .then(console.log)
-        //     .catch(console.error);
-
         // prisma.user
         //     .create({
         //         data: {
-        //             id: '00000000',
-        //             email: 'marcin@gmail.com',
-        //             bio: 'To ja',
-        //             avatar: '',
-        //             language: 'pl',
-        //             password: '1234',
-        //             token: 'TOJESTROKENWIECTEGOUZYWAJ',
-        //             username: 'marcin',
+        //             id: '01234567',
+        //             email: 'hello@nove.team',
+        //             bio: 'Bio',
+        //             language: 'en',
+        //             password: bcrypt.hashSync('PASSWORD', bcrypt.genSaltSync()),
+        //             token: 'TOKEN',
+        //             username: 'USERNAME',
         //         },
         //     })
         //     .then(console.log)
