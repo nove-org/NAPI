@@ -74,3 +74,12 @@ model Recovery {
   userId    String
   expiresAt DateTime
 }
+
+model Devices {
+  id        String   @id @unique @default(uuid())
+  userId    String
+  createdAt DateTime @default(now())
+  ip        String
+  device    String
+  system    String
+}

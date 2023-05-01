@@ -64,6 +64,22 @@ router.patch(
     }
 );
 
+router.get(
+    '/me/activity',
+    authorize({
+        requiredScopes: ['account.read.basic'],
+    }),
+    async (req: Request, res: Response) => {
+        const devices = await prisma.devices.findMany({
+            where: { userId: req.user.id },
+            orderBy: { createdAt: 'desc' },
+            take: 3,
+        });
+
+        createResponse(res, 200, devices);
+    }
+);
+
 router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File;
 
