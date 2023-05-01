@@ -75,6 +75,8 @@ router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object(
             type: 'validation',
         });
 
+    await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
+
     return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
 });
 
