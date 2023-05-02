@@ -44,7 +44,12 @@ router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
 router.patch(
     '/me',
     validate(
-        z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional(), language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).optional() }),
+        z.object({
+            username: z.string().min(1).max(24).optional(),
+            bio: z.string().min(1).max(256).optional(),
+            language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).optional(),
+            trackActivity: z.boolean().optional(),
+        }),
         'body'
     ),
     authorizeOwner,
@@ -54,6 +59,7 @@ router.patch(
         if (req.body.bio?.length) data['bio'] = req.body.bio;
         if (req.body.username?.length) data['username'] = req.body.username;
         if (req.body.language?.length) data['language'] = req.body.language;
+        if (typeof req.body.trackActivity?.length === 'boolean') data['trackActivty'] = req.body.trackActivity;
 
         await prisma.user.update({
             where: { id: req.user.id },
@@ -64,7 +70,7 @@ router.patch(
     }
 );
 
-router.get('/me/preferences', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+router.get('/me/activity', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
     if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivty)
         return createError(res, 400, {
             code: 'activity_disabled',
@@ -88,15 +94,6 @@ router.get('/me/preferences', authorize({ disableBearer: true }), async (req: Re
     });
 
     createResponse(res, 200, devices);
-});
-
-router.patch('/me/preferences', authorize({ disableBearer: true }), validate(z.object({ enable: z.boolean() })), async (req: Request, res: Response) => {
-    await prisma.user.update({
-        where: { id: req.user.id },
-        data: { trackActivty: req.body.enable },
-    });
-
-    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
 });
 
 router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
