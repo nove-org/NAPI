@@ -5,7 +5,7 @@ import { getUniqueKey } from './prisma';
 export async function createLoginDevice(ip: string, headers: string, userId: string) {
     const parsedHeaders = useragent.parse(headers);
 
-    const data = await prisma.devices.findFirst({
+    const data = await prisma.trackedDevices.findFirst({
         where: {
             ip,
             device: parsedHeaders.isDesktop ? 'desktop' : 'mobile',
@@ -15,16 +15,16 @@ export async function createLoginDevice(ip: string, headers: string, userId: str
     });
 
     if (data) {
-        await prisma.devices.update({
+        await prisma.trackedDevices.update({
             where: {
                 id: data.id,
             },
             data: { updatedAt: new Date() },
         });
     } else
-        await prisma.devices.create({
+        await prisma.trackedDevices.create({
             data: {
-                id: await getUniqueKey(prisma.devices, 'id'),
+                id: await getUniqueKey(prisma.trackedDevices, 'id'),
                 ip,
                 device: parsedHeaders.isDesktop ? 'desktop' : 'mobile',
                 system: parsedHeaders.os,

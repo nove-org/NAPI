@@ -64,8 +64,8 @@ router.patch(
     }
 );
 
-router.get('/me/activity', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
-    if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.activity)
+router.get('/me/preferences', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivty)
         return createError(res, 400, {
             code: 'activity_disabled',
             message: 'Account activity is turned off',
@@ -76,7 +76,7 @@ router.get('/me/activity', authorize({ disableBearer: true }), async (req: Reque
 
     if (perPage > 25 || perPage < 1) perPage = 3;
 
-    const devices = await prisma.devices.findMany({
+    const devices = await prisma.trackedDevices.findMany({
         where: {
             userId: req.user.id,
         },
@@ -90,10 +90,10 @@ router.get('/me/activity', authorize({ disableBearer: true }), async (req: Reque
     createResponse(res, 200, devices);
 });
 
-router.patch('/me/activity', authorize({ disableBearer: true }), validate(z.object({ enable: z.boolean() })), async (req: Request, res: Response) => {
+router.patch('/me/preferences', authorize({ disableBearer: true }), validate(z.object({ enable: z.boolean() })), async (req: Request, res: Response) => {
     await prisma.user.update({
         where: { id: req.user.id },
-        data: { activity: req.body.enable },
+        data: { trackActivty: req.body.enable },
     });
 
     return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
