@@ -8,8 +8,6 @@ import createResponse from '../../../utils/createResponse';
 import { randomString } from '../../../utils/crypto';
 import { removeProps } from '../../../utils/masker';
 import prisma from '../../../utils/prisma';
-import { getUniqueKey } from '../../../utils/prisma';
-import useragent from 'express-useragent';
 import { validate } from '../../../utils/schema';
 const router = Router();
 

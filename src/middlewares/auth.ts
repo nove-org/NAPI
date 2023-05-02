@@ -115,8 +115,6 @@ function authorize({ requiredScopes = [], disableBearer = false, disableOwner = 
             req.user = removeProps(authorization.user, ['password', 'token']);
             req.oauth = authorization;
 
-            createLoginDevice(req.ip, req.headers['user-agent'] as string, req.user.id);
-
             next();
         } else if (method === 'Owner') {
             const user = await prisma.user.findFirst({

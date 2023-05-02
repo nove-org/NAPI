@@ -14,7 +14,14 @@ export async function createLoginDevice(ip: string, headers: string, userId: str
         },
     });
 
-    if (!data)
+    if (data) {
+        await prisma.devices.update({
+            where: {
+                id: data.id,
+            },
+            data: { updatedAt: new Date() },
+        });
+    } else
         await prisma.devices.create({
             data: {
                 id: await getUniqueKey(prisma.devices, 'id'),

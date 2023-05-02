@@ -64,21 +64,31 @@ router.patch(
     }
 );
 
-router.get(
-    '/me/activity',
-    authorize({
-        requiredScopes: ['account.read.basic'],
-    }),
-    async (req: Request, res: Response) => {
-        const devices = await prisma.devices.findMany({
-            where: { userId: req.user.id },
-            orderBy: { createdAt: 'desc' },
-            take: 3,
+router.get('/me/activity', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    if ((await prisma.user.findFirst({ where: { id: req.user.id } }))?.disable_activity)
+        return createError(res, 400, {
+            code: 'activity_disabled',
+            message: 'Account activity is turned off',
+            type: 'request',
         });
 
-        createResponse(res, 200, devices);
-    }
-);
+    let perPage = parseInt(req.query.perPage as string) || 10;
+
+    if (perPage > 25 || perPage < 1) perPage = 3;
+
+    const devices = await prisma.devices.findMany({
+        where: {
+            userId: req.user.id,
+        },
+        skip: req.query.page ? parseInt(req.query.page.toString()) * perPage : 0,
+        take: perPage,
+        orderBy: {
+            updatedAt: 'desc',
+        },
+    });
+
+    createResponse(res, 200, devices);
+});
 
 router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File;
