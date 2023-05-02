@@ -90,6 +90,15 @@ router.get('/me/activity', authorize({ disableBearer: true }), async (req: Reque
     createResponse(res, 200, devices);
 });
 
+router.patch('/me/activity', authorize({ requiredScopes: ['account.write.basic'] }), validate(z.object({ disable: z.boolean() })), async (req: Request, res: Response) => {
+    await prisma.user.update({
+        where: { id: req.user.id },
+        data: { disable_activity: req.body.disable },
+    });
+
+    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+});
+
 router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File;
 
