@@ -33,7 +33,7 @@ router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
 
     const emailUser = await prisma.user.findFirst({ where: { email } });
 
-    if (emailUser) return createError(res, 400, { message: 'This email is already taken', code: 'invalid_email', type: 'validation' });
+    if (emailUser) return createError(res, 400, { message: 'This email is already taken', code: 'taken_email', type: 'validation' });
 
     await prisma.user.update({
         where: { id: req.user.id },
@@ -64,7 +64,7 @@ router.patch(
         if (req.body.username?.length) {
             const user = await prisma.user.findFirst({ where: { username: req.body.username } });
 
-            if (user) return createError(res, 400, { message: 'This username is already taken', code: 'invalid_username', type: 'validation' });
+            if (user) return createError(res, 400, { message: 'This username is already taken', code: 'taken_username', type: 'validation' });
 
             data['username'] = req.body.username;
         }
