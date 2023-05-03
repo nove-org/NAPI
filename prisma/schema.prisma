@@ -79,9 +79,9 @@ model Recovery {
 model TrackedDevices {
   id        String   @id @unique @default(uuid())
   userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
   ip        String
   device    String
   system    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

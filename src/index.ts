@@ -65,12 +65,12 @@ prisma
         //     .create({
         //         data: {
         //             id: '01234567',
-        //             email: 'dawod@nove.team',
+        //             email: 'user@nove.team',
         //             bio: 'Bio',
         //             language: 'en',
         //             password: bcrypt.hashSync('PASSWORD', bcrypt.genSaltSync()),
-        //             token: 'chujciwdupe',
-        //             username: 'dawid',
+        //             token: 'token',
+        //             username: 'user',
         //         },
         //     })
         //     .then(console.log)
