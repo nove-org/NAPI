@@ -44,7 +44,12 @@ router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
 router.patch(
     '/me',
     validate(
-        z.object({ username: z.string().min(1).max(24).optional(), bio: z.string().min(1).max(256).optional(), language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).optional() }),
+        z.object({
+            username: z.string().min(1).max(24).optional(),
+            bio: z.string().min(1).max(256).optional(),
+            language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).optional(),
+            trackActivity: z.boolean().optional(),
+        }),
         'body'
     ),
     authorizeOwner,
@@ -54,6 +59,7 @@ router.patch(
         if (req.body.bio?.length) data['bio'] = req.body.bio;
         if (req.body.username?.length) data['username'] = req.body.username;
         if (req.body.language?.length) data['language'] = req.body.language;
+        if (typeof req.body.trackActivity?.length === 'boolean') data['trackActivty'] = req.body.trackActivity;
 
         await prisma.user.update({
             where: { id: req.user.id },
@@ -63,6 +69,32 @@ router.patch(
         return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
     }
 );
+
+router.get('/me/activity', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivty)
+        return createError(res, 400, {
+            code: 'activity_disabled',
+            message: 'Account activity is turned off',
+            type: 'request',
+        });
+
+    let perPage = parseInt(req.query.perPage as string) || 10;
+
+    if (perPage > 25 || perPage < 1) perPage = 3;
+
+    const devices = await prisma.trackedDevices.findMany({
+        where: {
+            userId: req.user.id,
+        },
+        skip: req.query.page ? parseInt(req.query.page.toString()) * perPage : 0,
+        take: perPage,
+        orderBy: {
+            updatedAt: 'desc',
+        },
+    });
+
+    createResponse(res, 200, devices);
+});
 
 router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File;
@@ -74,6 +106,8 @@ router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object(
             param: 'body:avatar',
             type: 'validation',
         });
+
+    await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
 
     return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
 });

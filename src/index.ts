@@ -42,39 +42,6 @@ prisma
             logger.info(`server started on port ${process.env.PORT}`);
         });
         process.once('SIGTERM', () => shutdown(server));
-
-        // prisma.oAuth_App
-        //     .create({
-        //         data: {
-        //             client_id: '6b01162a-5bad-4a02-b97c-0889c8b3db47',
-        //             client_secret: 'J8KaEnenvoiPe8eNQ89KCf8LZ5LIBX8SsuaaEXVDY2Hl1vU9c18URxhuI6mPVVhr',
-        //             name: 'cheems.dog',
-        //             description: 'cheems.dog is a revolutionary image sharing platform',
-        //             link_homepage: 'https://cheems.dog',
-        //             owner: 'Nove Group',
-        //             link_privacy_policy: 'https://cheems.dog/privacy',
-        //             link_tos: 'https://cheems.dog/tos',
-        //             redirect_uris: ['https://cheems.dog/auth/callback', 'http://localhost:3000/callback.html', 'http://localhost:7100/v1/oauth2/callback'],
-        //             isVerified: true,
-        //         },
-        //     })
-        //     .then(console.log)
-        //     .catch(console.error);
-
-        // prisma.user
-        //     .create({
-        //         data: {
-        //             id: '01234567',
-        //             email: 'hello@nove.team',
-        //             bio: 'Bio',
-        //             language: 'en',
-        //             password: bcrypt.hashSync('PASSWORD', bcrypt.genSaltSync()),
-        //             token: 'TOKEN',
-        //             username: 'USERNAME',
-        //         },
-        //     })
-        //     .then(console.log)
-        //     .catch(console.error);
     })
     .catch((err: Error) => {
         logger.error(`failed to connect to database: ${err}`);

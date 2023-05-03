@@ -66,7 +66,7 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
 
     await prisma.user.update({
         where: { id: recovery.userId },
-        data: { password },
+        data: { password, token: randomString(48) },
     });
 
     await prisma.recovery.delete({ where: { code: recoveryKey } });
@@ -87,6 +87,7 @@ router.patch('/password', validate(z.object({ oldPassword: z.string(), newPasswo
         where: { id: req.user.id },
         data: {
             password: hashedPassword,
+            token: randomString(48),
         },
     });
 

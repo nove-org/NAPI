@@ -34,6 +34,7 @@ router.post(
             });
         if (!compareSync(req.body.password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+
         createResponse(res, 200, removeProps(user, ['password']));
     }
 );

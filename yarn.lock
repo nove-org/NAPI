@@ -884,6 +884,13 @@
     "@types/qs" "*"
     "@types/range-parser" "*"
 
+"@types/express-useragent@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@types/express-useragent/-/express-useragent-1.0.2.tgz#c129f2aae983fb7b646dbcd254973936f745c12f"
+  integrity sha512-eUVCqMsmEO7adMJSxuAARPUxbEJLYQJATiB86bx3MGeyUOTgKNnLTfAMaF+z84DftcH6NBbFFwiRomIcsFVdUQ==
+  dependencies:
+    "@types/express" "*"
+
 "@types/express@*":
   version "4.17.17"
   resolved "https://registry.yarnpkg.com/@types/express/-/express-4.17.17.tgz#01d5437f6ef9cfa8668e616e13c2f2ac9a491ae4"
@@ -1871,6 +1878,11 @@ expect@^29.3.1:
     jest-matcher-utils "^29.3.1"
     jest-message-util "^29.3.1"
     jest-util "^29.3.1"
+
+express-useragent@^1.0.15:
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/express-useragent/-/express-useragent-1.0.15.tgz#cefda5fa4904345d51d3368b117a8dd4124985d9"
+  integrity sha512-eq5xMiYCYwFPoekffMjvEIk+NWdlQY9Y38OsTyl13IvA728vKT+q/CSERYWzcw93HGBJcIqMIsZC5CZGARPVdg==
 
 express@^4.18.2:
   version "4.18.2"

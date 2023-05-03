@@ -11,18 +11,20 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  bio       String
-  username  String
-  language  String
-  password  String
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String  @id @default(uuid())
+  email        String  @unique
+  bio          String
+  username     String
+  language     String
+  password     String
+  token        String
+  trackActivty Boolean @default(true)
 
   oauth_authorizations OAuth_Authorization[]
   oauth_codes          OAuth_Code[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OAuth_App {
@@ -36,11 +38,12 @@ model OAuth_App {
   link_tos            String
   redirect_uris       String[]
   isVerified          Boolean
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
 
   oauth_authorizations OAuth_Authorization[]
   oauth_codes          OAuth_Code[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OAuth_Authorization {
@@ -54,23 +57,36 @@ model OAuth_Authorization {
   token         String
   token_expires DateTime
   refresh_token String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OAuth_Code {
-  code      String    @id
-  app_id    String
-  app       OAuth_App @relation(fields: [app_id], references: [client_id])
-  user_id   String
-  user      User      @relation(fields: [user_id], references: [id])
-  scopes    String[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  code    String    @id
+  app_id  String
+  app     OAuth_App @relation(fields: [app_id], references: [client_id])
+  user_id String
+  user    User      @relation(fields: [user_id], references: [id])
+  scopes  String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Recovery {
   code      String   @id @unique
   userId    String
   expiresAt DateTime
+}
+
+model TrackedDevices {
+  id     String @id @unique @default(uuid())
+  userId String
+  ip     String
+  device String
+  system String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

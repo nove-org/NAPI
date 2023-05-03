@@ -6,6 +6,7 @@ import { removeProps } from '../utils/masker';
 import { TPermission, checkPermissions } from '../utils/permissions';
 import prisma from '../utils/prisma';
 import { Modify } from '../utils/types';
+import { createLoginDevice } from '../utils/createLoginDevice';
 
 /**
  *
@@ -113,6 +114,7 @@ function authorize({ requiredScopes = [], disableBearer = false, disableOwner = 
 
             req.user = removeProps(authorization.user, ['password', 'token']);
             req.oauth = authorization;
+
             next();
         } else if (method === 'Owner') {
             const user = await prisma.user.findFirst({
@@ -125,6 +127,9 @@ function authorize({ requiredScopes = [], disableBearer = false, disableOwner = 
                 return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
 
             req.user = removeProps(user, ['password', 'token']);
+
+            createLoginDevice(req.ip, req.headers['user-agent'] as string, req.user.id);
+
             next();
         } else
             return createError(res, 401, { code: 'invalid_authorization_method', message: 'invalid authorization method', param: 'header:authorization', type: 'authorization' });
