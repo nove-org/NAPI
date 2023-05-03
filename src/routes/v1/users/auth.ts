@@ -6,8 +6,7 @@ import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import { randomString } from '../../../utils/crypto';
-import { removeProps } from '../../../utils/masker';
-import prisma from '../../../utils/prisma';
+import prisma, { maskUserMe } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 const router = Router();
 
@@ -35,7 +34,7 @@ router.post(
         if (!compareSync(req.body.password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
 
-        createResponse(res, 200, removeProps(user, ['password']));
+        createResponse(res, 200, maskUserMe(user, true));
     }
 );
 
@@ -98,7 +97,7 @@ router.post(
 
         // TODO: email verification
 
-        createResponse(res, 200, removeProps(user, ['password']));
+        createResponse(res, 200, maskUserMe(user, true));
     }
 );
 

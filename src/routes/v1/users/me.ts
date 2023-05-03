@@ -5,10 +5,8 @@ import { authorize, authorizeOwner } from '../../../middlewares/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
-import { removeProps } from '../../../utils/masker';
 import { multerUploadSingle } from '../../../utils/multipart';
-import { checkPermission } from '../../../utils/permissions';
-import prisma from '../../../utils/prisma';
+import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 
 const router = Router();
@@ -19,30 +17,27 @@ router.get(
         requiredScopes: ['account.read.basic'],
     }),
     async (req: Request, res: Response) => {
-        if (!req.oauth || checkPermission(req.oauth.scopes, 'account.read.email'))
-            createResponse(res, 200, {
-                avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`,
-                ...removeProps(req.user, ['password']),
-            });
-        else createResponse(res, 200, { avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`, ...removeProps(req.user, ['password', 'email']) });
+        const user = { avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`, ...req.user };
+
+        if (req.oauth) return createResponse(res, 200, maskUserOAuth(user, req.oauth));
+        else createResponse(res, 200, maskUserMe(user));
     }
 );
 
 router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
     const { email } = req.body;
-
     const emailUser = await prisma.user.findFirst({ where: { email } });
 
     if (emailUser) return createError(res, 400, { message: 'This email is already taken', code: 'taken_email', type: 'validation' });
 
-    await prisma.user.update({
+    const newUser = await prisma.user.update({
         where: { id: req.user.id },
         data: {
             email,
         },
     });
 
-    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+    return createResponse(res, 200, maskUserMe(newUser));
 });
 
 router.patch(
@@ -56,7 +51,12 @@ router.patch(
         }),
         'body'
     ),
-    authorizeOwner,
+    authorize({
+        requiredScopes: ['account.write.basic'],
+        // TODO: Add scopes for each field
+        // TODO: Remove this line and actually implement patching user data by OAuth apps
+        disableBearer: true,
+    }),
     async (req: Request, res: Response) => {
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
@@ -71,12 +71,12 @@ router.patch(
         if (req.body.language?.length) data['language'] = req.body.language;
         if (typeof req.body.trackActivity?.length === 'boolean') data['trackActivty'] = req.body.trackActivity;
 
-        await prisma.user.update({
+        const newUser = await prisma.user.update({
             where: { id: req.user.id },
             data,
         });
 
-        return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+        return createResponse(res, 200, maskUserMe(newUser));
     }
 );
 
@@ -106,20 +106,28 @@ router.get('/me/activity', authorize({ disableBearer: true }), async (req: Reque
     createResponse(res, 200, devices);
 });
 
-router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
-    const file = req.file as Express.Multer.File;
+router.patch(
+    '/avatar',
+    authorize({
+        requiredScopes: ['account.write.avatar'],
+    }),
+    multerUploadSingle(),
+    validate(z.object({ file: z.any() })),
+    async (req: Request, res: Response) => {
+        const file = req.file as Express.Multer.File;
 
-    if (!file)
-        return createError(res, 400, {
-            code: 'invalid_parameter',
-            message: 'You have to send an image',
-            param: 'body:avatar',
-            type: 'validation',
-        });
+        if (!file)
+            return createError(res, 400, {
+                code: 'invalid_parameter',
+                message: 'You have to send an image',
+                param: 'body:avatar',
+                type: 'validation',
+            });
 
-    await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
+        const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
 
-    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
-});
+        return createResponse(res, 200, maskUserMe(newUser));
+    }
+);
 
 export default router;
