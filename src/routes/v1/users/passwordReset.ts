@@ -1,7 +1,7 @@
 import bcrypt, { compareSync } from 'bcrypt';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
-import { authorizeOwner } from '../../../middlewares/auth';
+import { authorize } from '../../../middlewares/auth';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import { randomString } from '../../../utils/crypto';
@@ -73,24 +73,31 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
     return createResponse(res, 200, { success: true });
 });
 
-router.patch('/password', validate(z.object({ oldPassword: z.string(), newPassword: z.string() })), authorizeOwner, async (req: Request, res: Response) => {
-    const { oldPassword, newPassword } = req.body;
+router.patch(
+    '/password',
+    validate(z.object({ oldPassword: z.string(), newPassword: z.string() })),
+    authorize({
+        disableBearer: true,
+    }),
+    async (req: Request, res: Response) => {
+        const { oldPassword, newPassword } = req.body;
 
-    if (!(await bcrypt.compare(oldPassword, req.user.password))) {
-        return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+        if (!(await bcrypt.compare(oldPassword, req.user.password))) {
+            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+        }
+
+        const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data: {
+                password: hashedPassword,
+                token: randomString(48),
+            },
+        });
+
+        return createResponse(res, 200, { success: true });
     }
-
-    const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
-
-    await prisma.user.update({
-        where: { id: req.user.id },
-        data: {
-            password: hashedPassword,
-            token: randomString(48),
-        },
-    });
-
-    return createResponse(res, 200, { success: true });
-});
+);
 
 export default router;

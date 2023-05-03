@@ -51,7 +51,12 @@ router.patch(
         }),
         'body'
     ),
-    authorizeOwner,
+    authorize({
+        requiredScopes: ['account.write.basic'],
+        // TODO: Add scopes for each field
+        // TODO: Remove this line and actually implement patching user data by OAuth apps
+        disableBearer: true,
+    }),
     async (req: Request, res: Response) => {
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
@@ -101,20 +106,28 @@ router.get('/me/activity', authorize({ disableBearer: true }), async (req: Reque
     createResponse(res, 200, devices);
 });
 
-router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object({ file: z.any() })), async (req: Request, res: Response) => {
-    const file = req.file as Express.Multer.File;
+router.patch(
+    '/avatar',
+    authorize({
+        requiredScopes: ['account.write.avatar'],
+    }),
+    multerUploadSingle(),
+    validate(z.object({ file: z.any() })),
+    async (req: Request, res: Response) => {
+        const file = req.file as Express.Multer.File;
 
-    if (!file)
-        return createError(res, 400, {
-            code: 'invalid_parameter',
-            message: 'You have to send an image',
-            param: 'body:avatar',
-            type: 'validation',
-        });
+        if (!file)
+            return createError(res, 400, {
+                code: 'invalid_parameter',
+                message: 'You have to send an image',
+                param: 'body:avatar',
+                type: 'validation',
+            });
 
-    const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
+        const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
 
-    return createResponse(res, 200, maskUserMe(newUser));
-});
+        return createResponse(res, 200, maskUserMe(newUser));
+    }
+);
 
 export default router;
