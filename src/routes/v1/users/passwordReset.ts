@@ -5,7 +5,6 @@ import { authorizeOwner } from '../../../middlewares/auth';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import { randomString } from '../../../utils/crypto';
-import { removeProps } from '../../../utils/masker';
 import prisma, { getUniqueKey } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 
@@ -91,7 +90,7 @@ router.patch('/password', validate(z.object({ oldPassword: z.string(), newPasswo
         },
     });
 
-    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+    return createResponse(res, 200, { success: true });
 });
 
 export default router;

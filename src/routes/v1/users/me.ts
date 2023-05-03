@@ -5,10 +5,8 @@ import { authorize, authorizeOwner } from '../../../middlewares/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
-import { removeProps } from '../../../utils/masker';
 import { multerUploadSingle } from '../../../utils/multipart';
-import { checkPermission } from '../../../utils/permissions';
-import prisma from '../../../utils/prisma';
+import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 
 const router = Router();
@@ -19,30 +17,27 @@ router.get(
         requiredScopes: ['account.read.basic'],
     }),
     async (req: Request, res: Response) => {
-        if (!req.oauth || checkPermission(req.oauth.scopes, 'account.read.email'))
-            createResponse(res, 200, {
-                avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`,
-                ...removeProps(req.user, ['password']),
-            });
-        else createResponse(res, 200, { avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`, ...removeProps(req.user, ['password', 'email']) });
+        const user = { avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`, ...req.user };
+
+        if (req.oauth) return createResponse(res, 200, maskUserOAuth(user, req.oauth));
+        else createResponse(res, 200, maskUserMe(user));
     }
 );
 
 router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
     const { email } = req.body;
-
     const emailUser = await prisma.user.findFirst({ where: { email } });
 
     if (emailUser) return createError(res, 400, { message: 'This email is already taken', code: 'taken_email', type: 'validation' });
 
-    await prisma.user.update({
+    const newUser = await prisma.user.update({
         where: { id: req.user.id },
         data: {
             email,
         },
     });
 
-    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+    return createResponse(res, 200, maskUserMe(newUser));
 });
 
 router.patch(
@@ -71,12 +66,12 @@ router.patch(
         if (req.body.language?.length) data['language'] = req.body.language;
         if (typeof req.body.trackActivity?.length === 'boolean') data['trackActivty'] = req.body.trackActivity;
 
-        await prisma.user.update({
+        const newUser = await prisma.user.update({
             where: { id: req.user.id },
             data,
         });
 
-        return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+        return createResponse(res, 200, maskUserMe(newUser));
     }
 );
 
@@ -117,9 +112,9 @@ router.patch('/avatar', authorizeOwner, multerUploadSingle(), validate(z.object(
             type: 'validation',
         });
 
-    await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
+    const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
 
-    return createResponse(res, 200, removeProps(req.user, ['password', 'token']));
+    return createResponse(res, 200, maskUserMe(newUser));
 });
 
 export default router;
