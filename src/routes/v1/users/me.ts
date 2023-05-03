@@ -31,6 +31,10 @@ router.get(
 router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
     const { email } = req.body;
 
+    const emailUser = await prisma.user.findFirst({ where: { email } });
+
+    if (emailUser) return createError(res, 400, { message: 'This email is already taken', code: 'taken_email', type: 'validation' });
+
     await prisma.user.update({
         where: { id: req.user.id },
         data: {
@@ -57,7 +61,13 @@ router.patch(
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
         if (req.body.bio?.length) data['bio'] = req.body.bio;
-        if (req.body.username?.length) data['username'] = req.body.username;
+        if (req.body.username?.length) {
+            const user = await prisma.user.findFirst({ where: { username: req.body.username } });
+
+            if (user) return createError(res, 400, { message: 'This username is already taken', code: 'taken_username', type: 'validation' });
+
+            data['username'] = req.body.username;
+        }
         if (req.body.language?.length) data['language'] = req.body.language;
         if (typeof req.body.trackActivity?.length === 'boolean') data['trackActivty'] = req.body.trackActivity;
 
