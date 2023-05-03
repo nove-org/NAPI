@@ -11,14 +11,15 @@ datasource db {
 }
 
 model User {
-  id           String  @id @default(uuid())
-  email        String  @unique
-  bio          String
-  username     String
-  language     String
-  password     String
-  token        String
-  trackActivty Boolean @default(true)
+  id            String  @id @default(uuid())
+  email         String  @unique
+  bio           String
+  username      String
+  language      String
+  password      String
+  token         String
+  profilePublic Boolean @default(false)
+  trackActivty  Boolean @default(true)
 
   oauth_authorizations OAuth_Authorization[]
   oauth_codes          OAuth_Code[]
