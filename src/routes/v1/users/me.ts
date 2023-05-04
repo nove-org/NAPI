@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
-import { authorize, authorizeOwner } from '../../../middlewares/auth';
+import { authorize } from '../../../middlewares/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
@@ -24,21 +24,27 @@ router.get(
     }
 );
 
-router.patch('/email', authorizeOwner, async (req: Request, res: Response) => {
-    const { email } = req.body;
-    const emailUser = await prisma.user.findFirst({ where: { email } });
+router.patch(
+    '/email',
+    authorize({
+        disableBearer: true,
+    }),
+    async (req: Request, res: Response) => {
+        const { email } = req.body;
+        const emailUser = await prisma.user.findFirst({ where: { email } });
 
-    if (emailUser) return createError(res, 400, { message: 'This email is already taken', code: 'taken_email', type: 'validation' });
+        if (emailUser) return createError(res, 400, { message: 'This email is already taken', code: 'taken_email', type: 'validation' });
 
-    const newUser = await prisma.user.update({
-        where: { id: req.user.id },
-        data: {
-            email,
-        },
-    });
+        const newUser = await prisma.user.update({
+            where: { id: req.user.id },
+            data: {
+                email,
+            },
+        });
 
-    return createResponse(res, 200, maskUserMe(newUser));
-});
+        return createResponse(res, 200, maskUserMe(newUser));
+    }
+);
 
 router.patch(
     '/me',

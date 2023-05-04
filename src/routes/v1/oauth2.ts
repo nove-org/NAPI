@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
-import { authorizeOwner } from '../../middlewares/auth';
+import { authorize } from '../../middlewares/auth';
 import createResponse from '../../utils/createResponse';
 import { randomString } from '../../utils/crypto';
 import prisma, { getUniqueKey } from '../../utils/prisma';
@@ -47,7 +47,9 @@ router.get(
 
 router.post(
     '/authorize',
-    authorizeOwner,
+    authorize({
+        disableBearer: true,
+    }),
     validate(
         z.object({
             client_id: z.string().min(1).max(64),
