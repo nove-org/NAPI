@@ -44,7 +44,7 @@ export function maskUserMe(user: User, includeToken: boolean = false) {
  */
 export function maskUserQuery(user: User, includeEmail: boolean = false) {
     const { profilePublic } = user;
-    const mask = ['password', 'trackActivty', 'oauth_authorizations', 'oauth_codes', 'token', 'email'];
+    const mask = ['password', 'trackActivity', 'oauth_authorizations', 'oauth_codes', 'token', 'email'];
 
     if (!profilePublic) mask.push('bio', 'language', 'createdAt', 'updatedAt');
     if (!includeEmail || !profilePublic) mask.push('email');
