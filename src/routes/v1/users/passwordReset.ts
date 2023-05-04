@@ -82,7 +82,11 @@ router.patch(
     async (req: Request, res: Response) => {
         const { oldPassword, newPassword } = req.body;
 
-        if (!(await bcrypt.compare(oldPassword, req.user.password))) {
+        const user = await prisma.user.findFirst({ where: { id: req.user.id } });
+
+        if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
+
+        if (!(await bcrypt.compare(oldPassword, user.password))) {
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
         }
 
