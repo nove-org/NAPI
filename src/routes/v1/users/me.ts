@@ -69,7 +69,7 @@ router.patch(
             data['username'] = req.body.username;
         }
         if (req.body.language?.length) data['language'] = req.body.language;
-        if (typeof req.body.trackActivity?.length === 'boolean') data['trackActivty'] = req.body.trackActivity;
+        if (typeof req.body.trackActivity?.length === 'boolean') data['trackActivity'] = req.body.trackActivity;
 
         const newUser = await prisma.user.update({
             where: { id: req.user.id },
@@ -81,7 +81,7 @@ router.patch(
 );
 
 router.get('/me/activity', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
-    if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivty)
+    if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivity)
         return createError(res, 400, {
             code: 'activity_disabled',
             message: 'Account activity is turned off',
