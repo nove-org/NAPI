@@ -23,19 +23,31 @@ export function getUniqueKey(model: any, key: string, generator?: () => string):
 }
 
 /**
- * Mask user object for public and "me-only" use
+ * Mask user object for "me-only" use
  * @param user User to mask
  * @param includeToken Include token in the masked object
  * @returns User object with removed properties
  */
-export function maskUserMe(user: User, includeToken: boolean = false, includeEmail: boolean = false) {
-    const { profilePublic } = user;
+export function maskUserMe(user: User, includeToken: boolean = false) {
     const mask = ['password', 'trackActivity', 'oauth_authorizations', 'oauth_codes'];
 
     if (!includeToken) mask.push('token');
-    if (!profilePublic)
-        if (includeEmail) mask.push('email', 'bio', 'language', 'createdAt', 'updatedAt');
-        else mask.push('bio', 'language', 'createdAt', 'updatedAt');
+
+    return removeProps(user, mask);
+}
+
+/**
+ * Mask user object for public use
+ * @param user User to mask
+ * @param includeEmail include mail in the masked object
+ * @returns User object with removed properties
+ */
+export function maskUserQuery(user: User, includeEmail: boolean = false) {
+    const { profilePublic } = user;
+    const mask = ['password', 'trackActivty', 'oauth_authorizations', 'oauth_codes', 'token', 'email'];
+
+    if (!profilePublic) mask.push('bio', 'language', 'createdAt', 'updatedAt');
+    if (!includeEmail || !profilePublic) mask.push('email');
 
     return removeProps(user, mask);
 }
