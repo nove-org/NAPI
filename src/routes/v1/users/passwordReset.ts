@@ -87,16 +87,17 @@ router.patch(
         }
 
         const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+        const token = randomString(48);
 
         await prisma.user.update({
             where: { id: req.user.id },
             data: {
                 password: hashedPassword,
-                token: randomString(48),
+                token,
             },
         });
 
-        return createResponse(res, 200, { success: true });
+        return createResponse(res, 200, { success: true, token });
     }
 );
 
