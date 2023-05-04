@@ -75,7 +75,7 @@ router.patch(
             data['username'] = req.body.username;
         }
         if (req.body.language?.length) data['language'] = req.body.language;
-        if (typeof req.body.trackActivity?.length === 'boolean') data['trackActivity'] = req.body.trackActivity;
+        if (typeof req.body.trackActivity === 'boolean') data['trackActivity'] = req.body.trackActivity;
 
         const newUser = await prisma.user.update({
             where: { id: req.user.id },
