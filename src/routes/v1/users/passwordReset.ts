@@ -6,7 +6,7 @@ import { authorize } from '../../../middlewares/auth';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import { randomString } from '../../../utils/crypto';
-import prisma, { getUniqueKey } from '../../../utils/prisma';
+import prisma, { maskUserMe, getUniqueKey } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 
 const router = Router();
@@ -62,7 +62,7 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
     const password = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
 
     if (compareSync(newPassword, user.password))
-        return createError(res, 400, { code: 'invalid_password', message: 'New password cannot be the same as the current one', type: 'validation', param: 'body:password' });
+        return createError(res, 400, { code: 'invalid_password', message: 'new password cannot be the same as the current one', type: 'validation', param: 'body:password' });
 
     await prisma.user.update({
         where: { id: recovery.userId },
@@ -71,7 +71,7 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
 
     await prisma.recovery.delete({ where: { code: recoveryKey } });
 
-    return createResponse(res, 200, { success: true });
+    return createResponse(res, 200, { success: true, ...maskUserMe(user) });
 });
 
 router.patch(
@@ -88,15 +88,23 @@ router.patch(
         if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
 
         if (!(await bcrypt.compare(oldPassword, user.password))) {
-            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:oldPassword', type: 'authorization' });
         }
 
-        if (passwordStrength(req.body.password).id < 2 || req.body.password === req.body.email || req.body.password === req.body.username)
+        if (newPassword === oldPassword)
+            return createError(res, 400, {
+                code: 'invalid_password',
+                message: 'new password cannot be the same as the current one',
+                type: 'validation',
+                param: 'body:newPassword',
+            });
+
+        if (passwordStrength(req.body.newPassword).id < 2 || req.body.newPassword === req.user.email || req.body.newPassword === req.user.username)
             return createError(res, 400, {
                 code: 'weak_password',
-                message: 'password is too weak',
-                param: 'body:password',
-                type: 'register',
+                message: 'new password is too weak',
+                param: 'body:newPassword',
+                type: 'validation',
             });
 
         const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
@@ -110,7 +118,7 @@ router.patch(
             },
         });
 
-        return createResponse(res, 200, { success: true, token });
+        return createResponse(res, 200, { success: true, token, ...maskUserMe(user) });
     }
 );
 
