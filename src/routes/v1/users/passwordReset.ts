@@ -1,4 +1,5 @@
 import bcrypt, { compareSync } from 'bcrypt';
+import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { authorize } from '../../../middlewares/auth';
@@ -75,7 +76,7 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
 
 router.patch(
     '/password',
-    validate(z.object({ oldPassword: z.string(), newPassword: z.string() })),
+    validate(z.object({ oldPassword: z.string().min(1).max(128), newPassword: z.string().min(8).max(128) })),
     authorize({
         disableBearer: true,
     }),
@@ -89,6 +90,14 @@ router.patch(
         if (!(await bcrypt.compare(oldPassword, user.password))) {
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
         }
+
+        if (passwordStrength(req.body.password).id < 2 || req.body.password === req.body.email || req.body.password === req.body.username)
+            return createError(res, 400, {
+                code: 'weak_password',
+                message: 'password is too weak',
+                param: 'body:password',
+                type: 'register',
+            });
 
         const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
         const token = randomString(48);
