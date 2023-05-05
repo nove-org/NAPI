@@ -12,7 +12,7 @@
         "db": "yarn run -s prisma generate && yarn run -s prisma migrate dev",
         "db:update": "yarn run -s prisma migrate dev",
         "db:generate": "yarn run -s prisma generate",
-        "db:studio": "prisma studio",
+        "db:studio": "yarn run -s prisma studio",
         "test": "jest",
         "prepare": "husky install",
         "format": "npx pretty-quick --staged",
