@@ -68,6 +68,7 @@ router.post(
                 param: 'body:email',
                 type: 'register',
             });
+
         if (await prisma.user.count({ where: { username: req.body.username } }))
             return createError(res, 409, {
                 code: 'username_already_exists',

@@ -1,11 +1,12 @@
 import bcrypt, { compareSync } from 'bcrypt';
+import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { authorize } from '../../../middlewares/auth';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import { randomString } from '../../../utils/crypto';
-import prisma, { getUniqueKey } from '../../../utils/prisma';
+import prisma, { maskUserMe, getUniqueKey } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 
 const router = Router();
@@ -61,7 +62,7 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
     const password = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
 
     if (compareSync(newPassword, user.password))
-        return createError(res, 400, { code: 'invalid_password', message: 'New password cannot be the same as the current one', type: 'validation', param: 'body:password' });
+        return createError(res, 400, { code: 'invalid_password', message: 'new password cannot be the same as the current one', type: 'validation', param: 'body:password' });
 
     await prisma.user.update({
         where: { id: recovery.userId },
@@ -70,33 +71,54 @@ router.patch('/passwordReset', validate(z.object({ newPassword: z.string(), reco
 
     await prisma.recovery.delete({ where: { code: recoveryKey } });
 
-    return createResponse(res, 200, { success: true });
+    return createResponse(res, 200, { success: true, ...maskUserMe(user) });
 });
 
 router.patch(
     '/password',
-    validate(z.object({ oldPassword: z.string(), newPassword: z.string() })),
+    validate(z.object({ oldPassword: z.string().min(1).max(128), newPassword: z.string().min(8).max(128) })),
     authorize({
         disableBearer: true,
     }),
     async (req: Request, res: Response) => {
         const { oldPassword, newPassword } = req.body;
 
-        if (!(await bcrypt.compare(oldPassword, req.user.password))) {
-            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+        const user = await prisma.user.findFirst({ where: { id: req.user.id } });
+
+        if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
+
+        if (!(await bcrypt.compare(oldPassword, user.password))) {
+            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:oldPassword', type: 'authorization' });
         }
 
+        if (newPassword === oldPassword)
+            return createError(res, 400, {
+                code: 'invalid_password',
+                message: 'new password cannot be the same as the current one',
+                type: 'validation',
+                param: 'body:newPassword',
+            });
+
+        if (passwordStrength(req.body.newPassword).id < 2 || req.body.newPassword === req.user.email || req.body.newPassword === req.user.username)
+            return createError(res, 400, {
+                code: 'weak_password',
+                message: 'new password is too weak',
+                param: 'body:newPassword',
+                type: 'validation',
+            });
+
         const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+        const token = randomString(48);
 
         await prisma.user.update({
             where: { id: req.user.id },
             data: {
                 password: hashedPassword,
-                token: randomString(48),
+                token,
             },
         });
 
-        return createResponse(res, 200, { success: true });
+        return createResponse(res, 200, { success: true, token, ...maskUserMe(user) });
     }
 );
 
