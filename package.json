@@ -4,19 +4,19 @@
     "author": "nove-org",
     "license": "MIT",
     "scripts": {
+        "dev": "yarn run dev:sass & yarn run -s nodemon -e ts,json -x \"yarn run -s start\" -w \"./src\"",
+        "dev:sass": "sass --watch src/sass:src/static/css --style=compressed",
         "build": "rm -rf build/ && tsc --build",
         "build:sass": "sass src/sass:src/static/css --style=compressed",
-        "build:sass:watch": "sass --watch src/sass:src/static/css --style=compressed",
         "start": "yarn run build:sass && yarn run build && node build/index.js",
-        "watch": "yarn run build:sass:watch & yarn run -s nodemon -e ts,json -x \"yarn run -s start\" -w \"./src\"",
-        "postinstall": "yarn -s patch-package",
-        "prepare": "husky install",
-        "test": "jest",
-        "format": "npx pretty-quick --staged",
-        "checkCommitMessage": "yarn run -s commitlint -V -c --edit",
+        "db": "yarn run -s prisma generate && yarn run -s prisma migrate dev",
         "db:update": "yarn run -s prisma migrate dev",
         "db:generate": "yarn run -s prisma generate",
-        "db": "yarn run -s prisma generate && yarn run -s prisma migrate dev"
+        "test": "jest",
+        "prepare": "husky install",
+        "format": "npx pretty-quick --staged",
+        "checkCommitMessage": "yarn run -s commitlint -V -c --edit",
+        "postinstall": "yarn -s patch-package"
     },
     "dependencies": {
         "@prisma/client": "^4.11.0",
