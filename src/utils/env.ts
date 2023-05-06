@@ -20,6 +20,7 @@ export default function checkEnv() {
             .matches(/(silly|debug|info|warn|error|critical)/)
             .default('info'),
         EXPLICIT_DISABLE_CONSOLE_LOG: yup.boolean().default(false),
+        JWT_SECRET: yup.string().required().length(70),
     });
     try {
         schema.validateSync(process.env);
