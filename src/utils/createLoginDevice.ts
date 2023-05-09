@@ -1,4 +1,3 @@
-import useragent from 'express-useragent';
 import prisma from './prisma';
 import { getUniqueKey } from './prisma';
 import { UAParser } from 'ua-parser-js';
@@ -31,8 +30,8 @@ export async function createLoginDevice(ip: string, headers: string, userId: str
                 id: await getUniqueKey(prisma.trackedDevices, 'id'),
                 ip,
                 device: parsedHeaders.device.type ? parsedHeaders.device.type : 'desktop',
-                os_name: parsedHeaders.os.name,
-                os_version: parsedHeaders.os.version,
+                os_name: parsedHeaders.os.name || 'unknown',
+                os_version: parsedHeaders.os.version || 'unknown',
                 userId,
             },
         });
