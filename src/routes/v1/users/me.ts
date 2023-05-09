@@ -8,6 +8,7 @@ import createResponse from '../../../utils/createResponse';
 import { multerUploadSingle } from '../../../utils/multipart';
 import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
+import { UAParser } from 'ua-parser-js';
 
 const router = Router();
 
