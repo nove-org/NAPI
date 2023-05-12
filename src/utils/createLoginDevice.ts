@@ -7,35 +7,40 @@ export async function createLoginDevice(ip: string, headers: string, userId: str
 
     const parsedHeaders = parser.getResult();
 
-    console.log(userTrackActivity);
     if (!userTrackActivity) return;
 
-    const data = await prisma.trackedDevices.findFirst({
-        where: {
-            ip,
-            device: parsedHeaders.device.type ? 'mobile' : 'desktop',
-            os_name: parsedHeaders.os.name,
-            os_version: parsedHeaders.os.version,
-            userId,
-        },
-    });
-
-    if (data) {
-        await prisma.trackedDevices.update({
+    const data = await prisma.trackedDevices
+        .findFirst({
             where: {
-                id: data.id,
-            },
-            data: { updatedAt: new Date() },
-        });
-    } else
-        await prisma.trackedDevices.create({
-            data: {
-                id: await getUniqueKey(prisma.trackedDevices, 'id'),
                 ip,
                 device: parsedHeaders.device.type ? 'mobile' : 'desktop',
-                os_name: parsedHeaders.os.name || 'unknown',
-                os_version: parsedHeaders.os.version || 'unknown',
+                os_name: parsedHeaders.os.name,
+                os_version: parsedHeaders.os.version,
                 userId,
             },
-        });
+        })
+        .catch(console.error);
+
+    if (data) {
+        await prisma.trackedDevices
+            .update({
+                where: {
+                    id: data.id,
+                },
+                data: { updatedAt: new Date() },
+            })
+            .catch(console.error);
+    } else
+        await prisma.trackedDevices
+            .create({
+                data: {
+                    id: await getUniqueKey(prisma.trackedDevices, 'id'),
+                    ip,
+                    device: parsedHeaders.device.type ? 'mobile' : 'desktop',
+                    os_name: parsedHeaders.os.name || 'unknown',
+                    os_version: parsedHeaders.os.version || 'unknown',
+                    userId,
+                },
+            })
+            .catch(console.error);
 }
