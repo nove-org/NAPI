@@ -2,10 +2,13 @@ import prisma from './prisma';
 import { getUniqueKey } from './prisma';
 import { UAParser } from 'ua-parser-js';
 
-export async function createLoginDevice(ip: string, headers: string, userId: string) {
+export async function createLoginDevice(ip: string, headers: string, userId: string, userTrackActivity: boolean) {
     const parser = new UAParser(headers);
 
     const parsedHeaders = parser.getResult();
+
+    console.log(userTrackActivity);
+    if (!userTrackActivity) return;
 
     const data = await prisma.trackedDevices.findFirst({
         where: {
