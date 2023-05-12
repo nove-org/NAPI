@@ -27,7 +27,6 @@
         "dotenv": "^16.0.3",
         "ejs": "^3.1.8",
         "express": "^4.18.2",
-        "express-useragent": "^1.0.15",
         "fs-extra": "^11.1.0",
         "micromatch": "^4.0.5",
         "multer": "^1.4.5-lts.1",
