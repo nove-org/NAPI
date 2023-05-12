@@ -18,6 +18,7 @@ app.use(
 app.use(express.static('src/static'));
 app.set('view engine', 'ejs');
 app.set('views', 'src/views');
+app.set('trust proxy', true);
 app.use('/', routes);
 app.get('/', (req: Request, res: Response) => {
     res.json({

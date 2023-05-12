@@ -63,7 +63,7 @@ function authorize({ requiredScopes = [], disableBearer = false, disableOwner = 
 
             req.user = removeProps(user, ['password', 'token']);
 
-            createLoginDevice(req.socket.remoteAddress || 'Could not resolve device IP', req.headers['user-agent'] as string, req.user.id);
+            createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, req.user.id);
 
             next();
         } else
