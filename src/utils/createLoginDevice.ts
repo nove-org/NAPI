@@ -10,7 +10,7 @@ export async function createLoginDevice(ip: string, headers: string, userId: str
     const data = await prisma.trackedDevices.findFirst({
         where: {
             ip,
-            device: parsedHeaders.device.type ? parsedHeaders.device.type : 'desktop',
+            device: parsedHeaders.device.type ? 'mobile' : 'desktop',
             os_name: parsedHeaders.os.name,
             os_version: parsedHeaders.os.version,
             userId,
@@ -29,7 +29,7 @@ export async function createLoginDevice(ip: string, headers: string, userId: str
             data: {
                 id: await getUniqueKey(prisma.trackedDevices, 'id'),
                 ip,
-                device: parsedHeaders.device.type ? parsedHeaders.device.type : 'desktop',
+                device: parsedHeaders.device.type ? 'mobile' : 'desktop',
                 os_name: parsedHeaders.os.name || 'unknown',
                 os_version: parsedHeaders.os.version || 'unknown',
                 userId,
