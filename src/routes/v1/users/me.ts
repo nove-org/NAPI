@@ -79,7 +79,7 @@ router.patch(
         if (typeof req.body.trackActivity === 'boolean') {
             data['trackActivity'] = req.body.trackActivity;
 
-            if (!data['trackActivity']) await prisma.trackedDevices.deleteMany({ where: { userId: req.user.id } });
+            await prisma.trackedDevices.deleteMany({ where: { userId: req.user.id } });
         }
 
         const newUser = await prisma.user.update({
