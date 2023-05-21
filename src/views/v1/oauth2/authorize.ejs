@@ -63,12 +63,34 @@
         </div>
 
         <script>
+            function getCookie(cookieName) {
+                let name = cookieName + '=';
+                let decodedCookie = decodeURIComponent(document.cookie);
+                let ca = decodedCookie.split(';');
+
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+
+                    while (c.charAt(0) == ' ') {
+                        c = c.substring(1);
+                    }
+
+                    if (c.indexOf(name) == 0) {
+                        return c.substring(name.length, c.length);
+                    }
+                }
+
+                return '';
+            }
+        </script>
+
+        <script>
             async function main() {
                 const loading = document.getElementById('loading');
                 const main = document.getElementById('main');
 
-                if (!localStorage.getItem('token')) {
-                    window.location.href = `https://nove.team/login?redirectBack=${encodeURIComponent(window.location.href)}`;
+                if (!getCookie('napiAuthorizationToken')) {
+                    // window.location.href = `https://nove.team/login?redirectBack=${encodeURIComponent(window.location.href)}`;
                     return;
                 }
 
@@ -76,7 +98,7 @@
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Owner ${localStorage.getItem('token')}`,
+                        Authorization: `Owner ${getCookie('napiAuthorizationToken')}`,
                     },
                 })
                     .then((res) => {
@@ -108,7 +130,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            Authorization: `Owner ${localStorage.getItem('token')}`,
+                            Authorization: `Owner ${getCookie('napiAuthorizationToken')}`,
                         },
                         body: JSON.stringify({
                             client_id: query.get('client_id'),
