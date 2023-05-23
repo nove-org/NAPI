@@ -43,4 +43,12 @@ export async function createLoginDevice(ip: string, headers: string, userId: str
                 },
             })
             .catch(console.error);
+
+    const allData = await prisma.trackedDevices.findMany({ where: { userId } });
+
+    allData.forEach(async (device) => {
+        if (device.updatedAt.getTime() + 2629800000 < new Date().getTime()) {
+            await prisma.trackedDevices.delete({ where: { id: device.id } });
+        }
+    });
 }
