@@ -12,7 +12,6 @@ declare global {
             FILE_LOG_LEVEL: LogLevel;
             CONSOLE_LOG_LEVEL: LogLevel;
             EXPLICIT_DISABLE_CONSOLE_LOG: boolean;
-            JWT_SECRET: string;
         }
     }
 }
