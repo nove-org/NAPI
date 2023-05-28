@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { OAuth_App, Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import { authorize } from '../../../middlewares/auth';
@@ -140,5 +140,21 @@ router.patch(
         return createResponse(res, 200, maskUserMe(newUser));
     }
 );
+
+router.get('/me/connections', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    const oauth2 = await prisma.oAuth_Authorization.findMany({ where: { user_id: req.user.id } });
+
+    const apps: OAuth_App[] = [];
+
+    oauth2.forEach(async (x) => {
+        const app = await prisma.oAuth_App.findUnique({ where: { client_id: x.app_id } });
+
+        if (!app) return;
+
+        apps.push(app);
+    });
+
+    createResponse(res, 200, apps);
+});
 
 export default router;

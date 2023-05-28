@@ -42,6 +42,7 @@ prisma
         const server = app.listen(process.env.PORT, () => {
             logger.info(`server started on port ${process.env.PORT}`);
         });
+
         process.once('SIGTERM', () => shutdown(server));
     })
     .catch((err: Error) => {
