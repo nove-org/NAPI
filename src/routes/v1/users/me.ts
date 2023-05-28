@@ -1,14 +1,16 @@
-import { Prisma } from '@prisma/client';
+import { OAuth_App, Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
+import { generateSecret, verifyToken } from 'node-2fa';
 import { z } from 'zod';
 import { authorize } from '../../../middlewares/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
+import { randomString } from '../../../utils/crypto';
+import { removeProps } from '../../../utils/masker';
 import { multerUploadSingle } from '../../../utils/multipart';
 import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
-import { UAParser } from 'ua-parser-js';
 
 const router = Router();
 
@@ -29,6 +31,7 @@ router.patch(
     '/email',
     authorize({
         disableBearer: true,
+        requireMfa: true,
     }),
     async (req: Request, res: Response) => {
         const { email } = req.body;
@@ -91,6 +94,91 @@ router.patch(
     }
 );
 
+router.patch(
+    '/me/mfa',
+    validate(
+        z.object({
+            enabled: z.boolean().optional(),
+        }),
+        'body'
+    ),
+    authorize({
+        disableBearer: true,
+    }),
+    async (req: Request, res: Response) => {
+        if (req.user.mfaEnabled) {
+            if (!req.body.enabled) return createError(res, 400, { message: 'mfa is already disabled', code: 'mfa_already_disabled', type: 'validation' });
+
+            const mfa = req.headers['x-mfa'] as string;
+
+            if (/[a-zA-Z0-9]{16}/.test(mfa)) {
+                await prisma.user.update({
+                    where: { id: req.user.id },
+                    data: {
+                        mfaEnabled: false,
+                        mfaSecret: '',
+                        mfaRecoveryCodes: [] as string[],
+                    },
+                });
+
+                return createResponse(res, 200, { message: 'mfa disabled' });
+            }
+
+            if (!mfa || !/[0-9]{6}/.test(mfa))
+                return createError(res, 403, {
+                    code: 'mfa_required',
+                    message: 'mfa required',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+            if (verifyToken(req.user.mfaSecret, mfa)?.delta !== 0)
+                return createError(res, 403, {
+                    code: 'invalid_mfa_token',
+                    message: 'invalid mfa token',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+
+            await prisma.user.update({
+                where: { id: req.user.id },
+                data: {
+                    mfaEnabled: req.body.enabled,
+                    mfaSecret: '',
+                    mfaRecoveryCodes: [] as string[],
+                },
+            });
+
+            return createResponse(res, 200, { message: 'mfa disabled' });
+        } else {
+            if (req.body.enabled) return createError(res, 400, { message: 'mfa is already enabled', code: 'mfa_already_enabled', type: 'validation' });
+            const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
+            const newCodes = Array.from({ length: 10 }, () => randomString(16));
+
+            await prisma.user.update({
+                where: { id: req.user.id },
+                data: {
+                    mfaEnabled: req.body.enabled,
+                    mfaSecret: newSecret.secret,
+                    mfaRecoveryCodes: newCodes,
+                },
+            });
+
+            return createResponse(res, 200, { secret: newSecret, codes: newCodes });
+        }
+    }
+);
+
+router.get(
+    '/me/mfa/securityCodes',
+    authorize({
+        disableBearer: true,
+        requireMfa: true,
+    }),
+    async (req: Request, res: Response) => {
+        createResponse(res, 200, req.user.mfaRecoveryCodes);
+    }
+);
+
 router.get('/me/activity', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
     if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivity)
         return createError(res, 400, {
@@ -140,5 +228,16 @@ router.patch(
         return createResponse(res, 200, maskUserMe(newUser));
     }
 );
+
+router.get('/me/connections', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    const oauth2 = await prisma.oAuth_Authorization.findMany({ where: { user_id: req.user.id }, include: { app: true } });
+    const apps: OAuth_App[] = [];
+
+    createResponse(
+        res,
+        200,
+        oauth2.map((x) => removeProps(x, ['token', 'refresh_token', 'app.client_secret']))
+    );
+});
 
 export default router;

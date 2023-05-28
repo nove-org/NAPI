@@ -1,5 +1,6 @@
 import { OAuth_App, OAuth_Authorization, User } from '@prisma/client';
 import { NextFunction, Request, Response } from 'express';
+import { verifyToken } from 'node-2fa';
 import createError from '../utils/createError';
 import { createLoginDevice } from '../utils/createLoginDevice';
 import { removeProps } from '../utils/masker';
@@ -7,9 +8,20 @@ import { TPermission, checkPermissions } from '../utils/permissions';
 import prisma from '../utils/prisma';
 import { Modify } from '../utils/types';
 
-function authorize({ requiredScopes = [], disableBearer = false, disableOwner = false }: { requiredScopes?: TPermission[]; disableBearer?: boolean; disableOwner?: boolean }) {
+function authorize({
+    requiredScopes = [],
+    disableBearer = false,
+    disableOwner = false,
+    requireMfa = false,
+}: {
+    requiredScopes?: TPermission[];
+    disableBearer?: boolean;
+    disableOwner?: boolean;
+    requireMfa?: boolean;
+}) {
     return async (req: Request, res: Response, next: NextFunction) => {
         const [method, token] = req.headers.authorization?.split(' ') || [];
+        const mfa = (req.headers['x-mfa'] as string) || '';
 
         if (!token)
             return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
@@ -47,12 +59,39 @@ function authorize({ requiredScopes = [], disableBearer = false, disableOwner = 
             if (!checkPermissions(authorization.scopes, requiredScopes))
                 return createError(res, 403, { code: 'insufficient_permissions', message: 'insufficient permissions', param: 'header:authorization', type: 'authorization' });
 
+            if (requireMfa && (!authorization.user.mfaEnabled || !mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa)))
+                return createError(res, 403, {
+                    code: 'mfa_required',
+                    message: 'mfa required',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+            if (requireMfa && !(/([0-9]{6})/.test(mfa) ? verifyToken(authorization.user.mfaSecret, mfa)?.delta !== 0 : authorization.user.mfaRecoveryCodes?.includes(mfa)))
+                return createError(res, 403, {
+                    code: 'invalid_mfa_token',
+                    message: 'invalid mfa token',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+
+            if (/([a-zA-Z0-9]{16})/.test(mfa))
+                authorization.user = await prisma.user.update({
+                    where: {
+                        id: authorization.user.id,
+                    },
+                    data: {
+                        mfaRecoveryCodes: {
+                            set: authorization.user.mfaRecoveryCodes?.filter((code) => code !== mfa),
+                        },
+                    },
+                });
+
             req.user = removeProps(authorization.user, ['password', 'token']);
             req.oauth = authorization;
 
             next();
         } else if (method === 'Owner') {
-            const user = await prisma.user.findFirst({
+            let user = await prisma.user.findFirst({
                 where: {
                     token: token,
                 },
@@ -61,10 +100,35 @@ function authorize({ requiredScopes = [], disableBearer = false, disableOwner = 
             if (!user)
                 return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
 
+            if (requireMfa && (!user.mfaEnabled || !mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa)))
+                return createError(res, 403, {
+                    code: 'mfa_required',
+                    message: 'mfa required',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+            if (requireMfa && !(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta !== 0 : user.mfaRecoveryCodes?.includes(mfa)))
+                return createError(res, 403, {
+                    code: 'invalid_mfa_token',
+                    message: 'invalid mfa token',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+
+            if (/([a-zA-Z0-9]{16})/.test(mfa))
+                user = await prisma.user.update({
+                    where: {
+                        id: user.id,
+                    },
+                    data: {
+                        mfaRecoveryCodes: {
+                            set: user.mfaRecoveryCodes?.filter((code) => code !== mfa),
+                        },
+                    },
+                });
+
             req.user = removeProps(user, ['password', 'token']);
-
             createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, req.user.id, req.user.trackActivity);
-
             next();
         } else
             return createError(res, 401, { code: 'invalid_authorization_method', message: 'invalid authorization method', param: 'header:authorization', type: 'authorization' });
