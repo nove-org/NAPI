@@ -99,7 +99,7 @@ router.get('/me/activity', authorize({ disableBearer: true }), async (req: Reque
             type: 'request',
         });
 
-    let perPage = parseInt(req.query.perPage as string) || 10;
+    let perPage = Math.abs(parseInt(req.query.perPage as string)) || 10;
 
     if (perPage > 25 || perPage < 1) perPage = 3;
 
@@ -107,8 +107,8 @@ router.get('/me/activity', authorize({ disableBearer: true }), async (req: Reque
         where: {
             userId: req.user.id,
         },
-        skip: req.query.page ? parseInt(req.query.page.toString()) * Math.abs(perPage) : 0,
-        take: Math.abs(perPage),
+        skip: req.query.page ? parseInt(req.query.page.toString()) * perPage : 0,
+        take: perPage,
         orderBy: {
             updatedAt: 'desc',
         },
