@@ -1,5 +1,4 @@
 import cors from 'cors';
-import bcrypt from 'bcrypt';
 import express, { Request, Response } from 'express';
 import { Server } from 'http';
 import routes from './routes';
