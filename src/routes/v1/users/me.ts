@@ -107,8 +107,8 @@ router.get('/me/activity', authorize({ disableBearer: true }), async (req: Reque
         where: {
             userId: req.user.id,
         },
-        skip: req.query.page ? parseInt(req.query.page.toString()) * perPage : 0,
-        take: perPage,
+        skip: req.query.page ? parseInt(req.query.page.toString()) * Math.abs(perPage) : 0,
+        take: Math.abs(perPage),
         orderBy: {
             updatedAt: 'desc',
         },
