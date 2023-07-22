@@ -58,7 +58,7 @@ router.patch(
                 .string()
                 .min(3)
                 .max(24)
-                .regex(/[a-zA-Z0-9._-]{3,}$/g)
+                .regex(/[a-zA-Z0-9._-]{3,64}$/g)
                 .optional(),
             bio: z.string().min(1).max(256).optional(),
             language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).optional(),

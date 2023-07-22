@@ -47,7 +47,7 @@ router.post(
                 .string()
                 .min(3)
                 .max(24)
-                .regex(/[a-zA-Z0-9._ -]/gm)
+                .regex(/[a-zA-Z0-9._-]{3,64}$/g)
                 .optional(),
             password: z.string().min(8).max(128),
             language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).min(1).max(5).optional(),
