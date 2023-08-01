@@ -21,7 +21,7 @@ Full-featured API that handles most of the Nove projects. Including: OAuth2, acc
    yarn
    
    # If the command wasn't found please install yarn >=1.22.19 package manager
-   # You can do it on Arch Linux using following command
+   # You can do it on Arch Linux using the following command
    paru -S yarn
 6. Set up PostgreSQL and then run `yarn db`. Before running database generate and update please fill out the *.env* file using premade *.env.example*
    ```yml
