@@ -6,16 +6,33 @@ Full-featured API that handles most of the Nove projects. Including: OAuth2, acc
 
 ## Setting up the environment
 1. To start please install following packages `nodejs`, `yarn`, `imagemagick`, `postgresql`, `libwebp`<br/><br/>
-   You can do this on Arch Linux by using Paru package manager
    ```yml
+   # Example of installing the packages on Arch Linux using Paru package manager
    paru -S nodejs yarn imagemagick postgresql libwebp
    ```
 2. Fork and then `git clone` your forked repository
-3. Install required node packages using `yarn` command
-4. Set up PostgreSQL and then run `yarn db`. Before running database generate and update please fill out the *.env* file using premade *.env.example*
-5. If everything was successful you are ready to go! Happy coding.
+   ```yml
+   # You should always clone repositories through SSH
+   git clone git@github.com:nove-org/NAPI.git
+   ```
+4. Install required node packages
+   ```yml
+   # Always use yarn as your package manager when contributing to nove-org projects
+   yarn
+   
+   # If the command wasn't found please install yarn >=1.22.19 package manager
+   # You can do it on Arch Linux using following command
+   paru -S yarn
+6. Set up PostgreSQL and then run `yarn db`. Before running database generate and update please fill out the *.env* file using premade *.env.example*
+   ```yml
+   yarn db
+   # Alternatively, you can use following commands
+   yarn db:generate
+   yarn db:update
+   ```
+7. If everything was successful you are ready to go! Happy coding.
 
-## Start the project
+## Scripts in package.json
 NAPI project comes with premade commands for simplified usage:
  - `yarn dev`: In development mode, compiles Sass in watch mode and the project itself, running in nodemon
  - `yarn dev:sass`: Watch for Sass file changes and compile them to CSS directory
@@ -28,10 +45,14 @@ NAPI project comes with premade commands for simplified usage:
  - `yarn db:studio`: Start Prisma Studio on localhost:5555
  - `yarn test`: Run project tests
 
-## For developers
+## Contributing
+Feel free to contribute improvements, features, bug fixes and more to our code. When you do that, please follow the guidelines. Found a bug in this file? Fork this repository, fix it and open a new pull request.
 
 ### Commit messages
 All commits in pull request or not have to follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) guidelines. Otherwise, they will be rejected instantly.
+
+### Formatting
+The code should be automatically formatted after you create your pull request with our config file. You can still install Prettier extension for VSCode/VSCodium and turn on format on save.
 
 ### PostgreSQL
 Before you will be able to use NAPI you have to setup PostgreSQL as your database. Download it from [here](https://www.postgresql.org/download/) (or using your package manager) and follow the setup guide.
