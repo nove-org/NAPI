@@ -5,7 +5,7 @@ Full-featured API that handles most of the Nove projects. Including: OAuth2, acc
 <br />
 
 ## Setting up the environment
-1. To start please install following packages `nodejs`, `yarn`, `imagemagick`, `postgresql`, `libwebp`<br/><br/>
+1. To get started, please install the following packages `nodejs`, `yarn`, `imagemagick`, `postgresql`, `libwebp`<br/><br/>
    ```yml
    # Example of installing the packages on Arch Linux using Paru package manager
    paru -S nodejs yarn imagemagick postgresql libwebp
@@ -15,7 +15,7 @@ Full-featured API that handles most of the Nove projects. Including: OAuth2, acc
    # You should always clone repositories through SSH
    git clone git@github.com:nove-org/NAPI.git
    ```
-4. Install required node packages
+3. Install the required node packages
    ```yml
    # Always use yarn as your package manager when contributing to nove-org projects
    yarn
@@ -23,14 +23,14 @@ Full-featured API that handles most of the Nove projects. Including: OAuth2, acc
    # If the command wasn't found please install yarn >=1.22.19 package manager
    # You can do it on Arch Linux using the following command
    paru -S yarn
-6. Set up PostgreSQL and then run `yarn db`. Before running database generate and update please fill out the *.env* file using premade *.env.example*
+4. Set up PostgreSQL and then run `yarn db`. Before running database generate and update please fill out the *.env* file using premade *.env.example*
    ```yml
    yarn db
    # Alternatively, you can use following commands
    yarn db:generate
    yarn db:update
    ```
-7. If everything was successful you are ready to go! Happy coding.
+5. If everything was successful you are ready to go! Happy coding.
 
 ## Scripts in package.json
 NAPI project comes with premade commands for simplified usage:
@@ -68,7 +68,7 @@ In the *.env* file
 DATABASE_URL="postgres://USERNAME:PASSWORD@localhost:5432/DATABASE"
 ```
 
-You should now be able to setup Prisma
+You should now be able to setup Prisma.
 
 ```yml
 # Generate Prisma Client
@@ -78,4 +78,4 @@ yarn db:update
 ```
 
 ## License
-This project is licensed under [GNU Affero General Public License v3.0](https://github.com/nove-org/NAPI/blob/main/LICENSE)
+This project is under the [GNU Affero General Public License v3.0](https://github.com/nove-org/NAPI/blob/main/LICENSE)
