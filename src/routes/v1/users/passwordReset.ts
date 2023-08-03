@@ -50,12 +50,11 @@ router.post('/passwordRecovery', validate(z.object({ email: z.string(), newPassw
         },
     });
 
-    await transporter
-        .sendMail({
-            from: 'noreply@nove.team',
-            to: req.body.email,
-            subject: 'Password reset requested',
-            html: `<html style="width: 100%">
+    await transporter.sendMail({
+        from: 'noreply@nove.team',
+        to: req.body.email,
+        subject: 'Password reset requested',
+        html: `<html style="width: 100%">
             <body style="margin: 0 auto; max-width: 340px; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3); background: #e4e4e4">
                 <header style="display: flex; align-items: center; font-weight: 700; width: calc(100%-60px); padding: 20px 30px; border-bottom: 1px solid #c4c4c4">
                     <img style="margin-right: 5px" src="https://f.nove.team/nove.png" width="20" height="20" />
@@ -73,8 +72,7 @@ router.post('/passwordRecovery', validate(z.object({ email: z.string(), newPassw
             </body>
         </html>
         `,
-        })
-        .then(console.log);
+    });
 });
 
 router.get('/passwordKey', async (req: Request, res: Response) => {

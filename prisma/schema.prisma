@@ -33,6 +33,15 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+model UserEmailChange {
+  id          String   @id @default(uuid())
+  userId      String
+  codeOldMail String
+  codeNewMail String
+  newEmail    String
+  expiresAt   DateTime
+}
+
 model OAuth_App {
   client_id           String   @id @default(uuid())
   client_secret       String

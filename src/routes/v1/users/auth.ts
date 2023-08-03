@@ -133,7 +133,7 @@ router.post(
             
                     <h1 style="padding: 0 30px">Confirm your e-mail to create Nove account</h1>
                     <p style="padding: 0 30px; font-size: 20px; line-height: 1.5; margin: 0; margin-bottom: 40px">
-                        Hello ${req.user.username}, your e-mail address has been provided while creating a new Nove account. In order to confirm that request please click "Approve" button. If that wasn't you, just
+                        Hello ${req.body.username}, your e-mail address has been provided while creating a new Nove account. In order to confirm that request please click "Approve" button. If that wasn't you, just
                         ignore this e-mail.
                     </p>
                     <a style="margin: 0 30px; padding: 10px 15px; border-radius: 5px; font-size: 16px; border: 1px solid indianred; color: black; text-decoration: none" href="https://api.nove.team/v1/users/verifyEmail?code=${verificationCode}">Approve</a> 

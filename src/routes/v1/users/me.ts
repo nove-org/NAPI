@@ -1,6 +1,7 @@
-import { OAuth_App, Prisma } from '@prisma/client';
+import { OAuth_App, Prisma, UserEmailChange } from '@prisma/client';
 import { Request, Response, Router } from 'express';
 import { generateSecret, verifyToken } from 'node-2fa';
+import nodemailer from 'nodemailer';
 import { z } from 'zod';
 import { authorize } from '../../../middlewares/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
@@ -9,7 +10,7 @@ import createResponse from '../../../utils/createResponse';
 import { randomString } from '../../../utils/crypto';
 import { removeProps } from '../../../utils/masker';
 import { multerUploadSingle } from '../../../utils/multipart';
-import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
+import prisma, { getUniqueKey, maskUserMe, maskUserOAuth } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 
 const router = Router();
@@ -27,28 +28,135 @@ router.get(
     }
 );
 
-router.patch(
-    '/email',
-    authorize({
-        disableBearer: true,
-        requireMfa: true,
-    }),
-    async (req: Request, res: Response) => {
-        const { email } = req.body;
-        const emailUser = await prisma.user.findFirst({ where: { email } });
+router.post('/emailReset', authorize({ disableBearer: true, requireMfa: false }), validate(z.object({ newEmail: z.string() })), async (req: Request, res: Response) => {
+    const { newEmail } = req.body;
 
-        if (emailUser) return createError(res, 400, { message: 'This email is already taken', code: 'taken_email', type: 'validation' });
+    const emailUser = await prisma.user.findFirst({ where: { email: newEmail } });
 
-        const newUser = await prisma.user.update({
-            where: { id: req.user.id },
-            data: {
-                email,
-            },
+    if (emailUser)
+        return createError(res, 400, {
+            message: 'This email is already taken',
+            code: 'taken_email',
+            type: 'validation',
         });
 
-        return createResponse(res, 200, maskUserMe(newUser));
+    const data = await prisma.userEmailChange.create({
+        data: {
+            newEmail: newEmail,
+            userId: req.user.id,
+            expiresAt: new Date(Date.now() + 86400000),
+            codeNewMail: await getUniqueKey(prisma.userEmailChange, 'codeNewMail', randomString),
+            codeOldMail: await getUniqueKey(prisma.userEmailChange, 'codeOldMail', randomString),
+        },
+    });
+
+    createResponse(res, 200, { success: true });
+
+    const transporter = nodemailer.createTransport({
+        host: 'mail.nove.team',
+        port: 465,
+        tls: {
+            rejectUnauthorized: false,
+        },
+        auth: {
+            user: 'noreply@nove.team',
+            pass: process.env.PASSWORD,
+        },
+    });
+
+    await transporter.sendMail({
+        from: 'noreply@nove.team',
+        to: req.user.email,
+        subject: 'Password reset requested',
+        html: `<html style="width: 100%">
+        <body style="margin: 0 auto; max-width: 340px; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3); background: #e4e4e4">
+            <header style="display: flex; align-items: center; font-weight: 700; width: calc(100%-60px); padding: 20px 30px; border-bottom: 1px solid #c4c4c4">
+                <img style="margin-right: 5px" src="https://f.nove.team/nove.png" width="20" height="20" />
+                Nove Group
+            </header>
+    
+            <h1 style="padding: 0 30px">Password reset requested</h1>
+            <p style="padding: 0 30px; font-size: 20px; line-height: 1.5; margin: 0; margin-bottom: 40px">
+                Hello, ${req.user.username}. Your e-mail address has been provided while resetting Nove account password. In order to complete that request please click "Change password" button. If
+                that wasn't you, just ignore this e-mail.
+            </p>
+            <a style="margin: 0 30px; padding: 10px 15px; border-radius: 5px; font-size: 16px; border: 1px solid indianred; color: black; text-decoration: none" href="https://api.nove.team/v1/users/confirmEmailChange?code=${data.codeOldMail}"
+                >Change password</a
+            >
+        </body>
+    </html>
+    `,
+    });
+
+    await transporter
+        .sendMail({
+            from: 'noreply@nove.team',
+            to: newEmail,
+            subject: 'Password reset requested',
+            html: `<html style="width: 100%">
+        <body style="margin: 0 auto; max-width: 340px; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3); background: #e4e4e4">
+            <header style="display: flex; align-items: center; font-weight: 700; width: calc(100%-60px); padding: 20px 30px; border-bottom: 1px solid #c4c4c4">
+                <img style="margin-right: 5px" src="https://f.nove.team/nove.png" width="20" height="20" />
+                Nove Group
+            </header>
+    
+            <h1 style="padding: 0 30px">Password reset requested</h1>
+            <p style="padding: 0 30px; font-size: 20px; line-height: 1.5; margin: 0; margin-bottom: 40px">
+                Hello, ${req.user.username}. Your e-mail address has been provided while resetting Nove account password. In order to complete that request please click "Change password" button. If
+                that wasn't you, just ignore this e-mail.
+            </p>
+            <a style="margin: 0 30px; padding: 10px 15px; border-radius: 5px; font-size: 16px; border: 1px solid indianred; color: black; text-decoration: none" href="https://api.nove.team/v1/users/confirmEmailChange?code=${data.codeNewMail}"
+                >Change password</a
+            >
+        </body>
+    </html>
+    `,
+        })
+        .then(console.log);
+});
+
+router.get('/confirmEmailChange', authorize({ disableBearer: true, requireMfa: false }), async (req: Request, res: Response) => {
+    const code = req.query.code as string;
+
+    const newEmailObject = await prisma.userEmailChange.findFirst({
+        where: {
+            OR: [{ codeNewMail: code }, { codeOldMail: code }],
+        },
+    });
+
+    if (!newEmailObject)
+        return createError(res, 404, {
+            code: 'invalid_code',
+            message: 'invalid email change code',
+            param: 'query:code',
+            type: 'authorization',
+        });
+
+    if (code === newEmailObject.codeNewMail)
+        await prisma.userEmailChange.update({
+            where: { id: newEmailObject.id },
+            data: { codeNewMail: '' },
+        });
+    if (code === newEmailObject.codeOldMail)
+        await prisma.userEmailChange.update({
+            where: { id: newEmailObject.id },
+            data: { codeOldMail: '' },
+        });
+
+    const newData = (await prisma.userEmailChange.findFirst({ where: { id: newEmailObject.id } })) as UserEmailChange;
+
+    if (!newData.codeNewMail.length && !newData.codeOldMail.length) {
+        await prisma.userEmailChange.delete({
+            where: { id: newEmailObject.id },
+        });
+
+        await prisma.user.update({ where: { id: req.user.id }, data: { email: newEmailObject.newEmail } });
+
+        return createResponse(res, 200, { success: true });
     }
-);
+
+    return createResponse(res, 200, { text: `you have to verify your ${code === newEmailObject.codeNewMail ? 'old' : 'new'} also` });
+});
 
 router.patch(
     '/me',
