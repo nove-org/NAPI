@@ -11,17 +11,19 @@ datasource db {
 }
 
 model User {
-  id            String      @id @default(uuid())
-  email         String      @unique
-  bio           String
-  username      String      @unique
-  language      String
-  password      String
-  token         String
-  profilePublic Boolean     @default(false)
-  trackActivity Boolean     @default(true)
-  mfaEnabled    Boolean     @default(false)
-  mfaSecret     String      @default("")
+  id               String   @id @default(uuid())
+  email            String   @unique
+  bio              String
+  username         String   @unique
+  language         String
+  password         String
+  verified         Boolean  @default(false)
+  emailVerifyCode  String
+  token            String
+  profilePublic    Boolean  @default(false)
+  trackActivity    Boolean  @default(true)
+  mfaEnabled       Boolean  @default(false)
+  mfaSecret        String   @default("")
   mfaRecoveryCodes String[]
 
   oauth_authorizations OAuth_Authorization[]
@@ -79,9 +81,10 @@ model OAuth_Code {
 }
 
 model Recovery {
-  code      String   @id @unique
-  userId    String
-  expiresAt DateTime
+  code        String   @id @unique
+  userId      String
+  newPassword String
+  expiresAt   DateTime
 }
 
 model TrackedDevices {
