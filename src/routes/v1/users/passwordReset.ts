@@ -85,7 +85,7 @@ router.get('/passwordKey', async (req: Request, res: Response) => {
     await prisma.user.update({ where: { id: user.id }, data: { password: recovery.newPassword } });
     await prisma.recovery.delete({ where: { code: recovery.code } });
 
-    return res.redirect('${process.env.FRONTEND_URL}/account');
+    return res.redirect(`${process.env.FRONTEND_URL}/account`);
 });
 
 router.patch(

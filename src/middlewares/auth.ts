@@ -141,7 +141,7 @@ function authorize({
                     },
                     auth: {
                         user: process.env.MAIL_USERNAME,
-                        pass: process.env.PASSWORD,
+                        pass: process.env.MAIL_PASSWORD,
                     },
                 });
 
