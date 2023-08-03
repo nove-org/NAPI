@@ -1,0 +1,79 @@
+<center>
+    <img src="https://f.nove.team/emailReset.svg" width="380" height="126" alt="Confirm requested e-mail change" />
+    <div
+        style="
+            margin: 10px 0;
+            padding: 20px;
+            max-width: 380px;
+            width: calc(100% - 20px * 2);
+            background: #ededed;
+            border-radius: 25px;
+            font-family: sans-serif;
+            user-select: none;
+            text-align: left;
+        ">
+        <p style="font-size: 17px; line-height: 1.5; margin: 0; margin-bottom: 10px; text-align: left">
+            Hello,&nbsp;<b>${user.username}</b>. Someone requested to change your Nove account e-mail. In order to approve that request click "Confirm e-mail change" button. If
+            that wasn't you, just ignore this message.
+        </p>
+        <a
+            style="
+                display: block;
+                width: fit-content;
+                border-radius: 50px;
+                padding: 5px 9px;
+                font-size: 16px;
+                color: rgb(255, 255, 255);
+                background: #000000;
+                text-decoration: none;
+                text-align: left;
+            "
+            href="${process.env.NAPI_URL}/v1/users/confirmEmailChange?code=${data.codeNewMail}"
+            >Confirm e-mail change</a
+        >
+    </div>
+    <p style="max-width: 380px; width: 380px; text-align: left; font-size: 14px; opacity: 0.7; font-family: sans-serif; user-select: none">
+        We create FOSS privacy-respecting software for everyday use. <a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,
+        <a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a>
+    </p>
+</center>
+
+<center>
+    <img src="https://f.nove.team/emailReset.svg" width="380" height="126" alt="Confirm your e-mail to create new Nove account" />
+    <div
+        style="
+            margin: 10px 0;
+            padding: 20px;
+            max-width: 380px;
+            width: calc(100% - 20px * 2);
+            background: #ededed;
+            border-radius: 25px;
+            font-family: sans-serif;
+            user-select: none;
+            text-align: left;
+        ">
+        <p style="font-size: 17px; line-height: 1.5; margin: 0; margin-bottom: 10px; text-align: left">
+            Hello,&nbsp;<b>${user.username}</b>. Someone requested to change your Nove account e-mail. In order to approve that request click "Confirm e-mail change" button. If
+            that wasn't you, just ignore this message.
+        </p>
+        <a
+            style="
+                display: block;
+                width: fit-content;
+                border-radius: 50px;
+                padding: 5px 9px;
+                font-size: 16px;
+                color: rgb(255, 255, 255);
+                background: #000000;
+                text-decoration: none;
+                text-align: left;
+            "
+            href="${process.env.NAPI_URL}/v1/users/confirmEmailChange?code=${data.codeNewMail}"
+            >Confirm e-mail change</a
+        >
+    </div>
+    <p style="max-width: 380px; width: 380px; text-align: left; font-size: 14px; opacity: 0.7; font-family: sans-serif; user-select: none">
+        We create FOSS privacy-respecting software for everyday use. <a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,
+        <a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a>
+    </p>
+</center>

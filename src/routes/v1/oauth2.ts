@@ -73,7 +73,6 @@ router.post(
                 user_id: req.user.id,
             },
         });
-        console.log(code);
         createResponse(res, 200, {
             code: code.code,
         });

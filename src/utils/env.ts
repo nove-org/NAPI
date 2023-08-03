@@ -5,6 +5,11 @@ require('dotenv').config();
 export default function checkEnv() {
     const schema = yup.object({
         PORT: yup.number().required().min(0).max(65535),
+        NAPI_URL: yup.string().required(),
+        FRONTEND_URL: yup.string().required(),
+        MAIL_USERNAME: yup.string().required(),
+        MAIL_PASSWORD: yup.string().required(),
+        MAIL_HOST: yup.string().required(),
         ENV: yup
             .string()
             .required()
