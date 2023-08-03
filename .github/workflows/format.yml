@@ -22,4 +22,5 @@ jobs:
               with:
                   # This part is also where you can pass other options, for example:
                   prettier_options: --write **/*.{ts,js,md,json} --config .prettierrc
+                  commit_message: "chore: prettified code"
                   only_changed: True
