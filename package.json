@@ -15,7 +15,7 @@
         "db:studio": "yarn run -s prisma studio",
         "test": "jest",
         "prepare": "husky install",
-        "format": "npx pretty-quick --staged",
+        "format": "yarn pretty-quick --staged",
         "checkCommitMessage": "yarn run -s commitlint -V -c --edit",
         "postinstall": "yarn -s patch-package"
     },
