@@ -109,37 +109,22 @@ router.post(
         createResponse(res, 200, maskUserMe(user, true));
 
         const transporter = nodemailer.createTransport({
-            host: 'mail.nove.team',
+            host: process.env.MAIL_HOST,
             port: 465,
             tls: {
                 rejectUnauthorized: false,
             },
             auth: {
-                user: 'noreply@nove.team',
+                user: process.env.MAIL_USERNAME,
                 pass: process.env.PASSWORD,
             },
         });
 
         await transporter.sendMail({
-            from: 'noreply@nove.team',
+            from: process.env.MAIL_USERNAME,
             to: req.body.email,
             subject: 'Confirm your e-mail to create Nove account',
-            html: `<html style="width: 100%">
-                <body style="margin: 0 auto; max-width: 340px; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3); background: #e4e4e4">
-                    <header style="display: flex; align-items: center; font-weight: 700; width: calc(100%-60px); padding: 20px 30px; border-bottom: 1px solid #c4c4c4">
-                        <img style="margin-right: 5px" src="https://f.nove.team/nove.png" width="20" height="20" />
-                        Nove Group
-                    </header>
-            
-                    <h1 style="padding: 0 30px">Confirm your e-mail to create Nove account</h1>
-                    <p style="padding: 0 30px; font-size: 20px; line-height: 1.5; margin: 0; margin-bottom: 40px">
-                        Hello ${req.body.username}, your e-mail address has been provided while creating a new Nove account. In order to confirm that request please click "Approve" button. If that wasn't you, just
-                        ignore this e-mail.
-                    </p>
-                    <a style="margin: 0 30px; padding: 10px 15px; border-radius: 5px; font-size: 16px; border: 1px solid indianred; color: black; text-decoration: none" href="https://api.nove.team/v1/users/verifyEmail?code=${verificationCode}">Approve</a> 
-                </body>
-            </html>
-            `,
+            html: `<center><img src="https://f.nove.team/confirmEmail.svg" width="380" height="126" alt="Confirm your e-mail to create new Nove account"><div style="margin:10px 0;padding:20px;max-width:380px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${req.user.username}</b>. Your e-mail address has been provided while creating a new Nove account. In order to confirm that request please click "Approve" button. If that wasn't you, just ignore this e-mail.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${process.env.NAPI_URL}/v1/users/verifyEmail?code=${verificationCode}">Approve</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
         });
     }
 );
@@ -165,7 +150,7 @@ router.get('/verifyEmail', async (req: Request, res: Response) => {
         },
     });
 
-    return res.redirect('https://nove.team/account');
+    return res.redirect('${process.env.FRONTEND_URL}/account');
 });
 
 export default router;

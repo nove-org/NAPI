@@ -134,13 +134,13 @@ function authorize({
             const device = await prisma.trackedDevices.findFirst({ where: { ip: req.ip } });
             if (!device) {
                 const transporter = nodemailer.createTransport({
-                    host: 'mail.nove.team',
+                    host: process.env.MAIL_HOST,
                     port: 465,
                     tls: {
                         rejectUnauthorized: false,
                     },
                     auth: {
-                        user: 'noreply@nove.team',
+                        user: process.env.MAIL_USERNAME,
                         pass: process.env.PASSWORD,
                     },
                 });
@@ -150,25 +150,10 @@ function authorize({
                 });
 
                 await transporter.sendMail({
-                    from: 'noreply@nove.team',
+                    from: process.env.MAIL_USERNAME,
                     to: req.user.email,
                     subject: 'New login location detected',
-                    html: `<html style="width: 100%">
-                        <body style="margin: 0 auto; max-width: 340px; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3); background: #e4e4e4">
-                            <header style="display: flex; align-items: center; font-weight: 700; width: calc(100%-60px); padding: 20px 30px; border-bottom: 1px solid #c4c4c4">
-                                <img style="margin-right: 5px" src="https://f.nove.team/assets/nove.png" width="20" height="20" />
-                                Nove Group
-                            </header>
-                    
-                            <h1 style="padding: 0 30px">New login location detected</h1>
-                            <p style="padding: 0 30px; font-size: 20px; line-height: 1.5; margin: 0; margin-bottom: 40px">
-                                Hello, ${req.user.username}. Someone tried to log in to your account from ${location.data.country}, ${location.data.region_name} (${req.ip}). That request has been blocked. In order to add this address to whitelist
-                                click "Reset password" button. If that wasn't you, change your credentials immediately.
-                            </p>
-                            <a style="margin: 0 30px; padding: 10px 15px; border-radius: 5px; font-size: 16px; border: 1px solid indianred; color: black; text-decoration: none" href="https://nove.team/account/security">Reset password</a>
-                        </body>
-                    </html>
-                    `,
+                    html: `<center><img src="https://f.nove.team/passwordReset.svg" width="380" height="126" alt="New login location detected"><div style="margin:10px 0;padding:20px;max-width:380px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${req.user.username}</b>. Someone just logged in to your Nove account from&nbsp;<b>${location.data.country}, ${location.data.region_name}</b>&nbsp;(${req.ip}). If that was you, ignore this e-mail. Otherwise, change your password immediately.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${process.env.FRONTEND_URL}/account/security">Change your password</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
                 });
             }
             next();

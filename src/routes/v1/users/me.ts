@@ -53,64 +53,30 @@ router.post('/emailReset', authorize({ disableBearer: true, requireMfa: false })
     createResponse(res, 200, { success: true });
 
     const transporter = nodemailer.createTransport({
-        host: 'mail.nove.team',
+        host: process.env.MAIL_HOST,
         port: 465,
         tls: {
             rejectUnauthorized: false,
         },
         auth: {
-            user: 'noreply@nove.team',
+            user: process.env.MAIL_USERNAME,
             pass: process.env.PASSWORD,
         },
     });
 
     await transporter.sendMail({
-        from: 'noreply@nove.team',
+        from: process.env.MAIL_USERNAME,
         to: req.user.email,
-        subject: 'Password reset requested',
-        html: `<html style="width: 100%">
-        <body style="margin: 0 auto; max-width: 340px; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3); background: #e4e4e4">
-            <header style="display: flex; align-items: center; font-weight: 700; width: calc(100%-60px); padding: 20px 30px; border-bottom: 1px solid #c4c4c4">
-                <img style="margin-right: 5px" src="https://f.nove.team/nove.png" width="20" height="20" />
-                Nove Group
-            </header>
-    
-            <h1 style="padding: 0 30px">Password reset requested</h1>
-            <p style="padding: 0 30px; font-size: 20px; line-height: 1.5; margin: 0; margin-bottom: 40px">
-                Hello, ${req.user.username}. Your e-mail address has been provided while resetting Nove account password. In order to complete that request please click "Change password" button. If
-                that wasn't you, just ignore this e-mail.
-            </p>
-            <a style="margin: 0 30px; padding: 10px 15px; border-radius: 5px; font-size: 16px; border: 1px solid indianred; color: black; text-decoration: none" href="https://api.nove.team/v1/users/confirmEmailChange?code=${data.codeOldMail}"
-                >Change password</a
-            >
-        </body>
-    </html>
-    `,
+        subject: 'Confirm requested e-mail address change',
+        html: `<center><img src="https://f.nove.team/emailReset.svg" width="380" height="126" alt="Confirm requested e-mail address change"><div style="margin:10px 0;padding:20px;max-width:380px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${req.user.username}</b>. Someone requested to change your Nove account e-mail. In order to approve that request click "Confirm e-mail change" button. If that wasn't you, just ignore this message.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${process.env.NAPI_URL}/v1/users/confirmEmailChange?code=${data.codeOldMail}">Confirm e-mail change</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
     });
 
     await transporter
         .sendMail({
-            from: 'noreply@nove.team',
+            from: process.env.MAIL_USERNAME,
             to: newEmail,
-            subject: 'Password reset requested',
-            html: `<html style="width: 100%">
-        <body style="margin: 0 auto; max-width: 340px; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3); background: #e4e4e4">
-            <header style="display: flex; align-items: center; font-weight: 700; width: calc(100%-60px); padding: 20px 30px; border-bottom: 1px solid #c4c4c4">
-                <img style="margin-right: 5px" src="https://f.nove.team/nove.png" width="20" height="20" />
-                Nove Group
-            </header>
-    
-            <h1 style="padding: 0 30px">Password reset requested</h1>
-            <p style="padding: 0 30px; font-size: 20px; line-height: 1.5; margin: 0; margin-bottom: 40px">
-                Hello, ${req.user.username}. Your e-mail address has been provided while resetting Nove account password. In order to complete that request please click "Change password" button. If
-                that wasn't you, just ignore this e-mail.
-            </p>
-            <a style="margin: 0 30px; padding: 10px 15px; border-radius: 5px; font-size: 16px; border: 1px solid indianred; color: black; text-decoration: none" href="https://api.nove.team/v1/users/confirmEmailChange?code=${data.codeNewMail}"
-                >Change password</a
-            >
-        </body>
-    </html>
-    `,
+            subject: 'Confirm requested e-mail address change',
+            html: `<center><img src="https://f.nove.team/emailReset.svg" width="380" height="126" alt="Confirm requested e-mail address change"><div style="margin:10px 0;padding:20px;max-width:380px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${req.user.username}</b>. Someone requested to change your Nove account e-mail. In order to approve that request click "Confirm e-mail change" button. If that wasn't you, just ignore this message.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${process.env.NAPI_URL}/v1/users/confirmEmailChange?code=${data.codeNewMail}">Confirm e-mail change</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
         })
         .then(console.log);
 });

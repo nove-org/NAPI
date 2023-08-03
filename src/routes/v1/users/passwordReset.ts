@@ -39,39 +39,22 @@ router.post('/passwordRecovery', validate(z.object({ email: z.string(), newPassw
     createResponse(res, 200, { success: true });
 
     const transporter = nodemailer.createTransport({
-        host: 'mail.nove.team',
+        host: process.env.MAIL_HOST,
         port: 465,
         tls: {
             rejectUnauthorized: false,
         },
         auth: {
-            user: 'noreply@nove.team',
-            pass: process.env.PASSWORD,
+            user: process.env.MAIL_USERNAME,
+            pass: process.env.MAIL_PASSWORD,
         },
     });
 
     await transporter.sendMail({
-        from: 'noreply@nove.team',
+        from: process.env.MAIL_USERNAME,
         to: req.body.email,
         subject: 'Password reset requested',
-        html: `<html style="width: 100%">
-            <body style="margin: 0 auto; max-width: 340px; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.3); background: #e4e4e4">
-                <header style="display: flex; align-items: center; font-weight: 700; width: calc(100%-60px); padding: 20px 30px; border-bottom: 1px solid #c4c4c4">
-                    <img style="margin-right: 5px" src="https://f.nove.team/nove.png" width="20" height="20" />
-                    Nove Group
-                </header>
-        
-                <h1 style="padding: 0 30px">Password reset requested</h1>
-                <p style="padding: 0 30px; font-size: 20px; line-height: 1.5; margin: 0; margin-bottom: 40px">
-                    Hello, ${user.username}. Your e-mail address has been provided while resetting Nove account password. In order to complete that request please click "Change password" button. If
-                    that wasn't you, just ignore this e-mail.
-                </p>
-                <a style="margin: 0 30px; padding: 10px 15px; border-radius: 5px; font-size: 16px; border: 1px solid indianred; color: black; text-decoration: none" href="https://api.nove.team/v1/users/passwordKey?code=${data.code}"
-                    >Change password</a
-                >
-            </body>
-        </html>
-        `,
+        html: `<center><img src="https://f.nove.team/passwordReset.svg" width="380" height="126" alt="Password reset requested"><div style="margin:10px 0;padding:20px;max-width:380px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${user.username}</b>. Someone requested to reset your Nove account password by providing your e-mail address. In order to approve that request click "Reset password" button. If that wasn't you, just ignore this message.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${process.env.NAPI_URL}/v1/users/passwordKey?code=${data.code}">Reset password</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
     });
 });
 
@@ -102,7 +85,7 @@ router.get('/passwordKey', async (req: Request, res: Response) => {
     await prisma.user.update({ where: { id: user.id }, data: { password: recovery.newPassword } });
     await prisma.recovery.delete({ where: { code: recovery.code } });
 
-    return res.redirect('https://nove.team/account');
+    return res.redirect('${process.env.FRONTEND_URL}/account');
 });
 
 router.patch(
