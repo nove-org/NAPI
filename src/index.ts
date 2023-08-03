@@ -42,8 +42,6 @@ prisma
             logger.info(`server started on port ${process.env.PORT}`);
         });
 
-        prisma.user.findFirst({ where: { username: 'dawid' } }).then(console.log);
-
         process.once('SIGTERM', () => shutdown(server));
     })
     .catch((err: Error) => {
