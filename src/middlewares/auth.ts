@@ -102,6 +102,9 @@ function authorize({
             if (!user)
                 return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
 
+            if (!user.verified)
+                return createError(res, 401, { code: 'verify_email', message: 'this account is not verified', param: 'header:authorization', type: 'authorization' });
+
             if (requireMfa && (!user.mfaEnabled || !mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa)))
                 return createError(res, 403, {
                     code: 'mfa_required',
