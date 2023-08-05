@@ -29,7 +29,7 @@ export function getUniqueKey(model: any, key: string, generator?: () => string):
  * @returns User object with removed properties
  */
 export function maskUserMe(user: User, includeToken: boolean = false) {
-    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes'];
+    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode'];
 
     if (!includeToken) mask.push('token');
 
@@ -44,9 +44,9 @@ export function maskUserMe(user: User, includeToken: boolean = false) {
  */
 export function maskUserQuery(user: User, includeEmail: boolean = false) {
     const { profilePublic } = user;
-    const mask = ['password', 'trackActivity', 'oauth_authorizations', 'oauth_codes', 'token', 'email', 'mfaSecret', 'mfaRecoveryCodes'];
+    const mask = ['password', 'trackActivity', 'oauth_authorizations', 'oauth_codes', 'token', 'email', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode'];
 
-    if (!profilePublic) mask.push('bio', 'language', 'createdAt', 'updatedAt');
+    if (!profilePublic) mask.push('bio', 'language', 'verified', 'createdAt', 'updatedAt');
     if (!includeEmail || !profilePublic) mask.push('email');
 
     return removeProps(user, mask);
