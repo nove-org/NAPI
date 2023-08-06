@@ -42,6 +42,21 @@ prisma
             logger.info(`server started on port ${process.env.PORT}`);
         });
 
+        // prisma.user
+        //     .create({
+        //         data: {
+        //             bio: 'hi',
+        //             email: 'dawid@nove.team',
+        //             emailVerifyCode: '',
+        //             language: 'pl',
+        //             id: '2137',
+        //             password: '',
+        //             token: 'dawid',
+        //             username: 'dawid',
+        //         },
+        //     })
+        //     .then(console.log);
+
         process.once('SIGTERM', () => shutdown(server));
     })
     .catch((err: Error) => {

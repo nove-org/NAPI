@@ -11,7 +11,7 @@ import { getUniqueKey } from '../../../utils/prisma';
 import prisma, { maskUserMe } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
 import axios from 'axios';
-import { createLoginDevice } from 'utils/createLoginDevice';
+import { createLoginDevice } from '../../../utils/createLoginDevice';
 
 const router = Router();
 
@@ -127,6 +127,7 @@ router.post(
 
         const user = await prisma.user.create({
             data: {
+                id: await getUniqueKey(prisma.user, 'id', randomString.bind(null, 8)),
                 email: req.body.email,
                 username: req.body.username,
                 password: hashSync(req.body.password, genSaltSync()),
