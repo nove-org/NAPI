@@ -79,7 +79,7 @@ router.post('/emailReset', authorize({ disableBearer: true, requireMfa: false })
     });
 });
 
-router.get('/confirmEmailChange', authorize({ disableBearer: true, requireMfa: false }), async (req: Request, res: Response) => {
+router.get('/confirmEmailChange', async (req: Request, res: Response) => {
     const code = req.query.code as string;
 
     const newEmailObject = await prisma.userEmailChange.findFirst({
