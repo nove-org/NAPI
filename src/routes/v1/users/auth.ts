@@ -43,7 +43,7 @@ router.post(
 
         const device = await prisma.trackedDevices.findFirst({ where: { ip: req.ip } });
         if (!device) {
-            createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, req.user.id, req.user.trackActivity);
+            createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, user.id, user.trackActivity);
 
             const transporter = nodemailer.createTransport({
                 host: process.env.MAIL_HOST,
@@ -61,11 +61,21 @@ router.post(
                 responseType: 'json',
             });
 
-            return await transporter.sendMail({
+            await transporter.sendMail({
                 from: process.env.MAIL_USERNAME,
-                to: req.user.email,
+                to: user.email,
                 subject: 'New login location detected',
-                html: `<center><img src="https://f.nove.team/newLocation.svg" width="380" height="126" alt="New login location detected"><div style="margin:10px 0;padding:20px;max-width:340px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${req.user.username}</b>. Someone just logged in to your Nove account from&nbsp;<b>${location.data.country}, ${location.data.region_name}</b>&nbsp;(${req.ip}). If that was you, ignore this e-mail. Otherwise, change your password immediately.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${process.env.FRONTEND_URL}/account/security">Change your password</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
+                html: `<center><img src="https://f.nove.team/newLocation.svg" width="380" height="126" alt="New login location detected"><div style="margin:10px 0;padding:20px;max-width:340px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${
+                    user.username
+                }</b>. Someone just logged in to your Nove account from&nbsp;<b>${
+                    location.data.country + (location.data.region_name ? `, ${location.data.region_name}` : '')
+                }</b>&nbsp;(${
+                    req.ip
+                }). If that was you, ignore this e-mail. Otherwise, change your password immediately.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${
+                    process.env.FRONTEND_URL
+                }/account/security">Change your password</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${
+                    process.env.FRONTEND_URL
+                }" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
             });
         }
     }
