@@ -79,3 +79,4 @@ yarn db:update
 
 ## License
 This project is under the [GNU Affero General Public License v3.0](https://github.com/nove-org/NAPI/blob/main/LICENSE)
+ 

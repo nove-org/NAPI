@@ -21,7 +21,7 @@ model User {
   emailVerifyCode  String
   token            String
   profilePublic    Boolean  @default(false)
-  trackActivity    Boolean  @default(true)
+  trackActivity    Boolean  @default(false)
   mfaEnabled       Boolean  @default(false)
   mfaSecret        String   @default("")
   mfaRecoveryCodes String[]
