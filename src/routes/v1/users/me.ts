@@ -317,4 +317,10 @@ router.get('/me/connections', authorize({ disableBearer: true }), async (req: Re
     );
 });
 
+router.delete('/me', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    await prisma.user.delete({ where: { id: req.user.id } });
+
+    return res.redirect(process.env.FRONTEND_URL as string);
+});
+
 export default router;
