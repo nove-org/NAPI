@@ -40,6 +40,7 @@ router.patch(
             bio: z.string().min(1).max(256).optional(),
             language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).optional(),
             trackActivity: z.boolean().optional(),
+            profilePublic: z.boolean().optional(),
         }),
         'body'
     ),
@@ -66,6 +67,7 @@ router.patch(
 
             await prisma.trackedDevices.deleteMany({ where: { userId: req.user.id } });
         }
+        if (typeof req.body.profilePublic === 'boolean') data['profilePublic'] = req.body.profilePublic;
 
         const newUser = await prisma.user.update({
             where: { id: req.user.id },
