@@ -90,7 +90,7 @@
                 const main = document.getElementById('main');
 
                 if (!getCookie('napiAuthorizationToken')) {
-                    window.location.href = `${process.env.FRONTEND_URL}/login?redirectBack=${encodeURIComponent(window.location.href)}`;
+                    window.location.href = `https://nove.team/login?redirectBack=${encodeURIComponent(window.location.href)}`;
                     return;
                 }
 
