@@ -225,7 +225,7 @@ router.get('/me/connections', authorize({ disableBearer: true }), async (req: Re
     );
 });
 
-router.delete('/me',
+router.post('/me/delete',
     validate(z.object({ password: z.string().min(1).max(128) })),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
