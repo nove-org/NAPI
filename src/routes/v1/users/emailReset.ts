@@ -105,3 +105,5 @@ router.get('/confirmEmailChange', async (req: Request, res: Response) => {
 
     return createResponse(res, 200, { text: `you have to verify your ${code === newEmailObject.codeNewMail ? 'old' : 'new'} also` });
 });
+
+export default router;
