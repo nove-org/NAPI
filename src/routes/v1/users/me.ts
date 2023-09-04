@@ -224,10 +224,24 @@ router.get('/me/connections', authorize({ disableBearer: true }), async (req: Re
     );
 });
 
-router.delete('/me', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
-    await prisma.user.delete({ where: { id: req.user.id } });
+router.delete('/me',
+    validate(z.object({ password: z.string().min(1).max(128) })),
+    authorize({ disableBearer: true }),
+    async (req: Request, res: Response) => {
+        const { password } = req.body;
 
-    createResponse(res, 200, { success: true });
-});
+        const user = await prisma.user.findFirst({ where: { id: req.user.id } });
+
+        if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
+
+        if (!(await bcrypt.compare(password, user.password))) {
+            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+        }
+        
+        await prisma.user.delete({ where: { id: user.id } });
+
+        createResponse(res, 200, { success: true });
+    }
+);
 
 export default router;
