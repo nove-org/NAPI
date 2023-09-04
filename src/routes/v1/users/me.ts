@@ -2,6 +2,7 @@ import { OAuth_App, Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
 import { generateSecret, verifyToken } from 'node-2fa';
 import { z } from 'zod';
+import { compare } from 'bcrypt';
 import { authorize } from '../../../middlewares/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
@@ -234,7 +235,7 @@ router.delete('/me',
 
         if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
 
-        if (!(await bcrypt.compare(password, user.password))) {
+        if (!(await compare(password, user.password))) {
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
         }
         
