@@ -18,7 +18,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
-    const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+    const updatedAtCode = getAvatarCode(new Date(user.updatedAt));
 
     return createResponse(res, 200, {
         ...maskUserQuery(user, false),
