@@ -12,6 +12,7 @@ import { removeProps } from '../../../utils/masker';
 import { multerUploadSingle } from '../../../utils/multipart';
 import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
+import { getAvatarCode } from 'utils/getAvatarCode';
 
 const router = Router();
 
@@ -21,7 +22,9 @@ router.get(
         requiredScopes: ['account.read.basic'],
     }),
     async (req: Request, res: Response) => {
-        const user = { avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`, ...req.user };
+        const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+
+        const user = { avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`, ...req.user };
 
         if (req.oauth) return createResponse(res, 200, maskUserOAuth(user, req.oauth));
         else createResponse(res, 200, maskUserMe(user));
@@ -225,24 +228,20 @@ router.get('/me/connections', authorize({ disableBearer: true }), async (req: Re
     );
 });
 
-router.post('/me/delete',
-    validate(z.object({ password: z.string().min(1).max(128) })),
-    authorize({ disableBearer: true }),
-    async (req: Request, res: Response) => {
-        const { password } = req.body;
+router.post('/me/delete', validate(z.object({ password: z.string().min(1).max(128) })), authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    const { password } = req.body;
 
-        const user = await prisma.user.findFirst({ where: { id: req.user.id } });
+    const user = await prisma.user.findFirst({ where: { id: req.user.id } });
 
-        if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
+    if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
 
-        if (!(await compare(password, user.password))) {
-            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
-        }
-        
-        await prisma.user.delete({ where: { id: user.id } });
-
-        createResponse(res, 200, { success: true });
+    if (!(await compare(password, user.password))) {
+        return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
     }
-);
+
+    await prisma.user.delete({ where: { id: user.id } });
+
+    createResponse(res, 200, { success: true });
+});
 
 export default router;

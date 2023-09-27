@@ -5,6 +5,7 @@ import { STORAGE_PATH } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import prisma, { maskUserQuery } from '../../../utils/prisma';
+import { getAvatarCode } from 'utils/getAvatarCode';
 
 const router = Router();
 
@@ -17,7 +18,12 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
-    return createResponse(res, 200, { ...maskUserQuery(user, false), avatar: `${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp` });
+    const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+
+    return createResponse(res, 200, {
+        ...maskUserQuery(user, false),
+        avatar: `${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp?v=${updatedAtCode}`,
+    });
 });
 
 router.get('/:id/avatar.webp', async (req: Request, res: Response) => {

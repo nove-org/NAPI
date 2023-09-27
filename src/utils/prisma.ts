@@ -29,7 +29,7 @@ export function getUniqueKey(model: any, key: string, generator?: () => string):
  * @returns User object with removed properties
  */
 export function maskUserMe(user: User, includeToken: boolean = false) {
-    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode', 'verified', 'mfaEnabled'];
+    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode', 'verified', 'mfaEnabled', 'updatedAt'];
 
     if (!includeToken) mask.push('token');
 
@@ -44,7 +44,20 @@ export function maskUserMe(user: User, includeToken: boolean = false) {
  */
 export function maskUserQuery(user: User, includeEmail: boolean = false) {
     const { profilePublic } = user;
-    const mask = ['password', 'trackActivity', 'oauth_authorizations', 'oauth_codes', 'token', 'email', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode'];
+    const mask = [
+        'password',
+        'trackActivity',
+        'oauth_authorizations',
+        'oauth_codes',
+        'token',
+        'email',
+        'mfaSecret',
+        'mfaRecoveryCodes',
+        'emailVerifyCode',
+        'verified',
+        'mfaEnabled',
+        'updatedAt',
+    ];
 
     if (!profilePublic) mask.push('bio', 'language', 'verified', 'createdAt', 'updatedAt');
     if (!includeEmail || !profilePublic) mask.push('email');
@@ -59,7 +72,7 @@ export function maskUserQuery(user: User, includeEmail: boolean = false) {
  * @returns User object with removed properties
  */
 export function maskUserOAuth(user: User, oauth: OAuth_Authorization) {
-    const mask = ['password', 'token', 'trackActivity', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes'];
+    const mask = ['password', 'token', 'trackActivity', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'updatedAt', 'verified', 'mfaEnabled'];
 
     if (checkPermission(oauth.scopes as TPermission[], 'account.read.basic') && !checkPermission(oauth.scopes as TPermission[], 'account.read.email')) mask.push('email');
     if (!checkPermission(oauth.scopes as TPermission[], 'account.read.basic')) mask.push('bio', 'language', 'createdAt', 'updatedAt', 'mfaEnabled');
