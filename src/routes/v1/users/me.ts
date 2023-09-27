@@ -12,7 +12,7 @@ import { removeProps } from '../../../utils/masker';
 import { multerUploadSingle } from '../../../utils/multipart';
 import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
 import { validate } from '../../../utils/schema';
-import { getAvatarCode } from 'utils/getAvatarCode';
+import { getAvatarCode } from '../../../utils/getAvatarCode';
 
 const router = Router();
 
