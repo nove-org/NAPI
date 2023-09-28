@@ -1,14 +1,11 @@
 import { OAuth_App, OAuth_Authorization, User } from '@prisma/client';
 import { NextFunction, Request, Response } from 'express';
 import { verifyToken } from 'node-2fa';
-import axios from 'axios';
-import createError from '../utils/createError';
-import { createLoginDevice } from '../utils/createLoginDevice';
-import { removeProps } from '../utils/masker';
-import { TPermission, checkPermissions } from '../utils/permissions';
-import nodemailer from 'nodemailer';
-import prisma from '../utils/prisma';
-import { Modify } from '../utils/types';
+import createError from '@util/createError';
+import { removeProps } from '@util/masker';
+import { TPermission, checkPermissions } from '@util/permissions';
+import prisma from '@util/prisma';
+import { Modify } from '@util/types';
 
 function authorize({
     requiredScopes = [],

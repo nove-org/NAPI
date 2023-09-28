@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import erl, { Options } from 'express-rate-limit';
-import createError from '../utils/createError';
+import createError from '@util/createError';
 
 // TODO: implement https://www.npmjs.com/package/rate-limit-redis
 const DEFAULT_ERL_OPTIONS: Partial<Options> = {

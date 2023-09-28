@@ -1,11 +1,11 @@
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
-import { authorize } from '../../middlewares/auth';
-import createResponse from '../../utils/createResponse';
-import { randomString } from '../../utils/crypto';
-import prisma, { getUniqueKey } from '../../utils/prisma';
-import { validate } from '../../utils/schema';
-import { rateLimit } from '../../middlewares/ratelimit';
+import { authorize } from '@middleware/auth';
+import createResponse from '@util/createResponse';
+import { randomString } from '@util/crypto';
+import prisma, { getUniqueKey } from '@util/prisma';
+import { validate } from '@util/schema';
+import { rateLimit } from '@middleware/ratelimit';
 
 const router = Router();
 
