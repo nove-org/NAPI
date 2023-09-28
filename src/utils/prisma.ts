@@ -29,7 +29,7 @@ export function getUniqueKey(model: any, key: string, generator?: () => string):
  * @returns User object with removed properties
  */
 export function maskUserMe(user: User, includeToken: boolean = false) {
-    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode', 'verified', 'mfaEnabled', 'updatedAt', 'permissionLevel'];
+    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode', 'permissionLevel'];
 
     if (!includeToken) mask.push('token');
 
@@ -58,9 +58,10 @@ export function maskUserQuery(user: User, includeEmail: boolean = false) {
         'mfaEnabled',
         'updatedAt',
         'permissionLevel',
+        'profilePublic',
     ];
 
-    if (!profilePublic) mask.push('bio', 'language', 'verified', 'createdAt', 'updatedAt');
+    if (!profilePublic) mask.push('bio', 'language', 'createdAt');
     if (!includeEmail || !profilePublic) mask.push('email');
 
     return removeProps(user, mask);
@@ -88,7 +89,7 @@ export function maskUserOAuth(user: User, oauth: OAuth_Authorization) {
     ];
 
     if (checkPermission(oauth.scopes as TPermission[], 'account.read.basic') && !checkPermission(oauth.scopes as TPermission[], 'account.read.email')) mask.push('email');
-    if (!checkPermission(oauth.scopes as TPermission[], 'account.read.basic')) mask.push('bio', 'language', 'createdAt', 'updatedAt', 'mfaEnabled');
+    if (!checkPermission(oauth.scopes as TPermission[], 'account.read.basic')) mask.push('bio', 'language', 'createdAt');
 
     return removeProps(user, mask);
 }

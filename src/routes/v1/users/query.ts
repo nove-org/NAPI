@@ -5,8 +5,8 @@ import { STORAGE_PATH } from '../../../utils/CONSTS';
 import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import prisma, { maskUserQuery } from '../../../utils/prisma';
-import { getAvatarCode } from 'utils/getAvatarCode';
 import { rateLimit } from '../../../middlewares/ratelimit';
+import { getAvatarCode } from '../../../utils/getAvatarCode';
 
 const router = Router();
 
