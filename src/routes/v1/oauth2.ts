@@ -5,11 +5,16 @@ import createResponse from '../../utils/createResponse';
 import { randomString } from '../../utils/crypto';
 import prisma, { getUniqueKey } from '../../utils/prisma';
 import { validate } from '../../utils/schema';
+import { rateLimit } from '../../middlewares/ratelimit';
 
 const router = Router();
 
 router.get(
     '/authorize',
+    rateLimit({
+        ipCount: 500,
+        keyCount: 750,
+    }),
     // TODO: visually pleasing error page
     validate(
         z.object({
@@ -47,6 +52,10 @@ router.get(
 
 router.post(
     '/authorize',
+    rateLimit({
+        ipCount: 500,
+        keyCount: 750,
+    }),
     authorize({
         disableBearer: true,
     }),
@@ -81,6 +90,10 @@ router.post(
 
 router.post(
     '/token',
+    rateLimit({
+        ipCount: 500,
+        keyCount: 750,
+    }),
     validate(
         z.object({
             client_id: z.string().min(1).max(64),

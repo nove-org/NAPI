@@ -6,38 +6,53 @@ import createError from '../../../utils/createError';
 import createResponse from '../../../utils/createResponse';
 import prisma, { maskUserQuery } from '../../../utils/prisma';
 import { getAvatarCode } from 'utils/getAvatarCode';
+import { rateLimit } from '../../../middlewares/ratelimit';
 
 const router = Router();
 
-router.get('/:id', async (req: Request, res: Response) => {
-    const { id } = req.params;
+router.get(
+    '/:id',
+    rateLimit({
+        ipCount: 600,
+        keyCount: 900,
+    }),
+    async (req: Request, res: Response) => {
+        const { id } = req.params;
 
-    const user = await prisma.user.findFirst({
-        where: { id },
-    });
+        const user = await prisma.user.findFirst({
+            where: { id },
+        });
 
-    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
+        if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
-    const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+        const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
 
-    return createResponse(res, 200, {
-        ...maskUserQuery(user, false),
-        avatar: `${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp?v=${updatedAtCode}`,
-    });
-});
+        return createResponse(res, 200, {
+            ...maskUserQuery(user, false),
+            avatar: `${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp?v=${updatedAtCode}`,
+        });
+    }
+);
 
-router.get('/:id/avatar.webp', async (req: Request, res: Response) => {
-    const { id } = req.params;
+router.get(
+    '/:id/avatar.webp',
+    rateLimit({
+        ipCount: 600,
+        keyCount: 900,
+    }),
+    async (req: Request, res: Response) => {
+        const { id } = req.params;
 
-    const user = await prisma.user.findFirst({
-        where: { id },
-    });
+        const user = await prisma.user.findFirst({
+            where: { id },
+        });
 
-    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
+        if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
 
-    const path = existsSync(`${STORAGE_PATH}/${id}.webp`) ? `${STORAGE_PATH}/${id}.webp` : `${join(STORAGE_PATH, '..')}/defaults/AVATAR.webp`;
+        const path = existsSync(`${STORAGE_PATH}/${id}.webp`) ? `${STORAGE_PATH}/${id}.webp` : `${join(STORAGE_PATH, '..')}/defaults/AVATAR.webp`;
 
-    return res.sendFile(path);
-});
+        return res.sendFile(path);
+    }
+);
 
 export default router;
