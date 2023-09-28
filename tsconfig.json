@@ -12,7 +12,11 @@
         "forceConsistentCasingInFileNames": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "paths": {
+            "@util/*": ["utils/*"],
+            "@middleware/*": ["middlewares/*"]
+        }
     },
     "exclude": ["./src/ui/**/*"]
 }

@@ -25,7 +25,7 @@ model User {
   mfaEnabled       Boolean  @default(false)
   mfaSecret        String   @default("")
   mfaRecoveryCodes String[]
-  permissionsLevel Int      @default(1)
+  permissionLevel  Int      @default(1)
 
   oauth_authorizations OAuth_Authorization[]
   oauth_codes          OAuth_Code[]

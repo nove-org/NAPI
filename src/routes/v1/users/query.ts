@@ -1,12 +1,12 @@
 import { Request, Response, Router } from 'express';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { STORAGE_PATH } from '../../../utils/CONSTS';
-import createError from '../../../utils/createError';
-import createResponse from '../../../utils/createResponse';
-import prisma, { maskUserQuery } from '../../../utils/prisma';
-import { rateLimit } from '../../../middlewares/ratelimit';
-import { getAvatarCode } from '../../../utils/getAvatarCode';
+import { STORAGE_PATH } from '@util/CONSTS';
+import createError from '@util/createError';
+import createResponse from '@util/createResponse';
+import prisma, { maskUserQuery } from '@util/prisma';
+import { rateLimit } from '@middleware/ratelimit';
+import { getAvatarCode } from '@util/getAvatarCode';
 
 const router = Router();
 
@@ -25,7 +25,7 @@ router.get(
 
         if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
-        const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+        const updatedAtCode = getAvatarCode(new Date(user.updatedAt));
 
         return createResponse(res, 200, {
             ...maskUserQuery(user, false),

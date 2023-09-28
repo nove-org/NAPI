@@ -3,16 +3,16 @@ import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
-import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
-import createError from '../../../utils/createError';
-import createResponse from '../../../utils/createResponse';
-import { randomString } from '../../../utils/crypto';
-import { getUniqueKey } from '../../../utils/prisma';
-import prisma, { maskUserMe } from '../../../utils/prisma';
-import { validate } from '../../../utils/schema';
+import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
+import createError from '@util/createError';
+import createResponse from '@util/createResponse';
+import { randomString } from '@util/crypto';
+import { getUniqueKey } from '@util/prisma';
+import prisma, { maskUserMe } from '@util/prisma';
+import { validate } from '@util/schema';
 import axios from 'axios';
-import { createLoginDevice } from '../../../utils/createLoginDevice';
-import { rateLimit } from '../../../middlewares/ratelimit';
+import { createLoginDevice } from '@util/createLoginDevice';
+import { rateLimit } from '@middleware/ratelimit';
 
 const router = Router();
 

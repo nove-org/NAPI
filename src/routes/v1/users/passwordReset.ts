@@ -3,13 +3,13 @@ import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import nodemailer from 'nodemailer';
 import { z } from 'zod';
-import { authorize } from '../../../middlewares/auth';
-import createError from '../../../utils/createError';
-import createResponse from '../../../utils/createResponse';
-import { randomString } from '../../../utils/crypto';
-import prisma, { maskUserMe, getUniqueKey } from '../../../utils/prisma';
-import { validate } from '../../../utils/schema';
-import { rateLimit } from '../../../middlewares/ratelimit';
+import { authorize } from '@middleware/auth';
+import createError from '@util/createError';
+import createResponse from '@util/createResponse';
+import { randomString } from '@util/crypto';
+import prisma, { maskUserMe, getUniqueKey } from '@util/prisma';
+import { validate } from '@util/schema';
+import { rateLimit } from '@middleware/ratelimit';
 
 const router = Router();
 

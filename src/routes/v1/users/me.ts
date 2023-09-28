@@ -3,17 +3,17 @@ import { Request, Response, Router } from 'express';
 import { generateSecret, verifyToken } from 'node-2fa';
 import { z } from 'zod';
 import { compare } from 'bcrypt';
-import { authorize } from '../../../middlewares/auth';
-import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
-import createError from '../../../utils/createError';
-import createResponse from '../../../utils/createResponse';
-import { randomString } from '../../../utils/crypto';
-import { removeProps } from '../../../utils/masker';
-import { multerUploadSingle } from '../../../utils/multipart';
-import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
-import { validate } from '../../../utils/schema';
-import { rateLimit } from '../../../middlewares/ratelimit';
-import { getAvatarCode } from '../../../utils/getAvatarCode';
+import { authorize } from '@middleware/auth';
+import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
+import createError from '@util/createError';
+import createResponse from '@util/createResponse';
+import { randomString } from '@util/crypto';
+import { removeProps } from '@util/masker';
+import { multerUploadSingle } from '@util/multipart';
+import prisma, { maskUserMe, maskUserOAuth } from '@util/prisma';
+import { validate } from '@util/schema';
+import { rateLimit } from '@middleware/ratelimit';
+import { getAvatarCode } from '@util/getAvatarCode';
 
 const router = Router();
 

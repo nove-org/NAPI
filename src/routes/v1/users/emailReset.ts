@@ -1,15 +1,15 @@
 import { Router, Request, Response } from 'express';
-import { authorize } from '../../../middlewares/auth';
-import { validate } from '../../../utils/schema';
+import { authorize } from '@middleware/auth';
+import { validate } from '@util/schema';
 import { z } from 'zod';
-import prisma from '../../../utils/prisma';
-import { getUniqueKey } from '../../../utils/prisma';
-import { randomString } from '../../../utils/crypto';
-import createError from '../../../utils/createError';
-import createResponse from '../../../utils/createResponse';
+import prisma from '@util/prisma';
+import { getUniqueKey } from '@util/prisma';
+import { randomString } from '@util/crypto';
+import createError from '@util/createError';
+import createResponse from '@util/createResponse';
 import nodemailer from 'nodemailer';
 import { UserEmailChange } from '@prisma/client';
-import { rateLimit } from '../../../middlewares/ratelimit';
+import { rateLimit } from '@middleware/ratelimit';
 
 const router = Router();
 
