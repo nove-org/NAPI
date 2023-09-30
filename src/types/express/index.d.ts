@@ -1,6 +1,6 @@
 import { OAuth_Authorization, User } from '@prisma/client';
-import { TPermission } from '../../utils/permissions';
-import { Modify } from '../../utils/types';
+import { TPermission } from '@util/permissions';
+import { Modify } from '@util/types';
 
 declare global {
     namespace Express {

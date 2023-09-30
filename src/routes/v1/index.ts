@@ -1,8 +1,8 @@
 import { Request, Response, Router } from 'express';
 import oauth2 from './oauth2';
 import users from './users';
-import createResponse from '../../utils/createResponse';
-import { AVAILABLE_LANGUAGES } from '../../utils/CONSTS';
+import createResponse from '@util/createResponse';
+import { AVAILABLE_LANGUAGES } from '@util/CONSTS';
 
 const router = Router();
 

@@ -1,4 +1,4 @@
-import { LogLevel } from '../utils/logger';
+import { LogLevel } from '@util/logger';
 
 export type Env = 'development' | 'production';
 
