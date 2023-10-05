@@ -110,6 +110,26 @@ router.delete('/users/:id/disable', authorize({ disableBearer: true }), authoriz
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
+    const transporter = nodemailer.createTransport({
+        host: process.env.MAIL_HOST,
+        port: 465,
+        tls: {
+            rejectUnauthorized: false,
+        },
+        auth: {
+            user: process.env.MAIL_USERNAME,
+            pass: process.env.MAIL_PASSWORD,
+        },
+    });
+
+    //TODO: HTML to email
+    await transporter.sendMail({
+        from: process.env.MAIL_USERNAME,
+        to: user.email,
+        subject: 'account enabled',
+        html: `your account has been enabled! 👌👌👌👌, this action was triggered by: ${req.user.username}`,
+    });
+
     await prisma.user.update({ where: { id }, data: { disabled: false } });
 
     return createResponse(res, 200, { success: true });
