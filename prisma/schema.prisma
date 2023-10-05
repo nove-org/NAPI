@@ -27,6 +27,8 @@ model User {
   mfaRecoveryCodes String[]
   permissionLevel  Int      @default(1)
 
+  disabled Boolean @default(false)
+
   oauth_authorizations OAuth_Authorization[]
   oauth_codes          OAuth_Code[]
 
