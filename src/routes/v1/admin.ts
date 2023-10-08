@@ -26,8 +26,8 @@ router.get('/users', authorize({ disableBearer: true }), authorizeAdmin, async (
         users.push({
             id: u.id,
             username: u.username,
+            permissionLevel: u.permissionLevel,
             avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`,
-            updatedAt: u.updatedAt,
             createdAt: u.createdAt,
         });
     }
@@ -35,14 +35,14 @@ router.get('/users', authorize({ disableBearer: true }), authorizeAdmin, async (
     return createResponse(res, 200, users);
 });
 
-router.delete('/users/:id/delete', authorize({ disableBearer: true }), authorizeAdmin, validate(z.object({ reason: z.string() })), async (req: Request, res: Response) => {
+router.patch('/users/:id/delete', authorize({ disableBearer: true }), authorizeAdmin, validate(z.object({ reason: z.string() })), async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const user = await prisma.user.findFirst({ where: { id } });
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
-    if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide reason', type: 'validation', param: 'body:reason' });
+    if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', type: 'validation', param: 'body:reason' });
 
     const transporter = nodemailer.createTransport({
         host: process.env.MAIL_HOST,
@@ -76,7 +76,7 @@ router.post('/users/:id/disable', authorize({ disableBearer: true }), authorizeA
 
     if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
 
-    if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide reason', type: 'validation', param: 'body:reason' });
+    if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', type: 'validation', param: 'body:reason' });
 
     const transporter = nodemailer.createTransport({
         host: process.env.MAIL_HOST,
