@@ -7,6 +7,7 @@ import { validate } from '@util/schema';
 import { Request, Response, Router } from 'express';
 import { getAvatarCode } from '@util/getAvatarCode';
 import { z } from 'zod';
+import { AVAILABLE_POST_TAGS_REGEX } from '@util/CONSTS';
 
 const router = Router();
 
@@ -30,17 +31,14 @@ router.post(
 );
 
 router.patch(
-    '/:id/edit',
+    '/:id',
     authorize({ disableBearer: true }),
     authorizeAdmin,
     validate(
         z.object({
             text: z.string().optional(),
             title: z.string().optional(),
-            tag: z
-                .string()
-                .regex(/important|updates|security|general/)
-                .optional(),
+            tag: z.string().regex(AVAILABLE_POST_TAGS_REGEX).optional(),
             allow_comments: z.boolean().optional(),
         })
     ),
@@ -63,16 +61,30 @@ router.patch(
     }
 );
 
-router.get('/:id/comment/:comment_id', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+router.get('/:id/', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
     const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
     if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
 
-    const comment = await prisma.blogComment.findFirst({ where: { blogPostId: post.id, id: req.params.comment_id } });
+    return createResponse(res, 200, post);
+});
 
-    if (!comment) return createError(res, 404, { code: 'invalid_comment', message: 'this comment does not exist', type: 'validation', param: 'comment_id' });
+router.get('/', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    const posts = await prisma.blogPost.findMany();
 
-    return createResponse(res, 200, comment);
+    return createResponse(res, 200, posts);
+});
+
+router.delete('/:id', authorize({ disableBearer: true }), authorizeAdmin, async (req: Request, res: Response) => {
+    const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
+
+    if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
+
+    await prisma.blogPost.delete({ where: { id: post.id } });
+
+    await prisma.blogComment.deleteMany({ where: { blogPostId: post.id } });
+
+    return createResponse(res, 200, { success: true });
 });
 
 router.post('/:id/comment', authorize({ disableBearer: true }), validate(z.object({ text: z.string().min(2).max(400) })), async (req: Request, res: Response) => {
