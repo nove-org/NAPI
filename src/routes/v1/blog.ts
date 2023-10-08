@@ -7,28 +7,20 @@ import { validate } from '@util/schema';
 import { Request, Response, Router } from 'express';
 import { getAvatarCode } from '@util/getAvatarCode';
 import { z } from 'zod';
-import { AVAILABLE_POST_TAGS_REGEX } from '@util/CONSTS';
 
 const router = Router();
 
-router.post(
-    '/create',
-    authorize({ disableBearer: true }),
-    authorizeAdmin,
-    validate(z.object({ tag: z.string().regex(/important|updates|security|general/), text: z.string(), title: z.string() })),
-    async (req: Request, res: Response) => {
-        const newPost = await prisma.blogPost.create({
-            data: {
-                authorId: req.user.id,
-                tag: req.body.tag,
-                text: req.body.text,
-                title: req.body.title,
-            },
-        });
+router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, validate(z.object({ text: z.string(), title: z.string() })), async (req: Request, res: Response) => {
+    const newPost = await prisma.blogPost.create({
+        data: {
+            authorId: req.user.id,
+            text: req.body.text,
+            title: req.body.title,
+        },
+    });
 
-        return createResponse(res, 200, newPost);
-    }
-);
+    return createResponse(res, 200, newPost);
+});
 
 router.patch(
     '/:id',
@@ -38,7 +30,6 @@ router.patch(
         z.object({
             text: z.string().optional(),
             title: z.string().optional(),
-            tag: z.string().regex(AVAILABLE_POST_TAGS_REGEX).optional(),
             allow_comments: z.boolean().optional(),
         })
     ),
@@ -52,7 +43,6 @@ router.patch(
             data: {
                 text: req.body.text ? req.body.text : post.text,
                 title: req.body.title ? req.body.title : post.title,
-                tag: req.body.tag ? req.body.tag : post.tag,
                 commentsAllowed: typeof req.body?.allow_comments === 'boolean' ? req.body.allow_comments : post.commentsAllowed,
             },
         });

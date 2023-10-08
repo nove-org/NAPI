@@ -114,7 +114,6 @@ model TrackedDevices {
 model BlogPost {
   id              String        @id @unique @default(uuid())
   authorId        String
-  tag             Tags
   text            String
   title           String
   commentsAllowed Boolean       @default(true)
@@ -135,11 +134,4 @@ model BlogComment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-enum Tags {
-  important
-  updates
-  security
-  general
 }
