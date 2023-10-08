@@ -29,7 +29,7 @@ export function getUniqueKey(model: any, key: string, generator?: () => string):
  * @returns User object with removed properties
  */
 export function maskUserMe(user: User, includeToken: boolean = false) {
-    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode', 'permissionLevel'];
+    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode'];
 
     if (!includeToken) mask.push('token');
 
