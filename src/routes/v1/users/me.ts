@@ -104,8 +104,7 @@ router.patch(
     }),
     async (req: Request, res: Response) => {
         if (req.user.mfaEnabled) {
-            if (!req.body.enabled) return createError(res, 400, { message: 'mfa is already disabled', code: 'mfa_already_disabled', type: 'validation' });
-
+            if (req.body.enabled) return createError(res, 400, { message: 'mfa is already enabled', code: 'mfa_already_enabled', type: 'validation' });
             const mfa = req.headers['x-mfa'] as string;
 
             if (/[a-zA-Z0-9]{16}/.test(mfa)) {
@@ -147,7 +146,7 @@ router.patch(
 
             return createResponse(res, 200, { message: 'mfa disabled' });
         } else {
-            if (req.body.enabled) return createError(res, 400, { message: 'mfa is already enabled', code: 'mfa_already_enabled', type: 'validation' });
+            if (!req.body.enabled) return createError(res, 400, { message: 'mfa is already disabled', code: 'mfa_already_disabled', type: 'validation' });
             const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
             const newCodes = Array.from({ length: 10 }, () => randomString(16));
 
