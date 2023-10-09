@@ -51,7 +51,7 @@ router.patch(
     }
 );
 
-router.get('/:id/', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+router.get('/:id/', authorize({}), async (req: Request, res: Response) => {
     const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
     if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
@@ -59,7 +59,7 @@ router.get('/:id/', authorize({ disableBearer: true }), async (req: Request, res
     return createResponse(res, 200, post);
 });
 
-router.get('/', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+router.get('/', authorize({}), async (req: Request, res: Response) => {
     const posts = await prisma.blogPost.findMany();
 
     return createResponse(res, 200, posts);
