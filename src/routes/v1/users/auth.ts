@@ -8,6 +8,7 @@ import createError from '@util/createError';
 import createResponse from '@util/createResponse';
 import { randomString } from '@util/crypto';
 import { getUniqueKey } from '@util/prisma';
+import { verifyToken } from 'node-2fa';
 import prisma, { maskUserMe } from '@util/prisma';
 import { validate } from '@util/schema';
 import axios from 'axios';
@@ -43,6 +44,38 @@ router.post(
             });
         if (!compareSync(req.body.password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+
+        if (user.mfaEnabled) {
+            const mfa = (req.headers['x-mfa'] as string) || '';
+
+            if (!mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa))
+                return createError(res, 403, {
+                    code: 'mfa_required',
+                    message: 'mfa required',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+
+            if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 1 : user.mfaRecoveryCodes?.includes(mfa)))
+                return createError(res, 403, {
+                    code: 'invalid_mfa_token',
+                    message: 'invalid mfa token',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+
+            if (/([a-zA-Z0-9]{16})/.test(mfa))
+                await prisma.user.update({
+                    where: {
+                        id: user.id,
+                    },
+                    data: {
+                        mfaRecoveryCodes: {
+                            set: user.mfaRecoveryCodes?.filter((code) => code !== mfa),
+                        },
+                    },
+                });
+        }
 
         createResponse(res, 200, maskUserMe(user, true));
 
