@@ -25,7 +25,7 @@ model User {
   mfaEnabled       Boolean  @default(false)
   mfaSecret        String   @default("")
   mfaRecoveryCodes String[]
-  permissionLevel  Int      @default(1)
+  permissionLevel  Int      @default(0)
 
   disabled Boolean @default(false)
 
