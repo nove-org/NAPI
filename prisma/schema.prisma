@@ -27,6 +27,8 @@ model User {
   mfaRecoveryCodes String[]
   permissionLevel  Int      @default(1)
 
+  disabled Boolean @default(false)
+
   oauth_authorizations OAuth_Authorization[]
   oauth_codes          OAuth_Code[]
 
@@ -104,6 +106,31 @@ model TrackedDevices {
   device     String
   os_name    String
   os_version String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogPost {
+  id              String        @id @unique @default(uuid())
+  authorId        String
+  text            String
+  title           String
+  commentsAllowed Boolean       @default(true)
+  comments        BlogComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogComment {
+  id             String   @id @unique @default(uuid())
+  authorId       String
+  authorUsername String
+  authorAvatar   String
+  text           String
+  post           BlogPost @relation(fields: [blogPostId], references: [id])
+  blogPostId     String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
