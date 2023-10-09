@@ -9,14 +9,13 @@ import createResponse from '@util/createResponse';
 import { validate } from '@util/schema';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
-import { checkAdminPassword } from '@middleware/checkAdminPassword';
 interface UserAvatar extends User {
     avatar: string;
 }
 
 const router = Router();
 
-router.post('/users', authorize({ disableBearer: true }), authorizeAdmin, checkAdminPassword, async (req: Request, res: Response) => {
+router.post('/users', authorize({ disableBearer: true, requireMfa: true }), authorizeAdmin, async (req: Request, res: Response) => {
     const usersDB = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
 
     let users: Partial<UserAvatar>[] = [];
@@ -38,9 +37,8 @@ router.post('/users', authorize({ disableBearer: true }), authorizeAdmin, checkA
 
 router.patch(
     '/users/:id/delete',
-    authorize({ disableBearer: true }),
+    authorize({ disableBearer: true, requireMfa: true }),
     authorizeAdmin,
-    checkAdminPassword,
     validate(z.object({ reason: z.string() })),
     async (req: Request, res: Response) => {
         const { id } = req.params;
@@ -79,9 +77,8 @@ router.patch(
 
 router.post(
     '/users/:id/disable',
-    authorize({ disableBearer: true }),
+    authorize({ disableBearer: true, requireMfa: true }),
     authorizeAdmin,
-    checkAdminPassword,
     validate(z.object({ reason: z.string() })),
     async (req: Request, res: Response) => {
         const { id } = req.params;
@@ -118,7 +115,7 @@ router.post(
     }
 );
 
-router.delete('/users/:id/disable', authorize({ disableBearer: true }), authorizeAdmin, checkAdminPassword, async (req: Request, res: Response) => {
+router.delete('/users/:id/disable', authorize({ disableBearer: true, requireMfa: true }), authorizeAdmin, async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const user = await prisma.user.findFirst({ where: { id } });
