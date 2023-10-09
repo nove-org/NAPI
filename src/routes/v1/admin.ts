@@ -15,7 +15,7 @@ interface UserAvatar extends User {
 
 const router = Router();
 
-router.post('/users', authorize({ disableBearer: true, requireMfa: true }), authorizeAdmin, async (req: Request, res: Response) => {
+router.get('/users', authorize({ disableBearer: true, requireMfa: true }), authorizeAdmin, async (req: Request, res: Response) => {
     const usersDB = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
 
     let users: Partial<UserAvatar>[] = [];
