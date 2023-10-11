@@ -29,8 +29,8 @@ app.get('/', (_req: Request, res: Response) => {
         },
         meta: {
             timestamp: new Date().toISOString(),
-            version: 'a1.0.0',
-            server: 'nove_dev1',
+            version: process.env.VERSION,
+            server: process.env.SERVER,
         },
     });
 });

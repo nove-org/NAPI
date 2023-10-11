@@ -23,7 +23,8 @@ export default function createResponse(res: Response, status: HTTPStatus, body: 
         },
         meta: {
             timestamp: new Date().toISOString(),
-            version: '0.1.0',
+            version: process.env.VERSION,
+            server: process.env.SERVER,
         },
     });
 }
