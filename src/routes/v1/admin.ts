@@ -27,7 +27,8 @@ router.get('/users', authorize({ disableBearer: true, requireMfa: true }), autho
             id: u.id,
             username: u.username,
             permissionLevel: u.permissionLevel,
-            avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`,
+            disabled: u.disabled,
+            avatar: `${process.env.NAPI_URL}/v1/users/${u.id}/avatar.webp?v=${updatedAtCode}`,
             createdAt: u.createdAt,
         });
     }
