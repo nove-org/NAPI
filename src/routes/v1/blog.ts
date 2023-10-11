@@ -11,9 +11,13 @@ import { z } from 'zod';
 const router = Router();
 
 router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, validate(z.object({ text: z.string(), title: z.string() })), async (req: Request, res: Response) => {
+    const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+
     const newPost = await prisma.blogPost.create({
         data: {
             authorId: req.user.id,
+            authorAvatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`,
+            authorUsername: req.user.username,
             text: req.body.text,
             title: req.body.title,
         },
@@ -51,7 +55,7 @@ router.patch(
     }
 );
 
-router.get('/:id/', authorize({}), async (req: Request, res: Response) => {
+router.get('/:id/', async (req: Request, res: Response) => {
     const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
     if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
@@ -59,7 +63,7 @@ router.get('/:id/', authorize({}), async (req: Request, res: Response) => {
     return createResponse(res, 200, post);
 });
 
-router.get('/', authorize({}), async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     const posts = await prisma.blogPost.findMany();
 
     return createResponse(res, 200, posts);
