@@ -114,6 +114,8 @@ model TrackedDevices {
 model BlogPost {
   id              String        @id @unique @default(uuid())
   authorId        String
+  authorUsername  String
+  authorAvatar    String
   text            String
   title           String
   commentsAllowed Boolean       @default(true)

@@ -11,9 +11,13 @@ import { z } from 'zod';
 const router = Router();
 
 router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, validate(z.object({ text: z.string(), title: z.string() })), async (req: Request, res: Response) => {
+    const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+
     const newPost = await prisma.blogPost.create({
         data: {
             authorId: req.user.id,
+            authorAvatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`,
+            authorUsername: req.user.username,
             text: req.body.text,
             title: req.body.title,
         },
