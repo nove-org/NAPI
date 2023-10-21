@@ -65,7 +65,7 @@ function authorize({
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-            if (requireMfa && !(/([0-9]{6})/.test(mfa) ? (verifyToken(authorization.user.mfaSecret, mfa)?.delta === 1 || verifyToken(authorization.user.mfaSecret, mfa)?.delta === 0) : authorization.user.mfaRecoveryCodes?.includes(mfa)))
+            if (requireMfa && !(/([0-9]{6})/.test(mfa) ? verifyToken(authorization.user.mfaSecret, mfa)?.delta === (1 ||  0) : authorization.user.mfaRecoveryCodes?.includes(mfa)))
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: 'invalid mfa token',
@@ -109,7 +109,7 @@ function authorize({
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-            if (requireMfa && !(/([0-9]{6})/.test(mfa) ? (verifyToken(user.mfaSecret, mfa)?.delta === 1 || verifyToken(user.mfaSecret, mfa)?.delta === 0) : user.mfaRecoveryCodes?.includes(mfa)))
+            if (requireMfa && !(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === (1 ||  0) : user.mfaRecoveryCodes?.includes(mfa)))
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: 'invalid mfa token',
