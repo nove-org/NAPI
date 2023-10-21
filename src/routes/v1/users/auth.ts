@@ -3,20 +3,26 @@ import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
-import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
-import createError from '../../../utils/createError';
-import createResponse from '../../../utils/createResponse';
-import { randomString } from '../../../utils/crypto';
-import { getUniqueKey } from '../../../utils/prisma';
-import prisma, { maskUserMe } from '../../../utils/prisma';
-import { validate } from '../../../utils/schema';
+import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
+import createError from '@util/createError';
+import createResponse from '@util/createResponse';
+import { randomString } from '@util/crypto';
+import { getUniqueKey } from '@util/prisma';
+import { verifyToken } from 'node-2fa';
+import prisma, { maskUserMe } from '@util/prisma';
+import { validate } from '@util/schema';
 import axios from 'axios';
-import { createLoginDevice } from '../../../utils/createLoginDevice';
+import { createLoginDevice } from '@util/createLoginDevice';
+import { rateLimit } from '@middleware/ratelimit';
 
 const router = Router();
 
 router.post(
     '/login',
+    rateLimit({
+        ipCount: 25,
+        keyCount: 40,
+    }),
     validate(
         z.object({
             username: z.string().min(1).max(64),
@@ -38,6 +44,38 @@ router.post(
             });
         if (!compareSync(req.body.password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+
+        if (user.mfaEnabled) {
+            const mfa = (req.headers['x-mfa'] as string) || '';
+
+            if (!mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa))
+                return createError(res, 403, {
+                    code: 'mfa_required',
+                    message: 'mfa required',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+
+            if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 1 : user.mfaRecoveryCodes?.includes(mfa)))
+                return createError(res, 403, {
+                    code: 'invalid_mfa_token',
+                    message: 'invalid mfa token',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+
+            if (/([a-zA-Z0-9]{16})/.test(mfa))
+                await prisma.user.update({
+                    where: {
+                        id: user.id,
+                    },
+                    data: {
+                        mfaRecoveryCodes: {
+                            set: user.mfaRecoveryCodes?.filter((code) => code !== mfa),
+                        },
+                    },
+                });
+        }
 
         createResponse(res, 200, maskUserMe(user, true));
 
@@ -83,6 +121,10 @@ router.post(
 
 router.post(
     '/register',
+    rateLimit({
+        ipCount: 10,
+        keyCount: 15,
+    }),
     validate(
         z.object({
             email: z.string().min(5).max(128).email(),
@@ -170,28 +212,35 @@ router.post(
     }
 );
 
-router.get('/verifyEmail', async (req: Request, res: Response) => {
-    const code = req.query.code as string;
+router.get(
+    '/verifyEmail',
+    rateLimit({
+        ipCount: 2,
+        keyCount: 3,
+    }),
+    async (req: Request, res: Response) => {
+        const code = req.query.code as string;
 
-    const user = await prisma.user.findFirst({ where: { emailVerifyCode: code } });
+        const user = await prisma.user.findFirst({ where: { emailVerifyCode: code } });
 
-    if (!user)
-        return createError(res, 404, {
-            code: 'user_not_found',
-            message: 'user with this email verification code was not found',
-            param: 'query:code',
-            type: 'authorization',
+        if (!user)
+            return createError(res, 404, {
+                code: 'user_not_found',
+                message: 'user with this email verification code was not found',
+                param: 'query:code',
+                type: 'authorization',
+            });
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                emailVerifyCode: '',
+                verified: true,
+            },
         });
 
-    await prisma.user.update({
-        where: { id: user.id },
-        data: {
-            emailVerifyCode: '',
-            verified: true,
-        },
-    });
-
-    return res.redirect(`${process.env.FRONTEND_URL}/account`);
-});
+        return res.redirect(`${process.env.FRONTEND_URL}/account`);
+    }
+);
 
 export default router;

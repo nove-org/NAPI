@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express, { Request, Response } from 'express';
 import { Server } from 'http';
+import createError from '@util/createError';
 import routes from './routes';
 import checkEnv from './utils/env';
 import logger from './utils/logger';
@@ -19,7 +20,7 @@ app.set('view engine', 'ejs');
 app.set('views', 'src/views');
 app.set('trust proxy', true);
 app.use('/', routes);
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
     res.json({
         status: 200,
         body: {
@@ -28,10 +29,14 @@ app.get('/', (req: Request, res: Response) => {
         },
         meta: {
             timestamp: new Date().toISOString(),
-            version: 'a1.0.0',
-            server: 'nove_dev1',
+            version: process.env.VERSION,
+            server: process.env.SERVER,
         },
     });
+});
+
+app.use((_req, res, _next) => {
+    return createError(res, 404, { code: 'not_found', message: 'this page does not exist', type: 'authorization' });
 });
 
 prisma

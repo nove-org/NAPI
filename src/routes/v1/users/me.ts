@@ -3,25 +3,33 @@ import { Request, Response, Router } from 'express';
 import { generateSecret, verifyToken } from 'node-2fa';
 import { z } from 'zod';
 import { compare } from 'bcrypt';
-import { authorize } from '../../../middlewares/auth';
-import { AVAILABLE_LANGUAGES_REGEX } from '../../../utils/CONSTS';
-import createError from '../../../utils/createError';
-import createResponse from '../../../utils/createResponse';
-import { randomString } from '../../../utils/crypto';
-import { removeProps } from '../../../utils/masker';
-import { multerUploadSingle } from '../../../utils/multipart';
-import prisma, { maskUserMe, maskUserOAuth } from '../../../utils/prisma';
-import { validate } from '../../../utils/schema';
+import { authorize } from '@middleware/auth';
+import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
+import createError from '@util/createError';
+import createResponse from '@util/createResponse';
+import { randomString } from '@util/crypto';
+import { removeProps } from '@util/masker';
+import { multerUploadSingle } from '@util/multipart';
+import prisma, { maskUserMe, maskUserOAuth } from '@util/prisma';
+import { validate } from '@util/schema';
+import { rateLimit } from '@middleware/ratelimit';
+import { getAvatarCode } from '@util/getAvatarCode';
 
 const router = Router();
 
 router.get(
     '/me',
+    rateLimit({
+        ipCount: 500,
+        keyCount: 750,
+    }),
     authorize({
         requiredScopes: ['account.read.basic'],
     }),
     async (req: Request, res: Response) => {
-        const user = { avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp`, ...req.user };
+        const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+
+        const user = { avatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`, ...req.user };
 
         if (req.oauth) return createResponse(res, 200, maskUserOAuth(user, req.oauth));
         else createResponse(res, 200, maskUserMe(user));
@@ -30,6 +38,10 @@ router.get(
 
 router.patch(
     '/me',
+    rateLimit({
+        ipCount: 75,
+        keyCount: 100,
+    }),
     validate(
         z.object({
             username: z
@@ -92,8 +104,7 @@ router.patch(
     }),
     async (req: Request, res: Response) => {
         if (req.user.mfaEnabled) {
-            if (!req.body.enabled) return createError(res, 400, { message: 'mfa is already disabled', code: 'mfa_already_disabled', type: 'validation' });
-
+            if (req.body.enabled) return createError(res, 400, { message: 'mfa is already enabled', code: 'mfa_already_enabled', type: 'validation' });
             const mfa = req.headers['x-mfa'] as string;
 
             if (/[a-zA-Z0-9]{16}/.test(mfa)) {
@@ -116,7 +127,7 @@ router.patch(
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-            if (verifyToken(req.user.mfaSecret, mfa)?.delta !== 0)
+            if (verifyToken(req.user.mfaSecret, mfa)?.delta === 1)
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: 'invalid mfa token',
@@ -135,7 +146,7 @@ router.patch(
 
             return createResponse(res, 200, { message: 'mfa disabled' });
         } else {
-            if (req.body.enabled) return createError(res, 400, { message: 'mfa is already enabled', code: 'mfa_already_enabled', type: 'validation' });
+            if (!req.body.enabled) return createError(res, 400, { message: 'mfa is already disabled', code: 'mfa_already_disabled', type: 'validation' });
             const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
             const newCodes = Array.from({ length: 10 }, () => randomString(16));
 
@@ -164,34 +175,46 @@ router.get(
     }
 );
 
-router.get('/me/activity', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
-    if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivity)
-        return createError(res, 400, {
-            code: 'activity_disabled',
-            message: 'Account activity is turned off',
-            type: 'request',
+router.get(
+    '/me/activity',
+    rateLimit({
+        ipCount: 100,
+        keyCount: 150,
+    }),
+    authorize({ disableBearer: true }),
+    async (req: Request, res: Response) => {
+        if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivity)
+            return createError(res, 400, {
+                code: 'activity_disabled',
+                message: 'Account activity is turned off',
+                type: 'request',
+            });
+
+        let perPage = Math.abs(parseInt(req.query.perPage as string)) || 10;
+
+        if (perPage > 25 || perPage < 1) perPage = 3;
+
+        const devices = await prisma.trackedDevices.findMany({
+            where: {
+                userId: req.user.id,
+            },
+            skip: req.query.page ? parseInt(req.query.page.toString()) * perPage : 0,
+            take: perPage,
+            orderBy: {
+                updatedAt: 'desc',
+            },
         });
 
-    let perPage = Math.abs(parseInt(req.query.perPage as string)) || 10;
-
-    if (perPage > 25 || perPage < 1) perPage = 3;
-
-    const devices = await prisma.trackedDevices.findMany({
-        where: {
-            userId: req.user.id,
-        },
-        skip: req.query.page ? parseInt(req.query.page.toString()) * perPage : 0,
-        take: perPage,
-        orderBy: {
-            updatedAt: 'desc',
-        },
-    });
-
-    createResponse(res, 200, devices);
-});
+        createResponse(res, 200, devices);
+    }
+);
 
 router.patch(
     '/avatar',
+    rateLimit({
+        ipCount: 50,
+        keyCount: 75,
+    }),
     authorize({
         requiredScopes: ['account.write.avatar'],
     }),
@@ -214,18 +237,31 @@ router.patch(
     }
 );
 
-router.get('/me/connections', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
-    const oauth2 = await prisma.oAuth_Authorization.findMany({ where: { user_id: req.user.id }, include: { app: true } });
-    const apps: OAuth_App[] = [];
+router.get(
+    '/me/connections',
+    rateLimit({
+        ipCount: 100,
+        keyCount: 150,
+    }),
+    authorize({ disableBearer: true }),
+    async (req: Request, res: Response) => {
+        const oauth2 = await prisma.oAuth_Authorization.findMany({ where: { user_id: req.user.id }, include: { app: true } });
+        const apps: OAuth_App[] = [];
 
-    createResponse(
-        res,
-        200,
-        oauth2.map((x) => removeProps(x, ['token', 'refresh_token', 'app.client_secret']))
-    );
-});
+        createResponse(
+            res,
+            200,
+            oauth2.map((x) => removeProps(x, ['token', 'refresh_token', 'app.client_secret']))
+        );
+    }
+);
 
-router.post('/me/delete',
+router.post(
+    '/me/delete',
+    rateLimit({
+        ipCount: 3,
+        keyCount: 5,
+    }),
     validate(z.object({ password: z.string().min(1).max(128) })),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
@@ -238,7 +274,7 @@ router.post('/me/delete',
         if (!(await compare(password, user.password))) {
             return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
         }
-        
+
         await prisma.user.delete({ where: { id: user.id } });
 
         createResponse(res, 200, { success: true });

@@ -1,4 +1,4 @@
-import { LogLevel } from '../utils/logger';
+import { LogLevel } from '@util/logger';
 
 export type Env = 'development' | 'production';
 
@@ -7,6 +7,8 @@ declare global {
         interface ProcessEnv {
             ENV: Env;
             PORT: number;
+            VERSION: number;
+            SERVER: string;
             LOG_FILES_DIR: string;
             ENABLE_LOG_FILES: boolean;
             FILE_LOG_LEVEL: LogLevel;

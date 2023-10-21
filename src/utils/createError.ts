@@ -67,7 +67,8 @@ export default function createError(res: Response, status: HTTPStatus, error: HT
         },
         meta: {
             timestamp: new Date().toISOString(),
-            version: '0.1.0',
+            version: process.env.VERSION,
+            server: process.env.SERVER,
         },
     });
 }
