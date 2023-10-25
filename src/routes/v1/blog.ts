@@ -57,10 +57,11 @@ router.patch(
 
 router.get('/:id/', async (req: Request, res: Response) => {
     const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
-    const comments = await prisma.blogComment.findMany({ where: { blogPostId: post.id } });
 
     if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
 
+    const comments = await prisma.blogComment.findMany({ where: { blogPostId: post.id } });
+    
     return createResponse(res, 200, { post, comments });
 });
 
