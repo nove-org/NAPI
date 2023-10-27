@@ -131,7 +131,7 @@ router.delete('/:id/comment/:comment_id', authorize({ disableBearer: true }), as
     if (comment.authorId !== req.user.id && req.user.permissionLevel !== 2)
         return createError(res, 401, { code: 'insufficient_permissions', message: 'you can only delete your comments', type: 'validation' });
 
-    await prisma.blogComment.delete({ where: { id: req.body.comment_id } });
+    await prisma.blogComment.delete({ where: { id: req.params.comment_id } });
 
     return createResponse(res, 200, { success: true });
 });
