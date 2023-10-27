@@ -6,6 +6,7 @@ import prisma from '@util/prisma';
 import { validate } from '@util/schema';
 import { Request, Response, Router } from 'express';
 import { getAvatarCode } from '@util/getAvatarCode';
+import { rateLimit } from '@middleware/ratelimit';
 import { z } from 'zod';
 
 const router = Router();
@@ -83,24 +84,31 @@ router.delete('/:id', authorize({ disableBearer: true }), authorizeAdmin, async 
     return createResponse(res, 200, { success: true });
 });
 
-router.post('/:id/comment', authorize({ disableBearer: true }), validate(z.object({ text: z.string().min(2).max(400) })), async (req: Request, res: Response) => {
-    const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
+router.post('/:id/comment',
+    rateLimit({
+        ipCount: 3,
+        keyCount: 3,
+    }),
+    authorize({ disableBearer: true }),
+    validate(z.object({ text: z.string().min(2).max(400) })),
+    async (req: Request, res: Response) => {
+        const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
-    if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
+        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
 
-    const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+        const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
 
-    const comment = await prisma.blogComment.create({
-        data: {
-            authorId: req.user.id,
-            authorUsername: req.user.username,
-            authorAvatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`,
-            text: req.body.text,
-            blogPostId: post.id,
-        },
-    });
+        const comment = await prisma.blogComment.create({
+            data: {
+                authorId: req.user.id,
+                authorUsername: req.user.username,
+                authorAvatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`,
+                text: req.body.text,
+                blogPostId: post.id,
+            },
+        });
 
-    return createResponse(res, 200, comment);
+        return createResponse(res, 200, comment);
 });
 
 router.patch('/:id/comment/:comment_id', authorize({ disableBearer: true }), validate(z.object({ text: z.string().min(2).max(400) })), async (req: Request, res: Response) => {
