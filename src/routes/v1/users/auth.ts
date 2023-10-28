@@ -56,10 +56,10 @@ router.post(
                     type: 'authorization',
                 });
 
-            if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === (1 ||  0) : user.mfaRecoveryCodes?.includes(mfa)))
+            if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 1 ||  verifyToken(user.mfaSecret, mfa)?.delta === 0 : user.mfaRecoveryCodes?.includes(mfa)))
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
-                    message: 'invalid mfa token',
+                    message: `Invalid MFA token was provided (delta ${verifyToken(user.mfaSecret, mfa)?.delta})`,
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
