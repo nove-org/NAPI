@@ -27,9 +27,10 @@ router.post(
         const emailUser = await prisma.user.findFirst({ where: { email: newEmail } });
 
         if (emailUser)
-            return createError(res, 400, {
+            return createError(res, 409, {
+                code: 'invalid_email',
                 message: 'This email is already taken',
-                code: 'taken_email',
+                param: 'body:newEmail',
                 type: 'validation',
             });
 
@@ -57,6 +58,7 @@ router.post(
             },
         });
 
+        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.user.email,
@@ -64,6 +66,7 @@ router.post(
             html: `<center><img src="https://f.nove.team/emailReset.svg" width="380" height="126" alt="Confirm requested e-mail address change"><div style="margin:10px 0;padding:20px;max-width:340px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${req.user.username}</b>. Someone requested to change your Nove account e-mail. In order to approve that request, click the "Confirm e-mail change" button. If that wasn't you, just ignore this message.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${process.env.NAPI_URL}/v1/users/confirmEmailChange?code=${data.codeOldMail}">Confirm e-mail change</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
         });
 
+        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: newEmail,
@@ -91,7 +94,7 @@ router.get(
         if (!newEmailObject)
             return createError(res, 404, {
                 code: 'invalid_code',
-                message: 'invalid email change code',
+                message: 'Invalid email change code was provided',
                 param: 'query:code',
                 type: 'authorization',
             });
@@ -119,7 +122,7 @@ router.get(
             return createResponse(res, 200, { success: true });
         }
 
-        return createResponse(res, 200, { text: `you have to verify your ${code === newEmailObject.codeNewMail ? 'old' : 'new'} also` });
+        return createResponse(res, 200, { message: `You have to also verify your ${code === newEmailObject.codeNewMail ? 'old' : 'new'} e-mail` });
     }
 );
 

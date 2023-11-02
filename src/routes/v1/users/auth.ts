@@ -37,13 +37,13 @@ router.post(
         });
         if (!user)
             return createError(res, 404, {
-                code: 'user_not_found',
-                message: 'user with this username was not found',
+                code: 'invalid_user',
+                message: 'User with this username was not found',
                 param: 'body:username',
                 type: 'authorization',
             });
         if (!compareSync(req.body.password, user.password))
-            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
+            return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'authorization' });
 
         if (user.mfaEnabled) {
             const mfa = (req.headers['x-mfa'] as string) || '';
@@ -51,12 +51,12 @@ router.post(
             if (!mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa))
                 return createError(res, 403, {
                     code: 'mfa_required',
-                    message: 'mfa required',
+                    message: 'MFA is required',
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
 
-            if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 1 ||  verifyToken(user.mfaSecret, mfa)?.delta === 0 : user.mfaRecoveryCodes?.includes(mfa)))
+            if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 1 || verifyToken(user.mfaSecret, mfa)?.delta === 0 : user.mfaRecoveryCodes?.includes(mfa)))
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: `Invalid MFA token was provided (delta ${verifyToken(user.mfaSecret, mfa)?.delta})`,
@@ -99,6 +99,7 @@ router.post(
                 responseType: 'json',
             });
 
+            //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
             await transporter.sendMail({
                 from: process.env.MAIL_USERNAME,
                 to: user.email,
@@ -153,16 +154,16 @@ router.post(
     ) => {
         if (await prisma.user.count({ where: { email: req.body.email } }))
             return createError(res, 409, {
-                code: 'email_already_exists',
-                message: 'email already exists',
+                code: 'email_taken',
+                message: 'This e-mail is already taken',
                 param: 'body:email',
                 type: 'register',
             });
 
         if (await prisma.user.count({ where: { username: req.body.username } }))
             return createError(res, 409, {
-                code: 'username_already_exists',
-                message: 'username already exists',
+                code: 'username_taken',
+                message: 'This username is already taken',
                 param: 'body:username',
                 type: 'register',
             });
@@ -170,7 +171,7 @@ router.post(
         if (passwordStrength(req.body.password).id < 2 || req.body.password === req.body.email || req.body.password === req.body.username)
             return createError(res, 400, {
                 code: 'weak_password',
-                message: 'password is too weak',
+                message: 'Provided password is too weak',
                 param: 'body:password',
                 type: 'register',
             });
@@ -185,7 +186,7 @@ router.post(
                 password: hashSync(req.body.password, genSaltSync()),
                 bio: "Hey, I'm new here!",
                 emailVerifyCode: verificationCode,
-                language: req.body.language || 'en',
+                language: req.body.language || 'en-US',
                 token: randomString(48),
             },
         });
@@ -203,6 +204,7 @@ router.post(
             },
         });
 
+        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.body.email,
@@ -225,10 +227,10 @@ router.get(
 
         if (!user)
             return createError(res, 404, {
-                code: 'user_not_found',
-                message: 'user with this email verification code was not found',
+                code: 'invalid_user',
+                message: 'User with this email verification code was not found',
                 param: 'query:code',
-                type: 'authorization',
+                type: 'validation',
             });
 
         await prisma.user.update({
