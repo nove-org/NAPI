@@ -25,7 +25,7 @@ app.get('/', (_req: Request, res: Response) => {
         status: 200,
         body: {
             error: null,
-            message: 'oh hi there',
+            message: 'For more information on how to use the API place check proper documentation (https://git.nove.team/nove-org/NAPI/wiki)',
         },
         meta: {
             timestamp: new Date().toISOString(),
