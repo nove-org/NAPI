@@ -60,7 +60,7 @@ router.patch(
     authorize({
         requiredScopes: ['account.write.basic'],
         // TODO: Add scopes for each field
-        // TODO: Remove this line and actually implement patching user data by OAuth apps
+        // TODO: Remove this line and actually implement patching user data by OAuth apps (???, for what? ~ wnm210)
         disableBearer: true,
     }),
     async (req: Request, res: Response) => {
@@ -70,7 +70,7 @@ router.patch(
         if (req.body.username?.length) {
             const user = await prisma.user.findFirst({ where: { username: req.body.username } });
 
-            if (user) return createError(res, 400, { message: 'This username is already taken', code: 'taken_username', type: 'validation' });
+            if (user) return createError(res, 409, { code: 'username_taken', message: 'This username is already taken', param: 'body:username', type: 'validation' });
 
             data['username'] = req.body.username;
         }
@@ -104,7 +104,7 @@ router.patch(
     }),
     async (req: Request, res: Response) => {
         if (req.user.mfaEnabled) {
-            if (req.body.enabled) return createError(res, 400, { message: 'mfa is already enabled', code: 'mfa_already_enabled', type: 'validation' });
+            if (req.body.enabled) return createError(res, 400, { code: 'mfa_already_enabled', message: 'MFA is already enabled', param: 'body:enabled', type: 'validation' });
             const mfa = req.headers['x-mfa'] as string;
 
             if (/[a-zA-Z0-9]{16}/.test(mfa)) {
@@ -117,7 +117,7 @@ router.patch(
                     },
                 });
 
-                return createResponse(res, 200, { message: 'mfa disabled' });
+                return createResponse(res, 200, { success: true, message: 'MFA is now disabled' });
             }
 
             if (!mfa || !/[0-9]{6}/.test(mfa))
@@ -146,7 +146,7 @@ router.patch(
 
             return createResponse(res, 200, { message: 'mfa disabled' });
         } else {
-            if (!req.body.enabled) return createError(res, 400, { message: 'mfa is already disabled', code: 'mfa_already_disabled', type: 'validation' });
+            if (!req.body.enabled) return createError(res, 400, { code: 'mfa_already_disabled', message: 'MFA is already disabled', param: 'body:enabled', type: 'validation' });
             const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
             const newCodes = Array.from({ length: 10 }, () => randomString(16));
 
@@ -184,9 +184,9 @@ router.get(
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
         if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivity)
-            return createError(res, 400, {
+            return createError(res, 403, {
                 code: 'activity_disabled',
-                message: 'Account activity is turned off',
+                message: 'Account activity is disabled',
                 type: 'request',
             });
 
@@ -226,7 +226,7 @@ router.patch(
         if (!file)
             return createError(res, 400, {
                 code: 'invalid_parameter',
-                message: 'You have to send an image',
+                message: 'You have to send a valid image file',
                 param: 'body:avatar',
                 type: 'validation',
             });
@@ -269,11 +269,10 @@ router.post(
 
         const user = await prisma.user.findFirst({ where: { id: req.user.id } });
 
-        if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
+        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'authorization' });
 
-        if (!(await compare(password, user.password))) {
-            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:password', type: 'authorization' });
-        }
+        if (!(await compare(password, user.password)))
+            return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
 
         await prisma.user.delete({ where: { id: user.id } });
 

@@ -25,7 +25,7 @@ app.get('/', (_req: Request, res: Response) => {
         status: 200,
         body: {
             error: null,
-            message: 'oh hi there',
+            message: 'For more information on how to use the API place check proper documentation (https://git.nove.team/nove-org/NAPI/wiki)',
         },
         meta: {
             timestamp: new Date().toISOString(),
@@ -36,7 +36,7 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 app.use((_req, res, _next) => {
-    return createError(res, 404, { code: 'not_found', message: 'this page does not exist', type: 'authorization' });
+    return createError(res, 404, { code: 'not_found', message: 'This page does not exist', type: 'authorization' });
 });
 
 prisma

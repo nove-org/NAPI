@@ -23,7 +23,7 @@ router.get(
             where: { id },
         });
 
-        if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
+        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
 
         const updatedAtCode = getAvatarCode(new Date(user.updatedAt));
 
@@ -47,7 +47,7 @@ router.get(
             where: { id },
         });
 
-        if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exists!', type: 'validation', param: 'param:id' });
+        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
 
         const path = existsSync(`${STORAGE_PATH}/${id}.webp`) ? `${STORAGE_PATH}/${id}.webp` : `${join(STORAGE_PATH, '..')}/defaults/AVATAR.webp`;
 

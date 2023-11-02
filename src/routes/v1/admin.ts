@@ -46,9 +46,9 @@ router.patch(
 
         const user = await prisma.user.findFirst({ where: { id } });
 
-        if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
+        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
 
-        if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', type: 'validation', param: 'body:reason' });
+        if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', param: 'body:reason', type: 'validation' });
 
         const transporter = nodemailer.createTransport({
             host: process.env.MAIL_HOST,
@@ -62,12 +62,13 @@ router.patch(
             },
         });
 
-        //TODO: HTML to email
+        // TODO: Attach HTML to email
+        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: user.email,
-            subject: 'account deleted',
-            html: `your account has been deleted because of ${req.body.reason}, this action was triggered by: ${req.user.username}`,
+            subject: 'Your Nove Account has been deleted',
+            html: `Your account has been deleted because of ${req.body.reason}`,
         });
 
         await prisma.user.delete({ where: { id } });
@@ -86,9 +87,9 @@ router.post(
 
         const user = await prisma.user.findFirst({ where: { id } });
 
-        if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
+        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
 
-        if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', type: 'validation', param: 'body:reason' });
+        if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', param: 'body:reason', type: 'validation' });
 
         const transporter = nodemailer.createTransport({
             host: process.env.MAIL_HOST,
@@ -102,12 +103,13 @@ router.post(
             },
         });
 
-        //TODO: HTML to email
+        // TODO: HTML to email
+        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: user.email,
-            subject: 'account disabled',
-            html: `your account has been disabled because of ${req.body.reason}, this action was triggered by: ${req.user.username}`,
+            subject: 'Your Nove Account has been disabled',
+            html: `Your account has been disabled because of ${req.body.reason}`,
         });
 
         await prisma.user.update({ where: { id }, data: { disabled: true } });
@@ -121,7 +123,7 @@ router.delete('/users/:id/disable', authorize({ disableBearer: true, requireMfa:
 
     const user = await prisma.user.findFirst({ where: { id } });
 
-    if (!user) return createError(res, 400, { code: 'invalid_id', message: 'This user does not exist!', type: 'validation', param: 'param:id' });
+    if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
 
     const transporter = nodemailer.createTransport({
         host: process.env.MAIL_HOST,
@@ -139,8 +141,8 @@ router.delete('/users/:id/disable', authorize({ disableBearer: true, requireMfa:
     await transporter.sendMail({
         from: process.env.MAIL_USERNAME,
         to: user.email,
-        subject: 'account enabled',
-        html: `your account has been enabled! 👌👌👌👌, this action was triggered by: ${req.user.username}`,
+        subject: 'Your Nove account is active again',
+        html: `Your account has been re-enabled`,
     });
 
     await prisma.user.update({ where: { id }, data: { disabled: false } });

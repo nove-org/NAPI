@@ -11,6 +11,19 @@ import { z } from 'zod';
 
 const router = Router();
 
+router.get(
+    '/',
+    rateLimit({
+        ipCount: 500,
+        keyCount: 750,
+    }),
+    async (req: Request, res: Response) => {
+        const posts = await prisma.blogPost.findMany();
+
+        return createResponse(res, 200, posts);
+    }
+);
+
 router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, validate(z.object({ text: z.string(), title: z.string() })), async (req: Request, res: Response) => {
     const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
 
@@ -27,6 +40,23 @@ router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, valid
     return createResponse(res, 200, newPost);
 });
 
+router.get(
+    '/:id',
+    rateLimit({
+        ipCount: 300,
+        keyCount: 500,
+    }),
+    async (req: Request, res: Response) => {
+        const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
+
+        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
+
+        const comments = await prisma.blogComment.findMany({ where: { blogPostId: post.id } });
+
+        return createResponse(res, 200, { post, comments });
+    }
+);
+
 router.patch(
     '/:id',
     authorize({ disableBearer: true }),
@@ -41,7 +71,7 @@ router.patch(
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
-        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
+        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
         const updatedPost = await prisma.blogPost.update({
             where: { id: post.id },
@@ -56,26 +86,10 @@ router.patch(
     }
 );
 
-router.get('/:id/', async (req: Request, res: Response) => {
-    const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
-
-    if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
-
-    const comments = await prisma.blogComment.findMany({ where: { blogPostId: post.id } });
-    
-    return createResponse(res, 200, { post, comments });
-});
-
-router.get('/', async (req: Request, res: Response) => {
-    const posts = await prisma.blogPost.findMany();
-
-    return createResponse(res, 200, posts);
-});
-
 router.delete('/:id', authorize({ disableBearer: true }), authorizeAdmin, async (req: Request, res: Response) => {
     const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
-    if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
+    if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
     await prisma.blogPost.delete({ where: { id: post.id } });
 
@@ -84,7 +98,8 @@ router.delete('/:id', authorize({ disableBearer: true }), authorizeAdmin, async 
     return createResponse(res, 200, { success: true });
 });
 
-router.post('/:id/comment',
+router.post(
+    '/:id/comment',
     rateLimit({
         ipCount: 3,
         keyCount: 3,
@@ -94,7 +109,7 @@ router.post('/:id/comment',
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
-        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
+        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
         const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
 
@@ -109,39 +124,57 @@ router.post('/:id/comment',
         });
 
         return createResponse(res, 200, comment);
-});
+    }
+);
 
-router.patch('/:id/comment/:comment_id', authorize({ disableBearer: true }), validate(z.object({ text: z.string().min(2).max(400) })), async (req: Request, res: Response) => {
-    const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
+router.patch(
+    '/:id/comment/:comment_id',
+    rateLimit({
+        ipCount: 100,
+        keyCount: 200,
+    }),
+    authorize({ disableBearer: true }),
+    validate(z.object({ text: z.string().min(2).max(400) })),
+    async (req: Request, res: Response) => {
+        const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
-    if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
+        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
-    const comment = await prisma.blogComment.findFirst({ where: { blogPostId: post.id, id: req.params.comment_id } });
+        const comment = await prisma.blogComment.findFirst({ where: { blogPostId: post.id, id: req.params.comment_id } });
 
-    if (!comment) return createError(res, 404, { code: 'invalid_comment', message: 'this comment does not exist', type: 'validation', param: 'comment_id' });
+        if (!comment) return createError(res, 404, { code: 'invalid_comment', message: 'This comment does not exist', param: 'params:comment_id', type: 'validation' });
 
-    if (comment.authorId !== req.user.id) return createError(res, 401, { code: 'insufficient_permissions', message: 'you can only edit your comments', type: 'validation' });
+        if (comment.authorId !== req.user.id) return createError(res, 403, { code: 'insufficient_permissions', message: 'You can only edit your comments', type: 'validation' });
 
-    const newComment = await prisma.blogComment.update({ where: { id: comment.id }, data: { text: req.body.text } });
+        const newComment = await prisma.blogComment.update({ where: { id: comment.id }, data: { text: req.body.text } });
 
-    return createResponse(res, 200, newComment);
-});
+        return createResponse(res, 200, newComment);
+    }
+);
 
-router.delete('/:id/comment/:comment_id', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
-    const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
+router.delete(
+    '/:id/comment/:comment_id',
+    rateLimit({
+        ipCount: 100,
+        keyCount: 200,
+    }),
+    authorize({ disableBearer: true }),
+    async (req: Request, res: Response) => {
+        const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
-    if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', type: 'validation', param: 'id' });
+        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
-    const comment = await prisma.blogComment.findFirst({ where: { blogPostId: post.id, id: req.params.comment_id } });
+        const comment = await prisma.blogComment.findFirst({ where: { blogPostId: post.id, id: req.params.comment_id } });
 
-    if (!comment) return createError(res, 404, { code: 'invalid_comment', message: 'this comment does not exist', type: 'validation', param: 'comment_id' });
+        if (!comment) return createError(res, 404, { code: 'invalid_comment', message: 'This comment does not exist', param: 'params:comment_id', type: 'validation' });
 
-    if (comment.authorId !== req.user.id && req.user.permissionLevel !== 2)
-        return createError(res, 401, { code: 'insufficient_permissions', message: 'you can only delete your comments', type: 'validation' });
+        if (comment.authorId !== req.user.id && req.user.permissionLevel !== 2)
+            return createError(res, 403, { code: 'insufficient_permissions', message: 'You can only delete your comments', type: 'validation' });
 
-    await prisma.blogComment.delete({ where: { id: req.params.comment_id } });
+        await prisma.blogComment.delete({ where: { id: req.params.comment_id } });
 
-    return createResponse(res, 200, { success: true });
-});
+        return createResponse(res, 200, { success: true });
+    }
+);
 
 export default router;

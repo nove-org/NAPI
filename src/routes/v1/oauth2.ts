@@ -6,6 +6,7 @@ import { randomString } from '@util/crypto';
 import prisma, { getUniqueKey } from '@util/prisma';
 import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
+import createError from '@util/createError';
 
 const router = Router();
 
@@ -15,7 +16,6 @@ router.get(
         ipCount: 500,
         keyCount: 750,
     }),
-    // TODO: visually pleasing error page
     validate(
         z.object({
             client_id: z.string().min(1).max(64),
@@ -32,10 +32,11 @@ router.get(
                 client_id: req.query.client_id?.toString() || '',
             },
         });
-        // TODO: visually pleasing error page
         if (!client) return res.status(400).send('invalid client_id');
-        if (!client.redirect_uris.includes(req.query.redirect_uri as string)) return res.status(400).send('invalid redirect_uri');
-        if (req.query.response_type !== 'code') return res.status(400).send('invalid response_type');
+        if (!client.redirect_uris.includes(req.query.redirect_uri as string))
+            return createError(res, 400, { code: 'invalid_redirect_uri', message: 'Invalid redirection URL was provided', param: 'query:redirect_uri', type: 'validation' });
+        if (req.query.response_type !== 'code')
+            return createError(res, 400, { code: 'invalid_response_type', message: 'Invalid response code was provided', param: 'query:response_type', type: 'validation' });
 
         res.render('v1/oauth2/authorize', {
             client,
@@ -43,12 +44,6 @@ router.get(
         });
     }
 );
-
-// (todo for both routes below)
-// TODO: better error formats
-// TODO: figure out proper length for client_id, client_secret, etc.
-// TODO: figure out a safe length for code, token, etc.
-// TODO: figure out proper expiration time for token
 
 router.post(
     '/authorize',
@@ -71,8 +66,7 @@ router.post(
                 client_id: req.body.client_id?.toString() || '',
             },
         });
-        // TODO: visually pleasing error page
-        if (!client) return res.status(400).send('invalid client_id');
+        if (!client) return createError(res, 400, { code: 'invalid_client_id', message: 'Invalid client Id was provided', param: 'query:client_id', type: 'validation' });
 
         const code = await prisma.oAuth_Code.create({
             data: {
@@ -107,17 +101,23 @@ router.post(
         'query'
     ),
     async (req: Request, res: Response) => {
-        const TOKEN_LIFETIME = 3600 * 1000;
+        // * I set TOKEN_LIFETIME for 30 days because I think that's pretty optimal date and allows users to stay signed in for 30 days.
+        // * As by this change we can use OAuth2 system properly in our applications.
+        // TODO: If a user doesn't want the app to access their data they should be able to revoke app authorization.
+        const TOKEN_LIFETIME = 30 * 24 * 60 * 60 * 1000;
 
         const client = await prisma.oAuth_App.findFirst({
             where: {
                 client_id: req.query.client_id?.toString() || '',
             },
         });
-        if (!client) return res.status(400).send('invalid client_id');
-        if (client.client_secret !== req.query.client_secret?.toString()) return res.status(400).send('invalid client_id');
-        if (!client.redirect_uris.includes(req.query.redirect_uri?.toString() as string)) return res.status(400).send('invalid redirect_uri');
-        if (req.query.grant_type?.toString() !== 'authorization_code') return res.status(400).send('invalid grant_type');
+        if (!client) return createError(res, 400, { code: 'invalid_client_id', message: 'Invalid client Id was provided', param: 'query:client_id', type: 'validation' });
+        if (client.client_secret !== req.query.client_secret?.toString())
+            return createError(res, 400, { code: 'invalid_client_id', message: 'Invalid client Id was provided', param: 'query:client_id', type: 'validation' });
+        if (!client.redirect_uris.includes(req.query.redirect_uri?.toString() as string))
+            return createError(res, 400, { code: 'invalid_redirect_uri', message: 'Invalid redirection URL was provided', param: 'query:redirect_uri', type: 'validation' });
+        if (req.query.grant_type?.toString() !== 'authorization_code')
+            return createError(res, 400, { code: 'invalid_grant_type', message: 'Invalid grant type was provided', param: 'query:grant_type', type: 'validation' });
 
         if (req.query.code?.toString()) {
             const code = await prisma.oAuth_Code.findFirst({
@@ -125,9 +125,11 @@ router.post(
                     code: req.query.code?.toString() || '',
                 },
             });
-            if (!code) return res.status(400).send('invalid code');
-            if (code.app_id !== client.client_id) return res.status(400).send('invalid code');
-            if (code.scopes.join(' ') !== req.query.scope?.toString()) return res.status(400).send('invalid scope');
+            if (!code) return createError(res, 400, { code: 'invalid_code', message: 'Invalid code was provided', param: 'query:code', type: 'validation' });
+            if (code.app_id !== client.client_id)
+                return createError(res, 400, { code: 'invalid_code', message: 'Invalid code was provided', param: 'query:code', type: 'validation' });
+            if (code.scopes.join(' ') !== req.query.scope?.toString())
+                return createError(res, 400, { code: 'invalid_scope', message: 'Invalid scope was provided', param: 'query:scope', type: 'validation' });
 
             const authorization = await prisma.oAuth_Authorization.create({
                 data: {
@@ -159,9 +161,12 @@ router.post(
                     refresh_token: req.query.refresh_token?.toString() || '',
                 },
             });
-            if (!authorization) return res.status(400).send('invalid refresh_token');
-            if (authorization.app_id !== client.client_id) return res.status(400).send('invalid refresh_token');
-            if (authorization.scopes.join(' ') !== req.query.scope?.toString()) return res.status(400).send('invalid scope');
+            if (!authorization)
+                return createError(res, 400, { code: 'invalid_refresh_token', message: 'Invalid refresh token was provided', param: 'query:refresh_token', type: 'validation' });
+            if (authorization.app_id !== client.client_id)
+                return createError(res, 400, { code: 'invalid_refresh_token', message: 'Invalid refresh token was provided', param: 'query:refresh_token', type: 'validation' });
+            if (authorization.scopes.join(' ') !== req.query.scope?.toString())
+                return createError(res, 400, { code: 'invalid_scope', message: 'Invalid scope was provided', param: 'query:scope', type: 'validation' });
 
             authorization.token = randomString(64);
             authorization.token_expires = new Date(Date.now() + TOKEN_LIFETIME);
@@ -185,9 +190,7 @@ router.post(
                 scope: encodeURIComponent(authorization.scopes.join(' ')),
                 refresh_token: authorization.refresh_token,
             });
-        } else {
-            return res.status(400).send('code or refresh_token required');
-        }
+        } else return createError(res, 400, { code: 'invalid_token', message: 'You have to provide a code orp refresh_token', param: 'query:code', type: 'validation' });
     }
 );
 

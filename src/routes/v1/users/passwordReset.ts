@@ -25,7 +25,7 @@ router.post(
 
         const user = await prisma.user.findFirst({ where: { email } });
 
-        if (!user) return createError(res, 400, { code: 'invalid_email', message: 'account with this email address was not found', param: 'body:email', type: 'authorization' });
+        if (!user) return createError(res, 404, { code: 'invalid_email', message: 'Account with this email address was not found', param: 'body:email', type: 'validation' });
 
         if (passwordStrength(newPassword).id < 2 || newPassword === user.email || newPassword === user.username)
             return createError(res, 400, {
@@ -58,6 +58,7 @@ router.post(
             },
         });
 
+        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.body.email,
@@ -76,26 +77,20 @@ router.get(
     async (req: Request, res: Response) => {
         const code = req.query.code as string;
 
-        if (!code) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+        if (!code) return createError(res, 400, { code: 'invalid_code', message: 'Password recovery code was not provided ', param: 'query:code', type: 'validation' });
 
         const recovery = await prisma.recovery.findFirst({ where: { code } });
 
-        if (!recovery) return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+        if (!recovery) return createError(res, 400, { code: 'invalid_code', message: 'Invalid password recovery code was provided ', param: 'query:code', type: 'validation' });
 
         if (recovery.expiresAt.getTime() < Date.now()) {
             await prisma.recovery.delete({ where: { code: recovery.code } });
-            return createError(res, 404, { code: 'invalid_code', message: 'invalid password recovery code', param: 'query:code', type: 'authorization' });
+            return createError(res, 400, { code: 'invalid_code', message: 'Invalid password recovery code was provided ', param: 'query:code', type: 'validation' });
         }
 
         const user = await prisma.user.findFirst({ where: { id: recovery.userId } });
 
-        if (!user)
-            return createError(res, 404, {
-                code: 'user_not_found',
-                message: 'this user was not found',
-                param: 'query:code',
-                type: 'authorization',
-            });
+        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'validation' });
 
         const token = randomString(48);
 
@@ -121,16 +116,16 @@ router.patch(
 
         const user = await prisma.user.findFirst({ where: { id: req.user.id } });
 
-        if (!user) return createError(res, 500, { code: 'user_not_found', message: 'user not found', type: 'authorization' });
+        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'validation' });
 
         if (!(await bcrypt.compare(oldPassword, user.password))) {
-            return createError(res, 401, { code: 'invalid_password', message: 'invalid password', param: 'body:oldPassword', type: 'authorization' });
+            return createError(res, 401, { code: 'invalid_password', message: 'Invalid old password was provided', param: 'body:oldPassword', type: 'validation' });
         }
 
         if (newPassword === oldPassword)
             return createError(res, 400, {
                 code: 'invalid_password',
-                message: 'new password cannot be the same as the current one',
+                message: 'New password cannot be the same as the current one',
                 type: 'validation',
                 param: 'body:newPassword',
             });
@@ -138,7 +133,7 @@ router.patch(
         if (passwordStrength(req.body.newPassword).id < 2 || req.body.newPassword === req.user.email || req.body.newPassword === req.user.username)
             return createError(res, 400, {
                 code: 'weak_password',
-                message: 'new password is too weak',
+                message: 'New password is too weak',
                 param: 'body:newPassword',
                 type: 'validation',
             });
