@@ -26,9 +26,10 @@ div.loaderWindow
     min-height: 100vh
     & p
         display: block
-        margin-top: 10px
+        margin-top: 12px
         font-weight: 400
-        color: $font2
+        opacty: .7
+        color: var(--font-nd)
         text-align: center
 
 div.loader
@@ -40,9 +41,9 @@ div.loader
         display: block
         position: absolute
         border-radius: 50%
-        border: 4px solid $colored
+        border: 3px solid var(--accent-nd)
         animation: _ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite
-        border-color: $colored transparent transparent transparent !important
+        border-color: var(--accent-nd) transparent transparent transparent !important
         width: 24px
         height: 24px
         &:nth-child(1)

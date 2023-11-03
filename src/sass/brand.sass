@@ -1,27 +1,42 @@
-// Main color scheme
-$primary: #000000
-$secondary: #131415
-$tertiary: #171717
-$border: #2e2b2b
-$border2: #464141
-$font: #f1f1f1
-$font4: #ffffffdaf
-$font2: #d0c9c9be
-$font3: #b3adadaf
-$colored: #d73d3d
-$colored2: #3d59d7
-$colored2b: #3e58ccd3
+:root
+    --primary: #f6f6f6
+    --primary-nd: #ffffff
+    --primary-rd: #EDEDED
+    --secondary: #e8e8e8
+    --tertiary: #cecdcd
+    --border-st: #d8d8d8
+    --border-nd: #cecece
+    --transparent: #00000000
+    --font-st: #0C0C0C
+    --font-nd: #272727
+    --font-rd: #404040
+    --font-span-st: linear-gradient(90deg, #FF3364, #D0529E)
+    --font-span-nd: linear-gradient(90deg, #C03AFF, #DF61FF)
+    --font-span-rd: linear-gradient(90deg, #FF8A00, #E79D0E)
+    --accent-st: #e77280
+    --accent-nd: #F36B7B
+    --accent-rd: #F47B8A
+    --popup-bg: #ffffff88
+    --popup-nd: #ffffff44
 
-// Hero color scheme
-$textGlow: 0 0 50px rgba(129, 85, 121, 0.65)
-$textBackground: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(233, 229, 227, 1) 42%, rgba(198, 191, 191, 0.9850140739889706) 89%)
-$textSpan: linear-gradient(218deg, rgb(255, 0, 217) 0%, rgb(241, 58, 131) 42%, rgba(255, 54, 94, 0.98) 89%)
-$buttonGlow: 0 0 25px 0 rgba(129, 85, 121, 0.35)
-$buttonBackground: linear-gradient(180deg, rgb(240, 236, 236) 0%, rgba(233, 229, 227, 1) 42%, rgba(224, 218, 218, 0.985) 89%)
-$itemBackground: linear-gradient(218deg, rgb(0, 64, 255) 0%, rgb(119, 58, 241) 42%, rgba(131, 54, 255, 0.98) 89%)
-$textOrange: linear-gradient(218deg, rgb(235, 41, 23) 0%, rgb(241, 107, 58) 42%, rgba(239, 134, 22, 0.98) 89%)
-
-// Main variables
-$blur: blur(50%)
-$shadow: 0 0 25px 0 rgba(0, 0, 0, 0.15)
-$radius: 6px
+@media (prefers-color-scheme: dark)
+    :root
+        --primary: #141313
+        --primary-nd: #181717
+        --primary-rd: #1a1a1a
+        --secondary: #030202
+        --tertiary: #4a4646
+        --border-st: #373535
+        --border-nd: #444040
+        --transparent: #00000000
+        --font-st: #f7f7f7
+        --font-nd: #f3efef
+        --font-rd: #e7e4e4
+        --font-span-st: linear-gradient(90deg, #FF3364, #D0529E)
+        --font-span-nd: linear-gradient(90deg, #C03AFF, #DF61FF)
+        --font-span-rd: linear-gradient(90deg, #FF8A00, #E79D0E)
+        --accent-st: #e77280
+        --accent-nd: #F36B7B
+        --accent-rd: #F47B8A
+        --popup-bg: #0000005c
+        --popup-nd: #28262696
