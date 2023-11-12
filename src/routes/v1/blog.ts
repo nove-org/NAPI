@@ -8,17 +8,42 @@ import { Request, Response, Router } from 'express';
 import { getAvatarCode } from '@util/getAvatarCode';
 import { rateLimit } from '@middleware/ratelimit';
 import { z } from 'zod';
+import { BlogComment, BlogPost, User } from '@prisma/client';
 
 const router = Router();
+
+interface CommentAuthor extends BlogComment {
+    authorUsername: string;
+    authorAvatar: string;
+}
+
+interface PostAuthor extends BlogPost {
+    authorUsername: string;
+    authorAvatar: string;
+}
 
 router.get(
     '/',
     rateLimit({
-        ipCount: 500,
-        keyCount: 750,
+        ipCount: 250,
+        keyCount: 100,
     }),
     async (req: Request, res: Response) => {
-        const posts = await prisma.blogPost.findMany();
+        const prismaPosts = await prisma.blogPost.findMany();
+
+        let posts: PostAuthor[] = [];
+
+        for (const element of prismaPosts) {
+            const postUser = await prisma.user.findUnique({ where: { id: element.authorId } });
+
+            if (!postUser) return;
+
+            posts.push({
+                authorUsername: postUser.username,
+                authorAvatar: `${process.env.NAPI_URL}/v1/users/${postUser.id}/avatar.webp`,
+                ...element,
+            });
+        }
 
         return createResponse(res, 200, posts);
     }
@@ -30,8 +55,6 @@ router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, valid
     const newPost = await prisma.blogPost.create({
         data: {
             authorId: req.user.id,
-            authorAvatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`,
-            authorUsername: req.user.username,
             text: req.body.text,
             title: req.body.title,
         },
@@ -43,17 +66,40 @@ router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, valid
 router.get(
     '/:id',
     rateLimit({
-        ipCount: 300,
-        keyCount: 500,
+        ipCount: 200,
+        keyCount: 100,
     }),
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
         if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
-        const comments = await prisma.blogComment.findMany({ where: { blogPostId: post.id } });
+        const user = await prisma.user.findUnique({ where: { id: post.authorId } });
 
-        return createResponse(res, 200, { post, comments });
+        if (!user) return createError(res, 404, { code: 'invalid_post', message: 'User that posted this does not exist anymore', param: 'params:id', type: 'validation' });
+
+        const prismaComments = await prisma.blogComment.findMany({ where: { blogPostId: post.id } });
+
+        let comments: CommentAuthor[] = [];
+
+        for (const element of prismaComments) {
+            const commentUser = await prisma.user.findUnique({ where: { id: element.authorId } });
+
+            if (!commentUser) return;
+
+            comments.push({
+                authorUsername: commentUser.username,
+                authorAvatar: `${process.env.NAPI_URL}/v1/users/${commentUser.id}/avatar.webp`,
+                ...element,
+            });
+        }
+
+        return createResponse(res, 200, {
+            authorUsername: user.username,
+            authorAvatar: `${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp`,
+            comments,
+            ...post,
+        });
     }
 );
 
@@ -111,13 +157,9 @@ router.post(
 
         if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
-        const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
-
         const comment = await prisma.blogComment.create({
             data: {
                 authorId: req.user.id,
-                authorUsername: req.user.username,
-                authorAvatar: `${process.env.NAPI_URL}/v1/users/${req.user.id}/avatar.webp?v=${updatedAtCode}`,
                 text: req.body.text,
                 blogPostId: post.id,
             },
@@ -131,7 +173,7 @@ router.patch(
     '/:id/comment/:comment_id',
     rateLimit({
         ipCount: 100,
-        keyCount: 200,
+        keyCount: 100,
     }),
     authorize({ disableBearer: true }),
     validate(z.object({ text: z.string().min(2).max(400) })),
@@ -156,7 +198,7 @@ router.delete(
     '/:id/comment/:comment_id',
     rateLimit({
         ipCount: 100,
-        keyCount: 200,
+        keyCount: 100,
     }),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
