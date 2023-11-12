@@ -1,5 +1,5 @@
 <center>
-    <img src="https://f.nove.team/confirmEmail.svg" width="380" height="126" alt="Confirm your e-mail to create new Nove account" />
+    <img src="https://f.nove.team/emailReset.svg" width="380" height="126" alt="Confirm requested e-mail change" />
     <div
         style="
             margin: 10px 0;
@@ -13,8 +13,7 @@
             text-align: left;
         ">
         <p style="font-size: 17px; line-height: 1.5; margin: 0; margin-bottom: 10px; text-align: left">
-            Hello,&nbsp;<b>${req.user.username}</b>. Your e-mail address has been provided while creating a new Nove account. In order to confirm that request please click
-            "Approve" button. If that wasn't you, just ignore this e-mail.
+            Hello,&nbsp;<b>{username}</b>. {content} In order to approve that request click "Confirm e-mail change" button. If that wasn't you, just ignore this message.
         </p>
         <a
             style="
@@ -28,12 +27,12 @@
                 text-decoration: none;
                 text-align: left;
             "
-            href="${process.env.NAPI_URL}/v1/users/verifyEmail?code=${verificationCode}"
-            >Approve</a
+            href="{napi}/v1/users/confirmEmailChange?code={email}"
+            >Confirm e-mail change</a
         >
     </div>
     <p style="max-width: 380px; width: 380px; text-align: left; font-size: 14px; opacity: 0.7; font-family: sans-serif; user-select: none">
-        We create FOSS privacy-respecting software for everyday use. <a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,
-        <a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a>
+        We create FOSS privacy-respecting software for everyday use. <a href="{frontend}" target="_blank">Website</a>,
+        <a href="{frontend}/privacy" target="_blank">Privacy Policy</a>
     </p>
 </center>

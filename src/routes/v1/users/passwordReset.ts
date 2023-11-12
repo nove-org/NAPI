@@ -10,6 +10,7 @@ import { randomString } from '@util/crypto';
 import prisma, { maskUserMe, getUniqueKey } from '@util/prisma';
 import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
+import parseHTML from '@util/emails/parser';
 
 const router = Router();
 
@@ -58,12 +59,16 @@ router.post(
             },
         });
 
-        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.body.email,
             subject: 'Password reset requested',
-            html: `<center><img src="https://f.nove.team/passwordReset.svg" width="380" height="126" alt="Password reset requested"><div style="margin:10px 0;padding:20px;max-width:340px;width:calc(100% - 20px * 2);background:#ededed;border-radius:25px;font-family:sans-serif;user-select:none;text-align:left"><p style="font-size:17px;line-height:1.5;margin:0;margin-bottom:10px;text-align:left">Hello,&nbsp;<b>${user.username}</b>. Someone requested to reset your Nove account password by providing your e-mail address. In order to approve that request, click the "Reset password" button. If that wasn't you, just ignore this message.</p><a style="display:block;width:fit-content;border-radius:50px;padding:5px 9px;font-size:16px;color:#fff;background:#000;text-decoration:none;text-align:left" href="${process.env.NAPI_URL}/v1/users/passwordKey?code=${data.code}">Reset password</a></div><p style="max-width:380px;width:380px;text-align:left;font-size:14px;opacity:.7;font-family:sans-serif;user-select:none">We create FOSS privacy-respecting software for everyday use.<a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,<a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a></p></center>`,
+            html: parseHTML('passwordReset', {
+                username: user.username,
+                napi: process.env.NAPI_URL,
+                code: data.code,
+                frontend: process.env.FRONTEND_URL,
+            }),
         });
     }
 );
