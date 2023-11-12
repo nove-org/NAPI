@@ -1,5 +1,5 @@
 <center>
-    <img src="https://f.nove.team/newLogin.svg" width="380" height="126" alt="New login location detected" />
+    <img src="https://f.nove.team/confirmEmail.svg" width="380" height="126" alt="Confirm your e-mail to create new Nove account" />
     <div
         style="
             margin: 10px 0;
@@ -13,8 +13,8 @@
             text-align: left;
         ">
         <p style="font-size: 17px; line-height: 1.5; margin: 0; margin-bottom: 10px; text-align: left">
-            Hello,&nbsp;<b>${req.user.username}</b>. Someone just logged in to your Nove account from&nbsp;<b>${location.data.country}, ${location.data.region_name}</b
-            >&nbsp;(${req.ip}). If that was you, ignore this e-mail. Otherwise, change your password immediately.
+            Hello,&nbsp;<b>{username}</b>. Your e-mail address has been provided while creating a new Nove account. In order to confirm that request please click "Approve" button.
+            If that wasn't you, just ignore this e-mail.
         </p>
         <a
             style="
@@ -28,12 +28,12 @@
                 text-decoration: none;
                 text-align: left;
             "
-            href="${process.env.FRONTEND_URL}/account/security"
-            >Change your password</a
+            href="{napi}/v1/users/verifyEmail?code={verificationCode}"
+            >Approve</a
         >
     </div>
     <p style="max-width: 380px; width: 380px; text-align: left; font-size: 14px; opacity: 0.7; font-family: sans-serif; user-select: none">
-        We create FOSS privacy-respecting software for everyday use. <a href="${process.env.FRONTEND_URL}" target="_blank">Website</a>,
-        <a href="${process.env.FRONTEND_URL}/privacy" target="_blank">Privacy Policy</a>
+        We create FOSS privacy-respecting software for everyday use. <a href="{frontend}" target="_blank">Website</a>,
+        <a href="{frontend}/privacy" target="_blank">Privacy Policy</a>
     </p>
 </center>
