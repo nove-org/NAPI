@@ -85,7 +85,8 @@ export function maskUserOAuth(user: User, oauth: OAuth_Authorization) {
         'updatedAt',
         'verified',
         'mfaEnabled',
-        'permissionLevel',
+        'emailVerifyCode',
+        'profilePublic',
     ];
 
     if (checkPermission(oauth.scopes as TPermission[], 'account.read.basic') && !checkPermission(oauth.scopes as TPermission[], 'account.read.email')) mask.push('email');
