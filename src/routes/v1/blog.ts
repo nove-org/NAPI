@@ -29,7 +29,7 @@ router.get(
         keyCount: 100,
     }),
     async (req: Request, res: Response) => {
-        const prismaPosts = await prisma.blogPost.findMany();
+        const prismaPosts = await prisma.blogPost.findMany({ orderBy: { createdAt: 'desc' } });
 
         let posts: PostAuthor[] = [];
 
