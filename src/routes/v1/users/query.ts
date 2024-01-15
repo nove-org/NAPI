@@ -13,8 +13,8 @@ const router = Router();
 router.get(
     '/:id',
     rateLimit({
-        ipCount: 600,
-        keyCount: 900,
+        ipCount: 300,
+        keyCount: 200,
     }),
     async (req: Request, res: Response) => {
         const { id } = req.params;
@@ -37,8 +37,8 @@ router.get(
 router.get(
     '/:id/avatar.webp',
     rateLimit({
-        ipCount: 600,
-        keyCount: 900,
+        ipCount: 300,
+        keyCount: 200,
     }),
     async (req: Request, res: Response) => {
         const { id } = req.params;

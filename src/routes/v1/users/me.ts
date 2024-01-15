@@ -20,8 +20,8 @@ const router = Router();
 router.get(
     '/me',
     rateLimit({
-        ipCount: 500,
-        keyCount: 750,
+        // ipCount: 500,
+        keyCount: 800,
     }),
     authorize({
         requiredScopes: ['account.read.basic'],
@@ -39,7 +39,7 @@ router.get(
 router.patch(
     '/me',
     rateLimit({
-        ipCount: 75,
+        // ipCount: 75,
         keyCount: 100,
     }),
     validate(
@@ -178,7 +178,7 @@ router.get(
 router.get(
     '/me/activity',
     rateLimit({
-        ipCount: 100,
+        // ipCount: 100,
         keyCount: 150,
     }),
     authorize({ disableBearer: true }),
@@ -212,7 +212,7 @@ router.get(
 router.patch(
     '/avatar',
     rateLimit({
-        ipCount: 50,
+        // ipCount: 50,
         keyCount: 75,
     }),
     authorize({
@@ -240,7 +240,7 @@ router.patch(
 router.get(
     '/me/connections',
     rateLimit({
-        ipCount: 100,
+        // ipCount: 100,
         keyCount: 150,
     }),
     authorize({ disableBearer: true }),
@@ -259,7 +259,7 @@ router.get(
 router.post(
     '/me/delete',
     rateLimit({
-        ipCount: 3,
+        // ipCount: 3,
         keyCount: 5,
     }),
     validate(z.object({ password: z.string().min(1).max(128) })),

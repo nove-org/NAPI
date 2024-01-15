@@ -147,7 +147,7 @@ router.delete('/:id', authorize({ disableBearer: true }), authorizeAdmin, async 
 router.post(
     '/:id/comment',
     rateLimit({
-        ipCount: 3,
+        // ipCount: 3,
         keyCount: 3,
     }),
     authorize({ disableBearer: true }),
@@ -172,7 +172,7 @@ router.post(
 router.patch(
     '/:id/comment/:comment_id',
     rateLimit({
-        ipCount: 100,
+        // ipCount: 100,
         keyCount: 100,
     }),
     authorize({ disableBearer: true }),
@@ -197,7 +197,7 @@ router.patch(
 router.delete(
     '/:id/comment/:comment_id',
     rateLimit({
-        ipCount: 100,
+        // ipCount: 100,
         keyCount: 100,
     }),
     authorize({ disableBearer: true }),
