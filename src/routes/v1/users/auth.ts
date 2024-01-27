@@ -32,7 +32,7 @@ router.post(
         })
     ),
     async (req: Request, res: Response) => {
-        const user = await prisma.user.findFirst({
+        let user = await prisma.user.findFirst({
             where: {
                 OR: [{ username: req.body.username }, { email: req.body.username }],
             },
@@ -81,7 +81,7 @@ router.post(
 
         if (!user.tokenHash) {
             const newToken = randomString(48);
-            await prisma.user.update({
+            user = await prisma.user.update({
                 where: { id: user.id },
                 data: {
                     token: encryptWithToken(newToken, req.body.password),
@@ -106,6 +106,8 @@ router.post(
         user.token = decryptedToken;
         const devices = await prisma.trackedDevices.findMany({ where: { userId: user.id } });
         const device = devices.find((dev) => {
+            if (!user) return;
+
             const decryptedDevice = {
                 ip: decryptWithToken(dev.ip, user.token),
                 device: decryptWithToken(dev.device, user.token),
