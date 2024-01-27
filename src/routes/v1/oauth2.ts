@@ -12,10 +12,10 @@ const router = Router();
 
 router.get(
     '/authorize',
-    rateLimit({
-        ipCount: 500,
-        keyCount: 750,
-    }),
+    // rateLimit({
+    //     ipCount: 500,
+    //     keyCount: 750,
+    // }),
     validate(
         z.object({
             client_id: z.string().min(1).max(64),
@@ -47,10 +47,10 @@ router.get(
 
 router.post(
     '/authorize',
-    rateLimit({
-        ipCount: 500,
-        keyCount: 750,
-    }),
+    // rateLimit({
+    //     ipCount: 500,
+    //     keyCount: 750,
+    // }),
     authorize({
         disableBearer: true,
     }),
@@ -84,10 +84,10 @@ router.post(
 
 router.post(
     '/token',
-    rateLimit({
-        ipCount: 500,
-        keyCount: 750,
-    }),
+    // rateLimit({
+    //     ipCount: 500,
+    //     keyCount: 750,
+    // }),
     validate(
         z.object({
             client_id: z.string().min(1).max(64),

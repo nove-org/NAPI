@@ -24,10 +24,10 @@ interface PostAuthor extends BlogPost {
 
 router.get(
     '/',
-    rateLimit({
-        ipCount: 250,
-        keyCount: 100,
-    }),
+    // rateLimit({
+    //     ipCount: 250,
+    //     keyCount: 100,
+    // }),
     async (req: Request, res: Response) => {
         const prismaPosts = await prisma.blogPost.findMany({ orderBy: { createdAt: 'desc' } });
 
@@ -65,10 +65,10 @@ router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, valid
 
 router.get(
     '/:id',
-    rateLimit({
-        ipCount: 200,
-        keyCount: 100,
-    }),
+    // rateLimit({
+    //     ipCount: 200,
+    //     keyCount: 100,
+    // }),
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
