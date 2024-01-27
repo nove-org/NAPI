@@ -23,7 +23,7 @@ function authorize({
         const [method, token, userId] = req.headers.authorization?.split(' ') || [];
         const mfa = (req.headers['x-mfa'] as string) || '';
 
-        if (!token || !userId)
+        if (!token)
             return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
 
         if (method === 'Bearer') {
@@ -96,6 +96,9 @@ function authorize({
 
             next();
         } else if (method === 'Owner') {
+            if (!userId)
+                return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
+
             let user = await prisma.user.findFirst({
                 where: {
                     id: userId,
