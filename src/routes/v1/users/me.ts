@@ -12,17 +12,16 @@ import { removeProps } from '@util/masker';
 import { multerUploadSingle } from '@util/multipart';
 import prisma, { maskUserMe, maskUserOAuth } from '@util/prisma';
 import { validate } from '@util/schema';
-import { rateLimit } from '@middleware/ratelimit';
 import { getAvatarCode } from '@util/getAvatarCode';
 
 const router = Router();
 
 router.get(
     '/me',
-    rateLimit({
-        // ipCount: 500,
-        keyCount: 800,
-    }),
+    // rateLimit({
+    //     ipCount: 500,
+    //     keyCount: 800,
+    // }),
     authorize({
         requiredScopes: ['account.read.basic'],
     }),
@@ -38,10 +37,10 @@ router.get(
 
 router.patch(
     '/me',
-    rateLimit({
-        // ipCount: 75,
-        keyCount: 100,
-    }),
+    // rateLimit({
+    //     ipCount: 75,
+    //     keyCount: 100,
+    // }),
     validate(
         z.object({
             username: z
@@ -107,7 +106,7 @@ router.patch(
             if (req.body.enabled) return createError(res, 400, { code: 'mfa_already_enabled', message: 'MFA is already enabled', param: 'body:enabled', type: 'validation' });
             const mfa = req.headers['x-mfa'] as string;
 
-            if (/[a-zA-Z0-9]{16}/.test(mfa)) {
+            if (/[a-zA-Z0-9]{16}/.test(mfa) && req.user.mfaRecoveryCodes?.includes(mfa)) {
                 await prisma.user.update({
                     where: { id: req.user.id },
                     data: {
@@ -117,7 +116,10 @@ router.patch(
                     },
                 });
 
-                return createResponse(res, 200, { success: true, message: 'MFA is now disabled' });
+                return createResponse(res, 200, {
+                    success: false,
+                    message: 'MFA is now disabled',
+                });
             }
 
             if (!mfa || !/[0-9]{6}/.test(mfa))
@@ -127,7 +129,7 @@ router.patch(
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-            if (verifyToken(req.user.mfaSecret, mfa)?.delta === 1)
+            if (verifyToken(req.user.mfaSecret, mfa)?.delta !== 0)
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: 'invalid mfa token',
@@ -144,7 +146,7 @@ router.patch(
                 },
             });
 
-            return createResponse(res, 200, { message: 'mfa disabled' });
+            return createResponse(res, 200, { message: 'MFA is now disabled' });
         } else {
             if (!req.body.enabled) return createError(res, 400, { code: 'mfa_already_disabled', message: 'MFA is already disabled', param: 'body:enabled', type: 'validation' });
             const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
@@ -177,10 +179,10 @@ router.get(
 
 router.get(
     '/me/activity',
-    rateLimit({
-        // ipCount: 100,
-        keyCount: 150,
-    }),
+    // rateLimit({
+    //     ipCount: 100,
+    //     keyCount: 150,
+    // }),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
         if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivity)
@@ -211,10 +213,10 @@ router.get(
 
 router.patch(
     '/avatar',
-    rateLimit({
-        // ipCount: 50,
-        keyCount: 75,
-    }),
+    // rateLimit({
+    //     ipCount: 50,
+    //     keyCount: 75,
+    // }),
     authorize({
         requiredScopes: ['account.write.avatar'],
     }),
@@ -239,10 +241,10 @@ router.patch(
 
 router.get(
     '/me/connections',
-    rateLimit({
-        // ipCount: 100,
-        keyCount: 150,
-    }),
+    // rateLimit({
+    //     ipCount: 100,
+    //     keyCount: 150,
+    // }),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
         const oauth2 = await prisma.oAuth_Authorization.findMany({ where: { user_id: req.user.id }, include: { app: true } });
@@ -258,10 +260,10 @@ router.get(
 
 router.post(
     '/me/delete',
-    rateLimit({
-        // ipCount: 3,
-        keyCount: 5,
-    }),
+    // rateLimit({
+    //     ipCount: 3,
+    //     keyCount: 5,
+    // }),
     validate(z.object({ password: z.string().min(1).max(128) })),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {

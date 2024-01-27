@@ -4,7 +4,7 @@
     "author": "nove-org",
     "license": "AGPL-3.0",
     "scripts": {
-        "dev": "yarn run dev:sass & yarn run -s nodemon -e ts,json -x \"yarn run -s start\" -w \"./src\"",
+        "dev": "yarn run dev:sass & yarn run -s nodemon -e ts,json -x \"yarn run -s build && yarn run -s start\" -w \"./src\"",
         "dev:sass": "sass --watch src/sass:src/static/css --style=compressed",
         "build": "rm -rf build/ && tsc --build",
         "build:sass": "sass src/sass:src/static/css --style=compressed",
