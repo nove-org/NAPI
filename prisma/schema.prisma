@@ -20,6 +20,7 @@ model User {
   verified         Boolean  @default(false)
   emailVerifyCode  String
   token            String
+  tokenHash        String
   profilePublic    Boolean  @default(false)
   trackActivity    Boolean  @default(false)
   mfaEnabled       Boolean  @default(false)

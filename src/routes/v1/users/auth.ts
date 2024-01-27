@@ -15,6 +15,7 @@ import axios from 'axios';
 import { createLoginDevice } from '@util/createLoginDevice';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
+import { decryptWithToken, encryptWithToken } from '@util/tokenEncryption';
 
 const router = Router();
 
@@ -78,12 +79,44 @@ router.post(
                 });
         }
 
-        createResponse(res, 200, maskUserMe(user, true));
+        if (!user.tokenHash) {
+            const newToken = randomString(48);
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    token: encryptWithToken(newToken, req.body.password),
+                    tokenHash: hashSync(newToken, genSaltSync()),
+                },
+            });
+        }
 
-        const device = await prisma.trackedDevices.findFirst({ where: { ip: req.ip } });
+        let decryptedToken: string = '';
+        try {
+            decryptedToken = decryptWithToken(user.token, req.body.password);
+        } catch {
+            return createError(res, 500, {
+                code: 'internal_server_error',
+                message: 'Could not decrypt token',
+                param: 'body:username',
+                type: 'authorization',
+            });
+        }
+        createResponse(res, 200, { ...maskUserMe(user), token: decryptedToken });
+
+        user.token = decryptedToken;
+        const devices = await prisma.trackedDevices.findMany({ where: { userId: user.id } });
+        const device = devices.find((dev) => {
+            const decryptedDevice = {
+                ip: decryptWithToken(dev.ip, user.token),
+                device: decryptWithToken(dev.device, user.token),
+                os_name: decryptWithToken(dev.os_name, user.token),
+                os_version: decryptWithToken(dev.os_version, user.token),
+            };
+
+            return decryptedDevice.ip === req.ip;
+        });
+        createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, user);
         if (!device) {
-            createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, user.id, user.trackActivity);
-
             const transporter = nodemailer.createTransport({
                 host: process.env.MAIL_HOST,
                 port: 465,
@@ -173,6 +206,7 @@ router.post(
             });
 
         const verificationCode = await getUniqueKey(prisma.user, 'emailVerifyCode', randomString);
+        const generatedToken: string = randomString(48);
 
         const user = await prisma.user.create({
             data: {
@@ -183,10 +217,11 @@ router.post(
                 bio: "Hey, I'm new here!",
                 emailVerifyCode: verificationCode,
                 language: req.body.language || 'en-US',
-                token: randomString(48),
+                token: encryptWithToken(generatedToken, req.body.password),
+                tokenHash: hashSync(generatedToken, genSaltSync()),
             },
         });
-        createResponse(res, 200, maskUserMe(user, true));
+        createResponse(res, 200, { ...maskUserMe(user), token: generatedToken });
 
         const transporter = nodemailer.createTransport({
             host: process.env.MAIL_HOST,
