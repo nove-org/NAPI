@@ -21,31 +21,12 @@ router.post(
         ipCount: 5,
         keyCount: 10,
     }),
-    authorize({ disableBearer: true }),
+    authorize({ disableBearer: true, checkMfaCode: true }),
     validate(z.object({ newEmail: z.string() })),
     async (req: Request, res: Response) => {
         const { newEmail } = req.body;
 
         const emailUser = await prisma.user.findFirst({ where: { email: newEmail } });
-
-        if (req.user.mfaEnabled) {
-            const mfa = req.headers['x-mfa'] as string;
-
-            if (!mfa || !/[0-9]{6}/.test(mfa))
-                return createError(res, 403, {
-                    code: 'mfa_required',
-                    message: 'mfa required',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-            if (verifyToken(req.user.mfaSecret, mfa)?.delta !== 0)
-                return createError(res, 403, {
-                    code: 'invalid_mfa_token',
-                    message: 'invalid mfa token',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-        }
 
         if (emailUser)
             return createError(res, 409, {

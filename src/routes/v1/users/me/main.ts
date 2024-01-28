@@ -186,7 +186,7 @@ router.post(
     //     keyCount: 5,
     // }),
     validate(z.object({ password: z.string().min(1).max(128) })),
-    authorize({ disableBearer: true }),
+    authorize({ disableBearer: true, checkMfaCode: true }),
     async (req: Request, res: Response) => {
         const { password } = req.body;
 
@@ -196,25 +196,6 @@ router.post(
 
         if (!compareSync(password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
-
-        if (user.mfaEnabled) {
-            const mfa = req.headers['x-mfa'] as string;
-
-            if (!mfa || !/[0-9]{6}/.test(mfa))
-                return createError(res, 403, {
-                    code: 'mfa_required',
-                    message: 'mfa required',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-            if (verifyToken(user.mfaSecret, mfa)?.delta !== 0)
-                return createError(res, 403, {
-                    code: 'invalid_mfa_token',
-                    message: 'invalid mfa token',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-        }
 
         await prisma.user.delete({ where: { id: user.id } });
 
