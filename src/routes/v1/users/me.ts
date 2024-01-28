@@ -2,7 +2,7 @@ import { OAuth_App, Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
 import { generateSecret, verifyToken } from 'node-2fa';
 import { z } from 'zod';
-import { compare } from 'bcrypt';
+import { compareSync } from 'bcrypt';
 import { authorize } from '@middleware/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
 import createError from '@util/createError';
@@ -282,7 +282,7 @@ router.post(
 
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'authorization' });
 
-        if (!(await compare(password, user.password)))
+        if (!compareSync(password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
 
         await prisma.user.delete({ where: { id: user.id } });

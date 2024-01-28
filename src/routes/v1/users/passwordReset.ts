@@ -1,4 +1,4 @@
-import { compare, compareSync, genSaltSync, hashSync } from 'bcrypt';
+import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import nodemailer from 'nodemailer';
@@ -84,8 +84,6 @@ router.post(
     async (req: Request, res: Response) => {
         const { password, code } = req.body;
 
-        if (!code) return createError(res, 400, { code: 'invalid_code', message: 'Password recovery code was not provided ', param: 'query:code', type: 'validation' });
-
         const recovery = await prisma.recovery.findFirst({ where: { code } });
 
         if (!recovery) return createError(res, 400, { code: 'invalid_code', message: 'Invalid password recovery code was provided ', param: 'query:code', type: 'validation' });
@@ -99,7 +97,7 @@ router.post(
 
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'validation' });
 
-        if (!password || !compareSync(password, recovery.newPassword))
+        if (!compareSync(password, recovery.newPassword))
             return createError(res, 400, {
                 code: 'invalid_password',
                 message: 'You must re-enter your correct new password to confirm the change',
@@ -141,7 +139,7 @@ router.patch(
 
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'validation' });
 
-        if (!(await compare(oldPassword, user.password))) {
+        if (!compareSync(oldPassword, user.password)) {
             return createError(res, 401, { code: 'invalid_password', message: 'Invalid old password was provided', param: 'body:oldPassword', type: 'validation' });
         }
 

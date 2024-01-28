@@ -90,14 +90,14 @@ router.post(
             });
         }
 
-        let decryptedToken: string = '';
+        let decryptedToken: string;
         try {
             decryptedToken = decryptWithToken(user.token, req.body.password);
         } catch {
             return createError(res, 500, {
                 code: 'internal_server_error',
                 message: 'Could not decrypt token',
-                param: 'body:username',
+                param: 'body:password',
                 type: 'authorization',
             });
         }
@@ -105,18 +105,7 @@ router.post(
 
         user.token = decryptedToken;
         const devices = await prisma.trackedDevices.findMany({ where: { userId: user.id } });
-        const device = devices.find((dev) => {
-            if (!user) return;
-
-            const decryptedDevice = {
-                ip: decryptWithToken(dev.ip, user.token),
-                device: decryptWithToken(dev.device, user.token),
-                os_name: decryptWithToken(dev.os_name, user.token),
-                os_version: decryptWithToken(dev.os_version, user.token),
-            };
-
-            return decryptedDevice.ip === req.ip;
-        });
+        const device = devices.find((dev) => decryptWithToken(dev.ip, user!.token) === req.ip);
         createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, user);
         if (!device) {
             const transporter = nodemailer.createTransport({
