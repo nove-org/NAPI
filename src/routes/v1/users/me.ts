@@ -92,6 +92,34 @@ router.patch(
 );
 
 router.patch(
+    '/avatar',
+    // rateLimit({
+    //     ipCount: 50,
+    //     keyCount: 75,
+    // }),
+    authorize({
+        requiredScopes: ['account.write.avatar'],
+    }),
+    multerUploadSingle(),
+    validate(z.object({ file: z.any() })),
+    async (req: Request, res: Response) => {
+        const file = req.file as Express.Multer.File;
+
+        if (!file)
+            return createError(res, 400, {
+                code: 'invalid_parameter',
+                message: 'You have to send a valid image file',
+                param: 'body:avatar',
+                type: 'validation',
+            });
+
+        const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
+
+        return createResponse(res, 200, maskUserMe(newUser));
+    }
+);
+
+router.patch(
     '/me/mfa',
     validate(
         z.object({
@@ -234,34 +262,6 @@ router.get(
     }
 );
 
-router.patch(
-    '/avatar',
-    // rateLimit({
-    //     ipCount: 50,
-    //     keyCount: 75,
-    // }),
-    authorize({
-        requiredScopes: ['account.write.avatar'],
-    }),
-    multerUploadSingle(),
-    validate(z.object({ file: z.any() })),
-    async (req: Request, res: Response) => {
-        const file = req.file as Express.Multer.File;
-
-        if (!file)
-            return createError(res, 400, {
-                code: 'invalid_parameter',
-                message: 'You have to send a valid image file',
-                param: 'body:avatar',
-                type: 'validation',
-            });
-
-        const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
-
-        return createResponse(res, 200, maskUserMe(newUser));
-    }
-);
-
 router.get(
     '/me/connections',
     // rateLimit({
@@ -298,6 +298,25 @@ router.post(
 
         if (!compareSync(password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
+
+        if (user.mfaEnabled) {
+            const mfa = req.headers['x-mfa'] as string;
+
+            if (!mfa || !/[0-9]{6}/.test(mfa))
+                return createError(res, 403, {
+                    code: 'mfa_required',
+                    message: 'mfa required',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+            if (verifyToken(user.mfaSecret, mfa)?.delta !== 0)
+                return createError(res, 403, {
+                    code: 'invalid_mfa_token',
+                    message: 'invalid mfa token',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+        }
 
         await prisma.user.delete({ where: { id: user.id } });
 
