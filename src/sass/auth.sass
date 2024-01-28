@@ -30,7 +30,7 @@ section.authorize
     width: calc( 100% - 30px * 2 )
     padding: 30px
     border-radius: 25px
-    border: 1px solid var(--border-st)
+    background: var(--secondary-nd)
     @media screen and (max-width: 478px)
         padding: 30px
         width: calc( 100% - 30px * 2 )
@@ -39,12 +39,16 @@ section.authorize
         align-items: center
         justify-content: space-between
         width: 100%
-        @media screen and (max-width: 478px)
+        gap: 15px
+        @media screen and (max-width: 400px)
+            gap: 10px
+        @media screen and (max-width: 350px)
             flex-direction: column
+            gap: 8px
         & button
             outline: 0
-            background: var(--font-st)
-            color: var(--primary)
+            background: var(--tertiary)
+            color: var(--font-st)
             padding: 10px 14px
             border-radius: 50px
             width: fit-content
@@ -52,46 +56,31 @@ section.authorize
             font-size: 14px
             transition-duration: .15s
             border: 0
-            @media screen and (max-width: 478px)
-                width: 100%
-                margin-top: 10px
+            cursor: pointer
+            width: 100%
             &:hover
-                background: var(--tertiary)
-                color: var(--font-st)
-                cursor: pointer
-    & div.info
-        text-align: center
-        & header
-            & img
-                margin: 0 0 5px 0
-            & h1
-                font-size: 32px
-                font-weight: 500
-                color: var(--font-st)
-                text-align: center
-                margin-bottom: 5px
-            & p
-                font-size: 16px
-                color: var(--font-nd)
-                font-weight: 400
-                max-width: 500px
-                text-align: center
-                opacity: .7
-            & div.mark
-                margin-bottom: 5px
-                font-size: 14px
-                font-weight: 500
-                color: var(--accent-nd)
-                display: flex
-                align-items: center
-                justify-content: center
-                @media screen and (max-width: 478px)
-                    flex-direction: column
-                    & svg
-                        margin-right: 0 !important
-                        margin-bottom: 5px
-                & svg
-                    margin-right: 5px
+                background: var(--quaternary)
+    & header.info
+        width: 100%
+        & img
+            margin: 0 0 5px 0
+            padding: 10px
+            background: var(--secondary)
+            border-radius: 20px
+        & h1
+            font-size: 32px
+            font-weight: 500
+            color: var(--font-st)
+            margin-bottom: 5px
+        & p
+            font-size: 16px
+            color: var(--accent-st)
+            font-weight: 400
+            max-width: 500px
+            display: flex
+            align-items: center
+            flex-direction: row
+            gap: 5px
     & div.notes
         & p
             font-size: 16px
@@ -100,7 +89,7 @@ section.authorize
             line-height: 1.2
             font-weight: 500
             & a
-                color: var(--accent-nd)
+                color: var(--accent-st)
                 font-weight: 600
                 text-decoration: none
                 &:hover

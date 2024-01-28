@@ -6,7 +6,7 @@ import { removeProps } from '@util/masker';
 import { TPermission, checkPermissions } from '@util/permissions';
 import prisma from '@util/prisma';
 import { Modify } from '@util/types';
-import { compareSync, genSaltSync, hashSync } from 'bcrypt';
+import { compareSync } from 'bcrypt';
 
 function authorize({
     requiredScopes = [],
@@ -96,6 +96,14 @@ function authorize({
 
             next();
         } else if (method === 'Owner') {
+            if (disableOwner)
+                return createError(res, 401, {
+                    code: 'invalid_authorization_method',
+                    message: 'invalid authorization method',
+                    param: 'header:authorization',
+                    type: 'authorization',
+                });
+
             if (!userId)
                 return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
 
