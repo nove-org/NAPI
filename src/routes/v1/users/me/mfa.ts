@@ -14,7 +14,7 @@ router.patch(
     '/mfa',
     validate(
         z.object({
-            cancelSetup: z.boolean().optional(),
+            cancel: z.boolean().optional(),
         }),
         'body'
     ),
@@ -38,7 +38,7 @@ router.patch(
                 return createResponse(res, 200, { message: 'MFA is now disabled', enabled: false });
             }
 
-            if (req.body.cancelSetup && !req.body.mfaEnabled) {
+            if (req.body.cancel && !req.body.mfaEnabled) {
                 await prisma.user.update({
                     where: { id: req.user.id },
                     data: {
@@ -49,11 +49,11 @@ router.patch(
                 });
 
                 return createResponse(res, 200, { message: 'MFA is now disabled', enabled: false });
-            } else if (req.body.cancelSetup)
+            } else if (req.body.cancel)
                 return createError(res, 403, {
                     code: 'cannot_cancel',
                     message: 'You cannot cancel setup because it was either not initialized or you already completed it',
-                    param: 'body:cancelSetup',
+                    param: 'body:cancel',
                     type: 'validation',
                 });
 
