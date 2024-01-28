@@ -12,6 +12,7 @@ import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
 import { encryptWithToken } from '@util/tokenEncryption';
+import { verifyToken } from 'node-2fa';
 
 const router = Router();
 
@@ -138,6 +139,25 @@ router.patch(
         const user = await prisma.user.findFirst({ where: { id: req.user.id } });
 
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'validation' });
+
+        if (user.mfaEnabled) {
+            const mfa = req.headers['x-mfa'] as string;
+
+            if (!mfa || !/[0-9]{6}/.test(mfa))
+                return createError(res, 403, {
+                    code: 'mfa_required',
+                    message: 'mfa required',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+            if (verifyToken(user.mfaSecret, mfa)?.delta !== 0)
+                return createError(res, 403, {
+                    code: 'invalid_mfa_token',
+                    message: 'invalid mfa token',
+                    param: 'header:x-mfa',
+                    type: 'authorization',
+                });
+        }
 
         if (!compareSync(oldPassword, user.password)) {
             return createError(res, 401, { code: 'invalid_password', message: 'Invalid old password was provided', param: 'body:oldPassword', type: 'validation' });
