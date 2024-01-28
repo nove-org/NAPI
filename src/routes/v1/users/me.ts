@@ -2,7 +2,7 @@ import { OAuth_App, Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
 import { generateSecret, verifyToken } from 'node-2fa';
 import { z } from 'zod';
-import { compare } from 'bcrypt';
+import { compareSync } from 'bcrypt';
 import { authorize } from '@middleware/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
 import createError from '@util/createError';
@@ -13,6 +13,7 @@ import { multerUploadSingle } from '@util/multipart';
 import prisma, { maskUserMe, maskUserOAuth } from '@util/prisma';
 import { validate } from '@util/schema';
 import { getAvatarCode } from '@util/getAvatarCode';
+import { decryptWithToken } from '@util/tokenEncryption';
 
 const router = Router();
 
@@ -193,7 +194,6 @@ router.get(
             });
 
         let perPage = Math.abs(parseInt(req.query.perPage as string)) || 10;
-
         if (perPage > 25 || perPage < 1) perPage = 3;
 
         const devices = await prisma.trackedDevices.findMany({
@@ -205,6 +205,15 @@ router.get(
             orderBy: {
                 updatedAt: 'desc',
             },
+        });
+
+        const decryptionToken: string = (req.headers['authorization'] as string).split(' ')[1];
+
+        devices.map((dev, i) => {
+            devices[i].ip = decryptWithToken(dev.ip, decryptionToken);
+            devices[i].device = decryptWithToken(dev.device, decryptionToken);
+            devices[i].os_name = decryptWithToken(dev.os_name, decryptionToken);
+            devices[i].os_version = decryptWithToken(dev.os_version, decryptionToken);
         });
 
         createResponse(res, 200, devices);
@@ -273,7 +282,7 @@ router.post(
 
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'authorization' });
 
-        if (!(await compare(password, user.password)))
+        if (!compareSync(password, user.password))
             return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
 
         await prisma.user.delete({ where: { id: user.id } });

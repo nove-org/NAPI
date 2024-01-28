@@ -6,6 +6,7 @@ import { removeProps } from '@util/masker';
 import { TPermission, checkPermissions } from '@util/permissions';
 import prisma from '@util/prisma';
 import { Modify } from '@util/types';
+import { compareSync } from 'bcrypt';
 
 function authorize({
     requiredScopes = [],
@@ -19,7 +20,7 @@ function authorize({
     requireMfa?: boolean;
 }) {
     return async (req: Request, res: Response, next: NextFunction) => {
-        const [method, token] = req.headers.authorization?.split(' ') || [];
+        const [method, token, userId] = req.headers.authorization?.split(' ') || [];
         const mfa = (req.headers['x-mfa'] as string) || '';
 
         if (!token)
@@ -65,7 +66,12 @@ function authorize({
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-            if (requireMfa && !(/([0-9]{6})/.test(mfa) ? verifyToken(authorization.user.mfaSecret, mfa)?.delta === 1 || verifyToken(authorization.user.mfaSecret, mfa)?.delta === 0 : authorization.user.mfaRecoveryCodes?.includes(mfa)))
+            if (
+                requireMfa &&
+                !(/([0-9]{6})/.test(mfa)
+                    ? verifyToken(authorization.user.mfaSecret, mfa)?.delta === 1 || verifyToken(authorization.user.mfaSecret, mfa)?.delta === 0
+                    : authorization.user.mfaRecoveryCodes?.includes(mfa))
+            )
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: `Invalid MFA token was provided (delta ${verifyToken(authorization.user.mfaSecret, mfa)?.delta})`,
@@ -90,13 +96,25 @@ function authorize({
 
             next();
         } else if (method === 'Owner') {
+            if (disableOwner)
+                return createError(res, 401, {
+                    code: 'invalid_authorization_method',
+                    message: 'invalid authorization method',
+                    param: 'header:authorization',
+                    type: 'authorization',
+                });
+
+            if (!userId)
+                return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
+
             let user = await prisma.user.findFirst({
                 where: {
-                    token: token,
+                    id: userId,
                 },
             });
 
-            if (!user)
+            // please tell me there is another way to encrypt single token with two keys...
+            if (!user || !compareSync(token, user.tokenHash))
                 return createError(res, 401, { code: 'invalid_authorization_token', message: 'invalid authorization token', param: 'header:authorization', type: 'authorization' });
 
             if (!user.verified)
@@ -109,7 +127,10 @@ function authorize({
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-            if (requireMfa && !(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 1 || verifyToken(user.mfaSecret, mfa)?.delta === 0 : user.mfaRecoveryCodes?.includes(mfa)))
+            if (
+                requireMfa &&
+                !(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 1 || verifyToken(user.mfaSecret, mfa)?.delta === 0 : user.mfaRecoveryCodes?.includes(mfa))
+            )
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: `Invalid MFA token was provided (delta ${verifyToken(user.mfaSecret, mfa)?.delta})`,

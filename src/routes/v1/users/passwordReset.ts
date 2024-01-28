@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import nodemailer from 'nodemailer';
@@ -11,6 +11,7 @@ import prisma, { maskUserMe, getUniqueKey } from '@util/prisma';
 import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
+import { encryptWithToken } from '@util/tokenEncryption';
 
 const router = Router();
 
@@ -38,7 +39,7 @@ router.post(
 
         const data = await prisma.recovery.create({
             data: {
-                newPassword: bcrypt.hashSync(newPassword, bcrypt.genSaltSync()),
+                newPassword: hashSync(newPassword, genSaltSync()),
                 userId: user.id,
                 code: await getUniqueKey(prisma.recovery, 'code', randomString),
                 expiresAt: new Date(Date.now() + 86400000),
@@ -73,16 +74,15 @@ router.post(
     }
 );
 
-router.get(
+router.post(
     '/passwordKey',
     rateLimit({
         ipCount: 5,
         keyCount: 10,
     }),
+    validate(z.object({ password: z.string().min(1).max(128), code: z.string().min(1) })),
     async (req: Request, res: Response) => {
-        const code = req.query.code as string;
-
-        if (!code) return createError(res, 400, { code: 'invalid_code', message: 'Password recovery code was not provided ', param: 'query:code', type: 'validation' });
+        const { password, code } = req.body;
 
         const recovery = await prisma.recovery.findFirst({ where: { code } });
 
@@ -97,12 +97,28 @@ router.get(
 
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'validation' });
 
+        if (!compareSync(password, recovery.newPassword))
+            return createError(res, 400, {
+                code: 'invalid_password',
+                message: 'You must re-enter your correct new password to confirm the change',
+                param: 'body:password',
+                type: 'validation',
+            });
+
         const token = randomString(48);
 
-        await prisma.user.update({ where: { id: user.id }, data: { password: recovery.newPassword, token } });
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: recovery.newPassword,
+                token: encryptWithToken(token, password),
+                tokenHash: hashSync(token, genSaltSync()),
+            },
+        });
         await prisma.recovery.delete({ where: { code: recovery.code } });
+        await prisma.trackedDevices.deleteMany({ where: { userId: user.id } });
 
-        return res.redirect(`${process.env.FRONTEND_URL}/account`);
+        return createResponse(res, 200, { success: true, token, ...maskUserMe(user) });
     }
 );
 
@@ -123,7 +139,7 @@ router.patch(
 
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'validation' });
 
-        if (!(await bcrypt.compare(oldPassword, user.password))) {
+        if (!compareSync(oldPassword, user.password)) {
             return createError(res, 401, { code: 'invalid_password', message: 'Invalid old password was provided', param: 'body:oldPassword', type: 'validation' });
         }
 
@@ -143,16 +159,18 @@ router.patch(
                 type: 'validation',
             });
 
-        const hashedPassword = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+        const hashedPassword = hashSync(newPassword, genSaltSync());
         const token = randomString(48);
 
         await prisma.user.update({
             where: { id: req.user.id },
             data: {
                 password: hashedPassword,
-                token,
+                token: encryptWithToken(token, req.body.newPassword),
+                tokenHash: hashSync(token, genSaltSync()),
             },
         });
+        await prisma.trackedDevices.deleteMany({ where: { userId: user.id } });
 
         return createResponse(res, 200, { success: true, token, ...maskUserMe(user) });
     }

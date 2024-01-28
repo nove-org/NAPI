@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Authorize — Nove</title>
+        <title>Authorize | Nove</title>
         <link rel="icon" type="image/x-icon" href="/data/logo.png" />
         <link rel="stylesheet" href="/css/main.css" />
         <link rel="stylesheet" href="/css/auth.css" />
@@ -13,22 +13,18 @@
     <body>
         <main id="main">
             <section class="authorize">
-                <div class="info">
-                    <header>
-                        <img src="/data/logo.png" width="64" height="64" alt="Nove logo" />
-                        <h1>Authorize <%= client.name %></h1>
-                        <% if(client.isVerified) { %>
-                        <div class="mark">
-                            <svg width="12" height="12" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M95 21L36.3647 80L6 49.4464" stroke="currentColor" stroke-width="14" />
-                            </svg>
-                            This app is official Nove app or verified by Nove
-                        </div>
-                        <% } %>
+                <header class="info">
+                    <img src="/data/logo.png" width="64" height="64" alt="Nove logo" />
+                    <h1>Authorize <%= client.name %></h1>
 
-                        <p>By <%= client.owner %></p>
-                    </header>
-                </div>
+                    <p>
+                        By <% if(client.isVerified) { %>
+                        <svg width="12" height="12" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M95 21L36.3647 80L6 49.4464" stroke="currentColor" stroke-width="14" />
+                        </svg>
+                        <% } %> <%= client.owner %>
+                    </p>
+                </header>
                 <div class="notes">
                     <p>
                         Before you grant this app access to your account read their <a href="<%= client.link_privacy_policy %>">privacy policy</a> and

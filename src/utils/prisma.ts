@@ -28,10 +28,8 @@ export function getUniqueKey(model: any, key: string, generator?: () => string):
  * @param includeToken Include token in the masked object
  * @returns User object with removed properties
  */
-export function maskUserMe(user: User, includeToken: boolean = false) {
-    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode'];
-
-    if (!includeToken) mask.push('token');
+export function maskUserMe(user: User) {
+    const mask = ['password', 'oauth_authorizations', 'oauth_codes', 'mfaSecret', 'mfaRecoveryCodes', 'emailVerifyCode', 'token', 'tokenHash'];
 
     return removeProps(user, mask);
 }
@@ -50,6 +48,7 @@ export function maskUserQuery(user: User, includeEmail: boolean = false) {
         'oauth_authorizations',
         'oauth_codes',
         'token',
+        'tokenHash',
         'email',
         'mfaSecret',
         'mfaRecoveryCodes',
@@ -77,6 +76,7 @@ export function maskUserOAuth(user: User, oauth: OAuth_Authorization) {
     const mask = [
         'password',
         'token',
+        'tokenHash',
         'trackActivity',
         'oauth_authorizations',
         'oauth_codes',
