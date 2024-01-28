@@ -1,13 +1,12 @@
 import { OAuth_App, Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
-import { generateSecret, verifyToken } from 'node-2fa';
+import { verifyToken } from 'node-2fa';
 import { z } from 'zod';
 import { compareSync } from 'bcrypt';
 import { authorize } from '@middleware/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
 import createError from '@util/createError';
 import createResponse from '@util/createResponse';
-import { randomString } from '@util/crypto';
 import { removeProps } from '@util/masker';
 import { multerUploadSingle } from '@util/multipart';
 import prisma, { maskUserMe, maskUserOAuth } from '@util/prisma';
@@ -92,7 +91,7 @@ router.patch(
 );
 
 router.patch(
-    '/me/avatar',
+    '/avatar',
     // rateLimit({
     //     ipCount: 50,
     //     keyCount: 75,
@@ -119,109 +118,8 @@ router.patch(
     }
 );
 
-router.patch(
-    '/me/mfa',
-    validate(
-        z.object({
-            cancelSetup: z.boolean().optional(),
-        }),
-        'body'
-    ),
-    authorize({
-        disableBearer: true,
-    }),
-    async (req: Request, res: Response) => {
-        if (req.user.mfaSecret) {
-            const mfa = req.headers['x-mfa'] as string;
-
-            if (/[a-zA-Z0-9]{16}/.test(mfa) && req.user.mfaRecoveryCodes?.includes(mfa) && req.user.mfaEnabled) {
-                await prisma.user.update({
-                    where: { id: req.user.id },
-                    data: {
-                        mfaEnabled: false,
-                        mfaSecret: '',
-                        mfaRecoveryCodes: [],
-                    },
-                });
-
-                return createResponse(res, 200, { message: 'MFA is now disabled', enabled: false });
-            }
-
-            if (req.body.cancelSetup && !req.body.mfaEnabled) {
-                await prisma.user.update({
-                    where: { id: req.user.id },
-                    data: {
-                        mfaEnabled: false,
-                        mfaSecret: '',
-                        mfaRecoveryCodes: [],
-                    },
-                });
-
-                return createResponse(res, 200, { message: 'MFA is now disabled', enabled: false });
-            } else if (req.body.cancelSetup)
-                return createError(res, 403, {
-                    code: 'cannot_cancel',
-                    message: 'You cannot cancel setup because it was either not initialized or you already completed it',
-                    param: 'body:cancelSetup',
-                    type: 'validation',
-                });
-
-            if (!mfa || !/[0-9]{6}/.test(mfa))
-                return createError(res, 403, {
-                    code: 'mfa_required',
-                    message: 'mfa required',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-            if (verifyToken(req.user.mfaSecret, mfa)?.delta !== 0)
-                return createError(res, 403, {
-                    code: 'invalid_mfa_token',
-                    message: 'invalid mfa token',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-
-            await prisma.user.update({
-                where: { id: req.user.id },
-                data: {
-                    mfaEnabled: !req.user.mfaEnabled,
-                    mfaSecret: req.user.mfaEnabled ? '' : req.user.mfaSecret,
-                    mfaRecoveryCodes: req.user.mfaEnabled ? [] : req.user.mfaRecoveryCodes,
-                },
-            });
-
-            return createResponse(res, 200, { message: `MFA is now ${req.user.mfaEnabled ? 'disabled' : 'enabled'}`, enabled: !req.user.mfaEnabled });
-        } else {
-            const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
-            const newCodes = Array.from({ length: 10 }, () => randomString(16));
-
-            await prisma.user.update({
-                where: { id: req.user.id },
-                data: {
-                    mfaEnabled: false,
-                    mfaSecret: newSecret.secret,
-                    mfaRecoveryCodes: newCodes,
-                },
-            });
-
-            return createResponse(res, 200, { secret: newSecret, codes: newCodes });
-        }
-    }
-);
-
 router.get(
-    '/me/mfa/securityCodes',
-    authorize({
-        disableBearer: true,
-        requireMfa: true,
-    }),
-    async (req: Request, res: Response) => {
-        createResponse(res, 200, req.user.mfaRecoveryCodes);
-    }
-);
-
-router.get(
-    '/me/activity',
+    '/activity',
     // rateLimit({
     //     ipCount: 100,
     //     keyCount: 150,
@@ -263,7 +161,7 @@ router.get(
 );
 
 router.get(
-    '/me/connections',
+    '/connections',
     // rateLimit({
     //     ipCount: 100,
     //     keyCount: 150,
@@ -282,7 +180,7 @@ router.get(
 );
 
 router.post(
-    '/me/delete',
+    '/delete',
     // rateLimit({
     //     ipCount: 3,
     //     keyCount: 5,
