@@ -95,7 +95,7 @@ router.patch(
     '/me/mfa',
     validate(
         z.object({
-            enabled: z.boolean().optional(),
+            cancelSetup: z.boolean().optional(),
         }),
         'body'
     ),
@@ -103,25 +103,40 @@ router.patch(
         disableBearer: true,
     }),
     async (req: Request, res: Response) => {
-        if (req.user.mfaEnabled) {
-            if (req.body.enabled) return createError(res, 400, { code: 'mfa_already_enabled', message: 'MFA is already enabled', param: 'body:enabled', type: 'validation' });
+        if (req.user.mfaSecret) {
             const mfa = req.headers['x-mfa'] as string;
 
-            if (/[a-zA-Z0-9]{16}/.test(mfa) && req.user.mfaRecoveryCodes?.includes(mfa)) {
+            if (/[a-zA-Z0-9]{16}/.test(mfa) && req.user.mfaRecoveryCodes?.includes(mfa) && req.user.mfaEnabled) {
                 await prisma.user.update({
                     where: { id: req.user.id },
                     data: {
                         mfaEnabled: false,
                         mfaSecret: '',
-                        mfaRecoveryCodes: [] as string[],
+                        mfaRecoveryCodes: [],
                     },
                 });
 
-                return createResponse(res, 200, {
-                    success: false,
-                    message: 'MFA is now disabled',
-                });
+                return createResponse(res, 200, { message: 'MFA is now disabled', enabled: false });
             }
+
+            if (req.body.cancelSetup && !req.body.mfaEnabled) {
+                await prisma.user.update({
+                    where: { id: req.user.id },
+                    data: {
+                        mfaEnabled: false,
+                        mfaSecret: '',
+                        mfaRecoveryCodes: [],
+                    },
+                });
+
+                return createResponse(res, 200, { message: 'MFA is now disabled', enabled: false });
+            } else if (req.body.cancelSetup)
+                return createError(res, 403, {
+                    code: 'cannot_cancel',
+                    message: 'You cannot cancel setup because it was either not initialized or you already completed it',
+                    param: 'body:cancelSetup',
+                    type: 'validation',
+                });
 
             if (!mfa || !/[0-9]{6}/.test(mfa))
                 return createError(res, 403, {
@@ -141,22 +156,21 @@ router.patch(
             await prisma.user.update({
                 where: { id: req.user.id },
                 data: {
-                    mfaEnabled: req.body.enabled,
-                    mfaSecret: '',
-                    mfaRecoveryCodes: [] as string[],
+                    mfaEnabled: !req.user.mfaEnabled,
+                    mfaSecret: req.user.mfaEnabled ? '' : req.user.mfaSecret,
+                    mfaRecoveryCodes: req.user.mfaEnabled ? [] : req.user.mfaRecoveryCodes,
                 },
             });
 
-            return createResponse(res, 200, { message: 'MFA is now disabled' });
+            return createResponse(res, 200, { message: `MFA is now ${req.user.mfaEnabled ? 'disabled' : 'enabled'}`, enabled: !req.user.mfaEnabled });
         } else {
-            if (!req.body.enabled) return createError(res, 400, { code: 'mfa_already_disabled', message: 'MFA is already disabled', param: 'body:enabled', type: 'validation' });
             const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
             const newCodes = Array.from({ length: 10 }, () => randomString(16));
 
             await prisma.user.update({
                 where: { id: req.user.id },
                 data: {
-                    mfaEnabled: req.body.enabled,
+                    mfaEnabled: false,
                     mfaSecret: newSecret.secret,
                     mfaRecoveryCodes: newCodes,
                 },
