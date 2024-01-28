@@ -12,6 +12,7 @@ import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
 import { encryptWithToken } from '@util/tokenEncryption';
+import { verifyToken } from 'node-2fa';
 
 const router = Router();
 
@@ -131,6 +132,7 @@ router.patch(
     validate(z.object({ oldPassword: z.string().min(1).max(128), newPassword: z.string().min(8).max(128) })),
     authorize({
         disableBearer: true,
+        checkMfaCode: true,
     }),
     async (req: Request, res: Response) => {
         const { oldPassword, newPassword } = req.body;

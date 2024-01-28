@@ -13,11 +13,13 @@ function authorize({
     disableBearer = false,
     disableOwner = false,
     requireMfa = false,
+    checkMfaCode = false,
 }: {
     requiredScopes?: TPermission[];
     disableBearer?: boolean;
     disableOwner?: boolean;
     requireMfa?: boolean;
+    checkMfaCode?: boolean;
 }) {
     return async (req: Request, res: Response, next: NextFunction) => {
         const [method, token, userId] = req.headers.authorization?.split(' ') || [];
@@ -120,35 +122,33 @@ function authorize({
             if (!user.verified)
                 return createError(res, 401, { code: 'verify_email', message: 'this account is not verified', param: 'header:authorization', type: 'authorization' });
 
-            if (requireMfa && (!user.mfaEnabled || !mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa)))
-                return createError(res, 403, {
-                    code: 'mfa_required',
-                    message: 'mfa required',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-            if (
-                requireMfa &&
-                !(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 1 || verifyToken(user.mfaSecret, mfa)?.delta === 0 : user.mfaRecoveryCodes?.includes(mfa))
-            )
-                return createError(res, 403, {
-                    code: 'invalid_mfa_token',
-                    message: `Invalid MFA token was provided (delta ${verifyToken(user.mfaSecret, mfa)?.delta})`,
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-
-            if (/([a-zA-Z0-9]{16})/.test(mfa))
-                user = await prisma.user.update({
-                    where: {
-                        id: user.id,
-                    },
-                    data: {
-                        mfaRecoveryCodes: {
-                            set: user.mfaRecoveryCodes?.filter((code) => code !== mfa),
+            if (requireMfa || checkMfaCode) {
+                if ((requireMfa ? !user.mfaEnabled : false) || !mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa))
+                    return createError(res, 403, {
+                        code: 'mfa_required',
+                        message: 'mfa required',
+                        param: 'header:x-mfa',
+                        type: 'authorization',
+                    });
+                if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 0 : user.mfaRecoveryCodes?.includes(mfa)))
+                    return createError(res, 403, {
+                        code: 'invalid_mfa_token',
+                        message: `Invalid MFA token was provided (delta ${verifyToken(user.mfaSecret, mfa)?.delta})`,
+                        param: 'header:x-mfa',
+                        type: 'authorization',
+                    });
+                if (/([a-zA-Z0-9]{16})/.test(mfa))
+                    user = await prisma.user.update({
+                        where: {
+                            id: user.id,
                         },
-                    },
-                });
+                        data: {
+                            mfaRecoveryCodes: {
+                                set: user.mfaRecoveryCodes?.filter((code) => code !== mfa),
+                            },
+                        },
+                    });
+            }
 
             req.user = removeProps(user, ['password', 'token']);
             next();

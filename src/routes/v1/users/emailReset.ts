@@ -11,6 +11,7 @@ import nodemailer from 'nodemailer';
 import { UserEmailChange } from '@prisma/client';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
+import { verifyToken } from 'node-2fa';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.post(
         ipCount: 5,
         keyCount: 10,
     }),
-    authorize({ disableBearer: true, requireMfa: false }),
+    authorize({ disableBearer: true, checkMfaCode: true }),
     validate(z.object({ newEmail: z.string() })),
     async (req: Request, res: Response) => {
         const { newEmail } = req.body;
@@ -30,7 +31,7 @@ router.post(
         if (emailUser)
             return createError(res, 409, {
                 code: 'invalid_email',
-                message: 'This email is already taken',
+                message: 'You cannot use this email',
                 param: 'body:newEmail',
                 type: 'validation',
             });

@@ -1,13 +1,12 @@
 import { OAuth_App, Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
-import { generateSecret, verifyToken } from 'node-2fa';
+import { verifyToken } from 'node-2fa';
 import { z } from 'zod';
 import { compareSync } from 'bcrypt';
 import { authorize } from '@middleware/auth';
 import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
 import createError from '@util/createError';
 import createResponse from '@util/createResponse';
-import { randomString } from '@util/crypto';
 import { removeProps } from '@util/masker';
 import { multerUploadSingle } from '@util/multipart';
 import prisma, { maskUserMe, maskUserOAuth } from '@util/prisma';
@@ -92,94 +91,35 @@ router.patch(
 );
 
 router.patch(
-    '/me/mfa',
-    validate(
-        z.object({
-            enabled: z.boolean().optional(),
-        }),
-        'body'
-    ),
+    '/avatar',
+    // rateLimit({
+    //     ipCount: 50,
+    //     keyCount: 75,
+    // }),
     authorize({
-        disableBearer: true,
+        requiredScopes: ['account.write.avatar'],
     }),
+    multerUploadSingle(),
+    validate(z.object({ file: z.any() })),
     async (req: Request, res: Response) => {
-        if (req.user.mfaEnabled) {
-            if (req.body.enabled) return createError(res, 400, { code: 'mfa_already_enabled', message: 'MFA is already enabled', param: 'body:enabled', type: 'validation' });
-            const mfa = req.headers['x-mfa'] as string;
+        const file = req.file as Express.Multer.File;
 
-            if (/[a-zA-Z0-9]{16}/.test(mfa) && req.user.mfaRecoveryCodes?.includes(mfa)) {
-                await prisma.user.update({
-                    where: { id: req.user.id },
-                    data: {
-                        mfaEnabled: false,
-                        mfaSecret: '',
-                        mfaRecoveryCodes: [] as string[],
-                    },
-                });
-
-                return createResponse(res, 200, {
-                    success: false,
-                    message: 'MFA is now disabled',
-                });
-            }
-
-            if (!mfa || !/[0-9]{6}/.test(mfa))
-                return createError(res, 403, {
-                    code: 'mfa_required',
-                    message: 'mfa required',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-            if (verifyToken(req.user.mfaSecret, mfa)?.delta !== 0)
-                return createError(res, 403, {
-                    code: 'invalid_mfa_token',
-                    message: 'invalid mfa token',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-
-            await prisma.user.update({
-                where: { id: req.user.id },
-                data: {
-                    mfaEnabled: req.body.enabled,
-                    mfaSecret: '',
-                    mfaRecoveryCodes: [] as string[],
-                },
+        if (!file)
+            return createError(res, 400, {
+                code: 'invalid_parameter',
+                message: 'You have to send a valid image file',
+                param: 'body:avatar',
+                type: 'validation',
             });
 
-            return createResponse(res, 200, { message: 'MFA is now disabled' });
-        } else {
-            if (!req.body.enabled) return createError(res, 400, { code: 'mfa_already_disabled', message: 'MFA is already disabled', param: 'body:enabled', type: 'validation' });
-            const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
-            const newCodes = Array.from({ length: 10 }, () => randomString(16));
+        const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
 
-            await prisma.user.update({
-                where: { id: req.user.id },
-                data: {
-                    mfaEnabled: req.body.enabled,
-                    mfaSecret: newSecret.secret,
-                    mfaRecoveryCodes: newCodes,
-                },
-            });
-
-            return createResponse(res, 200, { secret: newSecret, codes: newCodes });
-        }
+        return createResponse(res, 200, maskUserMe(newUser));
     }
 );
 
 router.get(
-    '/me/mfa/securityCodes',
-    authorize({
-        disableBearer: true,
-        requireMfa: true,
-    }),
-    async (req: Request, res: Response) => {
-        createResponse(res, 200, req.user.mfaRecoveryCodes);
-    }
-);
-
-router.get(
-    '/me/activity',
+    '/activity',
     // rateLimit({
     //     ipCount: 100,
     //     keyCount: 150,
@@ -220,36 +160,8 @@ router.get(
     }
 );
 
-router.patch(
-    '/avatar',
-    // rateLimit({
-    //     ipCount: 50,
-    //     keyCount: 75,
-    // }),
-    authorize({
-        requiredScopes: ['account.write.avatar'],
-    }),
-    multerUploadSingle(),
-    validate(z.object({ file: z.any() })),
-    async (req: Request, res: Response) => {
-        const file = req.file as Express.Multer.File;
-
-        if (!file)
-            return createError(res, 400, {
-                code: 'invalid_parameter',
-                message: 'You have to send a valid image file',
-                param: 'body:avatar',
-                type: 'validation',
-            });
-
-        const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
-
-        return createResponse(res, 200, maskUserMe(newUser));
-    }
-);
-
 router.get(
-    '/me/connections',
+    '/connections',
     // rateLimit({
     //     ipCount: 100,
     //     keyCount: 150,
@@ -268,13 +180,13 @@ router.get(
 );
 
 router.post(
-    '/me/delete',
+    '/delete',
     // rateLimit({
     //     ipCount: 3,
     //     keyCount: 5,
     // }),
     validate(z.object({ password: z.string().min(1).max(128) })),
-    authorize({ disableBearer: true }),
+    authorize({ disableBearer: true, checkMfaCode: true }),
     async (req: Request, res: Response) => {
         const { password } = req.body;
 
