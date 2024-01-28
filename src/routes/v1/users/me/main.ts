@@ -1,6 +1,5 @@
 import { OAuth_App, Prisma } from '@prisma/client';
 import { Request, Response, Router } from 'express';
-import { verifyToken } from 'node-2fa';
 import { z } from 'zod';
 import { compareSync } from 'bcrypt';
 import { authorize } from '@middleware/auth';
