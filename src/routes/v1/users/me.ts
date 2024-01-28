@@ -92,7 +92,7 @@ router.patch(
 );
 
 router.patch(
-    '/avatar',
+    '/me/avatar',
     // rateLimit({
     //     ipCount: 50,
     //     keyCount: 75,
