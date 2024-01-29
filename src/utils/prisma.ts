@@ -58,6 +58,8 @@ export function maskUserQuery(user: User, includeEmail: boolean = false) {
         'updatedAt',
         'permissionLevel',
         'profilePublic',
+        'activityNotify',
+        'pubkey',
     ];
 
     if (!profilePublic) mask.push('bio', 'language', 'createdAt');
@@ -87,6 +89,8 @@ export function maskUserOAuth(user: User, oauth: OAuth_Authorization) {
         'mfaEnabled',
         'emailVerifyCode',
         'profilePublic',
+        'activityNotify',
+        'pubkey',
     ];
 
     if (checkPermission(oauth.scopes as TPermission[], 'account.read.basic') && !checkPermission(oauth.scopes as TPermission[], 'account.read.email')) mask.push('email');

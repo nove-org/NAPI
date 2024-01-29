@@ -12,7 +12,7 @@ import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
 import { encryptWithToken } from '@util/tokenEncryption';
-import { verifyToken } from 'node-2fa';
+import * as pgp from 'openpgp';
 
 const router = Router();
 
@@ -61,16 +61,28 @@ router.post(
             },
         });
 
+        let html: string = parseHTML('passwordReset', {
+            username: user.username,
+            napi: process.env.NAPI_URL,
+            code: data.code,
+            frontend: process.env.FRONTEND_URL,
+        });
+
+        if (user.pubkey)
+            try {
+                html = (await pgp.encrypt({
+                    message: await pgp.createMessage({ text: html }),
+                    encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
+                })) as string;
+            } catch {
+                html = `<h1>COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY</h1><br /><br />` + html;
+            }
+
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.body.email,
             subject: 'Password reset requested',
-            html: parseHTML('passwordReset', {
-                username: user.username,
-                napi: process.env.NAPI_URL,
-                code: data.code,
-                frontend: process.env.FRONTEND_URL,
-            }),
+            html,
         });
     }
 );

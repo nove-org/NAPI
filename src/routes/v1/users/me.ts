@@ -53,6 +53,7 @@ router.patch(
             trackActivity: z.boolean().optional(),
             profilePublic: z.boolean().optional(),
             activityNotify: z.boolean().optional(),
+            pubkey: z.string().min(1).optional(),
         }),
         'body'
     ),
@@ -66,6 +67,14 @@ router.patch(
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
         if (req.body.bio?.length) data['bio'] = req.body.bio;
+        if (req.body.pubkey?.length) {
+            const pubkey = req.body.pubkey as string;
+
+            if (!(pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----\n') && pubkey.endsWith('\n-----END PGP PUBLIC KEY BLOCK-----')) && pubkey !== 'false')
+                return createError(res, 403, { code: 'invalid_pgp_key', message: 'Please provide a valid PGP key', param: 'body:pubkey', type: 'validation' });
+
+            data['pubkey'] = pubkey !== 'false' ? req.body.pubkey : '';
+        }
         if (req.body.username?.length) {
             const user = await prisma.user.findFirst({ where: { username: req.body.username } });
 
