@@ -70,10 +70,10 @@ router.patch(
         if (req.body.pubkey?.length) {
             const pubkey = req.body.pubkey?.length as string;
 
-            if (!(pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----\n') && pubkey.startsWith('\n-----END PGP PUBLIC KEY BLOCK-----')))
+            if (!(pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----\n') && pubkey.startsWith('\n-----END PGP PUBLIC KEY BLOCK-----')) && pubkey !== 'false')
                 return createError(res, 403, { code: 'invalid_pgp_key', message: 'Please provide a valid PGP key', param: 'body:pubkey', type: 'validation' });
 
-            data['pubkey'] = req.body.pubkey;
+            data['pubkey'] = pubkey !== 'false' ? req.body.pubkey : '';
         }
         if (req.body.username?.length) {
             const user = await prisma.user.findFirst({ where: { username: req.body.username } });
