@@ -90,7 +90,7 @@ router.patch(
 );
 
 router.patch(
-    '/avatar',
+    '/me/avatar',
     // rateLimit({
     //     ipCount: 50,
     //     keyCount: 75,
@@ -118,7 +118,7 @@ router.patch(
 );
 
 router.get(
-    '/activity',
+    '/me/activity',
     // rateLimit({
     //     ipCount: 100,
     //     keyCount: 150,
@@ -160,7 +160,7 @@ router.get(
 );
 
 router.get(
-    '/connections',
+    '/me/connections',
     // rateLimit({
     //     ipCount: 100,
     //     keyCount: 150,
@@ -179,7 +179,7 @@ router.get(
 );
 
 router.post(
-    '/delete',
+    '/me/delete',
     // rateLimit({
     //     ipCount: 3,
     //     keyCount: 5,

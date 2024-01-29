@@ -71,7 +71,7 @@ function authorize({
             if (
                 requireMfa &&
                 !(/([0-9]{6})/.test(mfa)
-                    ? verifyToken(authorization.user.mfaSecret, mfa)?.delta === 1 || verifyToken(authorization.user.mfaSecret, mfa)?.delta === 0
+                    ? verifyToken(authorization.user.mfaSecret, mfa)?.delta === 0 || verifyToken(authorization.user.mfaSecret, mfa)?.delta === 1
                     : authorization.user.mfaRecoveryCodes?.includes(mfa))
             )
                 return createError(res, 403, {
@@ -130,7 +130,11 @@ function authorize({
                         param: 'header:x-mfa',
                         type: 'authorization',
                     });
-                if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 0 : user.mfaRecoveryCodes?.includes(mfa)))
+                if (
+                    !(/([0-9]{6})/.test(mfa)
+                        ? verifyToken(user.mfaSecret, mfa)?.delta === 0 || verifyToken(user.mfaSecret, mfa)?.delta === 1
+                        : user.mfaRecoveryCodes?.includes(mfa))
+                )
                     return createError(res, 403, {
                         code: 'invalid_mfa_token',
                         message: `Invalid MFA token was provided (delta ${verifyToken(user.mfaSecret, mfa)?.delta})`,
