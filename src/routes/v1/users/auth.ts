@@ -16,6 +16,7 @@ import { createLoginDevice } from '@util/createLoginDevice';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
 import { decryptWithToken, encryptWithToken } from '@util/tokenEncryption';
+import pgp from 'openpgp';
 
 const router = Router();
 
@@ -124,16 +125,25 @@ router.post(
                 responseType: 'json',
             });
 
+            let html: string = parseHTML('securityAlert', {
+                username: user.username,
+                country: !location.data.region_name ? `Somewhere in ${location.data.country}` : `${location.data.country}, ${location.data.region_name}`,
+                ip: req.ip,
+                frontend: process.env.FRONTEND_URL,
+            });
+
+            if (user.pubkey) {
+                html = (await pgp.encrypt({
+                    message: await pgp.createMessage({ text: html }),
+                    encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
+                })) as string;
+            }
+
             await transporter.sendMail({
                 from: process.env.MAIL_USERNAME,
                 to: user.email,
                 subject: 'New login location detected',
-                html: parseHTML('securityAlert', {
-                    username: user.username,
-                    country: !location.data.region_name ? `Somewhere in ${location.data.country}` : `${location.data.country}, ${location.data.region_name}`,
-                    ip: req.ip,
-                    frontend: process.env.FRONTEND_URL,
-                }),
+                html,
             });
         }
     }
