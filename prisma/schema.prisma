@@ -21,6 +21,7 @@ model User {
   emailVerifyCode  String
   token            String
   tokenHash        String
+  pubkey           String   @default("")
   profilePublic    Boolean  @default(false)
   trackActivity    Boolean  @default(false)
   activityNotify   Boolean  @default(false)
