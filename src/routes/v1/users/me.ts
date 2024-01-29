@@ -68,9 +68,9 @@ router.patch(
 
         if (req.body.bio?.length) data['bio'] = req.body.bio;
         if (req.body.pubkey?.length) {
-            const pubkey = req.body.pubkey?.length as string;
+            const pubkey = req.body.pubkey as string;
 
-            if (!(pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----\n') && pubkey.startsWith('\n-----END PGP PUBLIC KEY BLOCK-----')) && pubkey !== 'false')
+            if (!(pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----\n') && pubkey.endsWith('\n-----END PGP PUBLIC KEY BLOCK-----')) && pubkey !== 'false')
                 return createError(res, 403, { code: 'invalid_pgp_key', message: 'Please provide a valid PGP key', param: 'body:pubkey', type: 'validation' });
 
             data['pubkey'] = pubkey !== 'false' ? req.body.pubkey : '';
