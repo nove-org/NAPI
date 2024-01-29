@@ -16,7 +16,7 @@ import { createLoginDevice } from '@util/createLoginDevice';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
 import { decryptWithToken, encryptWithToken } from '@util/tokenEncryption';
-import pgp from 'openpgp';
+import * as pgp from 'openpgp';
 
 const router = Router();
 
@@ -127,17 +127,20 @@ router.post(
 
             let html: string = parseHTML('securityAlert', {
                 username: user.username,
-                country: !location.data.region_name ? `Somewhere in ${location.data.country}` : `${location.data.country}, ${location.data.region_name}`,
+                country: location.data.region_name ? `${location.data.country}, ${location.data.region_name}` : `Somewhere in ${location.data.country}`,
                 ip: req.ip,
                 frontend: process.env.FRONTEND_URL,
             });
 
-            if (user.pubkey) {
-                html = (await pgp.encrypt({
-                    message: await pgp.createMessage({ text: html }),
-                    encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
-                })) as string;
-            }
+            if (user.pubkey)
+                try {
+                    html = (await pgp.encrypt({
+                        message: await pgp.createMessage({ text: html }),
+                        encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
+                    })) as string;
+                } catch {
+                    html = `<h1>COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY</h1><br /><br />` + html;
+                }
 
             await transporter.sendMail({
                 from: process.env.MAIL_USERNAME,

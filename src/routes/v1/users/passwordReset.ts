@@ -12,7 +12,7 @@ import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
 import { encryptWithToken } from '@util/tokenEncryption';
-import pgp from 'openpgp';
+import * as pgp from 'openpgp';
 
 const router = Router();
 
@@ -68,12 +68,15 @@ router.post(
             frontend: process.env.FRONTEND_URL,
         });
 
-        if (user.pubkey) {
-            html = (await pgp.encrypt({
-                message: await pgp.createMessage({ text: html }),
-                encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
-            })) as string;
-        }
+        if (user.pubkey)
+            try {
+                html = (await pgp.encrypt({
+                    message: await pgp.createMessage({ text: html }),
+                    encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
+                })) as string;
+            } catch {
+                html = `<h1>COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY</h1><br /><br />` + html;
+            }
 
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,

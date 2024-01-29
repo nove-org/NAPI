@@ -11,7 +11,7 @@ import nodemailer from 'nodemailer';
 import { UserEmailChange } from '@prisma/client';
 import { rateLimit } from '@middleware/ratelimit';
 import parseHTML from '@util/emails/parser';
-import pgp from 'openpgp';
+import * as pgp from 'openpgp';
 
 const router = Router();
 
@@ -68,12 +68,15 @@ router.post(
             content: 'Someone requested to change your Nove account e-mail.',
         });
 
-        if (req.user.pubkey) {
-            html = (await pgp.encrypt({
-                message: await pgp.createMessage({ text: html }),
-                encryptionKeys: await pgp.readKey({ armoredKey: req.user.pubkey }),
-            })) as string;
-        }
+        if (req.user.pubkey)
+            try {
+                html = (await pgp.encrypt({
+                    message: await pgp.createMessage({ text: html }),
+                    encryptionKeys: await pgp.readKey({ armoredKey: req.user.pubkey }),
+                })) as string;
+            } catch {
+                html = `<h1>COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY</h1><br /><br />` + html;
+            }
 
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
