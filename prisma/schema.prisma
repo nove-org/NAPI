@@ -23,6 +23,7 @@ model User {
   tokenHash        String
   profilePublic    Boolean  @default(false)
   trackActivity    Boolean  @default(false)
+  activityNotify   Boolean  @default(false)
   mfaEnabled       Boolean  @default(false)
   mfaSecret        String   @default("")
   mfaRecoveryCodes String[]
