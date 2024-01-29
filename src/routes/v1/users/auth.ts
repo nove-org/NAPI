@@ -107,7 +107,7 @@ router.post(
         const devices = await prisma.trackedDevices.findMany({ where: { userId: user.id } });
         const device = devices.find((dev) => decryptWithToken(dev.ip, user!.token) === req.ip);
         createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, user);
-        if (!device) {
+        if (!device && user.activityNotify) {
             const transporter = nodemailer.createTransport({
                 host: process.env.MAIL_HOST,
                 port: 465,
@@ -130,8 +130,7 @@ router.post(
                 subject: 'New login location detected',
                 html: parseHTML('securityAlert', {
                     username: user.username,
-                    country: location.data.country,
-                    regionName: location.data.region_name,
+                    country: !location.data.region_name ? `Somewhere in ${location.data.country}` : `${location.data.country}, ${location.data.region_name}`,
                     ip: req.ip,
                     frontend: process.env.FRONTEND_URL,
                 }),
