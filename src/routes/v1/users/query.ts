@@ -28,7 +28,7 @@ router.get(
         const updatedAtCode = getAvatarCode(new Date(user.updatedAt));
 
         return createResponse(res, 200, {
-            ...maskUserQuery(user, false),
+            ...maskUserQuery(user),
             avatar: `${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp?v=${updatedAtCode}`,
         });
     }
