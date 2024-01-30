@@ -40,10 +40,11 @@ export function maskUserMe(user: User) {
  * @param includeEmail include mail in the masked object
  * @returns User object with removed properties
  */
-export function maskUserQuery(user: User, includeEmail: boolean = false) {
+export function maskUserQuery(user: User) {
     const { profilePublic } = user;
     const mask = [
         'password',
+        'email',
         'trackActivity',
         'oauth_authorizations',
         'oauth_codes',
@@ -63,7 +64,6 @@ export function maskUserQuery(user: User, includeEmail: boolean = false) {
     ];
 
     if (!profilePublic) mask.push('bio', 'language', 'createdAt');
-    if (!includeEmail || !profilePublic) mask.push('email');
 
     return removeProps(user, mask);
 }
@@ -90,11 +90,12 @@ export function maskUserOAuth(user: User, oauth: OAuth_Authorization) {
         'emailVerifyCode',
         'profilePublic',
         'activityNotify',
-        'pubkey',
     ];
 
-    if (checkPermission(oauth.scopes as TPermission[], 'account.read.basic') && !checkPermission(oauth.scopes as TPermission[], 'account.read.email')) mask.push('email');
-    if (!checkPermission(oauth.scopes as TPermission[], 'account.read.basic')) mask.push('bio', 'language', 'createdAt');
+    const scopes = oauth.scopes as TPermission[];
+    if (!checkPermission(scopes, 'account.read.email')) mask.push('email');
+    if (!checkPermission(scopes, 'account.read.basic')) mask.push('bio', 'language', 'createdAt');
+    if (!checkPermission(scopes, 'account.read.pubkey')) mask.push('pubkey');
 
     return removeProps(user, mask);
 }
