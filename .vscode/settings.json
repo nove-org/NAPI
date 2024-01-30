@@ -1,4 +1,4 @@
 {
     "editor.detectIndentation": false,
-    "cSpell.words": ["dompurify", "NAPI"]
+    "cSpell.words": ["CONSTS", "dompurify", "NAPI", "Nove", "openpgp", "ratelimit"]
 }
