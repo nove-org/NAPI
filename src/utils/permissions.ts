@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import micromatch from 'micromatch';
 
-export const ALL_PERMISSIONS = ['account.read.basic', 'account.read.email', 'account.write.basic', 'account.write.email', 'account.write.avatar'] as const;
+export const ALL_PERMISSIONS = ['account.read.basic', 'account.read.email', 'account.read.pubkey'] as const;
+
 export type TPermission = typeof ALL_PERMISSIONS[number];
 
 export const mergePermissions = (...permissions: Array<Array<TPermission>>): Array<TPermission> => {

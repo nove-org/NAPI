@@ -10,43 +10,11 @@ import { validate } from '@util/schema';
 
 const router = Router();
 
-router.patch(
-    '/me/mfa',
-    authorize({
-        disableBearer: true,
-    }),
-    async (req: Request, res: Response) => {
-        if (req.user.mfaEnabled) {
-            const mfa = req.headers['x-mfa'] as string;
+router.patch('/me/mfa', authorize({ disableBearer: true }), async (req: Request, res: Response) => {
+    if (req.user.mfaEnabled) {
+        const mfa = req.headers['x-mfa'] as string;
 
-            if (/[a-zA-Z0-9]{16}/.test(mfa) && req.user.mfaRecoveryCodes?.includes(mfa)) {
-                await prisma.user.update({
-                    where: { id: req.user.id },
-                    data: {
-                        mfaEnabled: false,
-                        mfaSecret: '',
-                        mfaRecoveryCodes: [],
-                    },
-                });
-
-                return createResponse(res, 200, { message: 'MFA is now disabled', enabled: false });
-            }
-
-            if (!mfa || !/[0-9]{6}/.test(mfa))
-                return createError(res, 403, {
-                    code: 'mfa_required',
-                    message: 'mfa required',
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-            if (verifyToken(req.user.mfaSecret, mfa)?.delta !== 0 || verifyToken(req.user.mfaSecret, mfa)?.delta !== 1)
-                return createError(res, 403, {
-                    code: 'invalid_mfa_token',
-                    message: `Invalid MFA token was provided (delta ${verifyToken(req.user.mfaSecret, mfa)?.delta})`,
-                    param: 'header:x-mfa',
-                    type: 'authorization',
-                });
-
+        if (/[a-zA-Z0-9]{16}/.test(mfa) && req.user.mfaRecoveryCodes?.includes(mfa)) {
             await prisma.user.update({
                 where: { id: req.user.id },
                 data: {
@@ -56,24 +24,50 @@ router.patch(
                 },
             });
 
-            return createResponse(res, 200, { message: `MFA is now disabled` });
-        } else {
-            const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
-            const newCodes = Array.from({ length: 10 }, () => randomString(16));
+            return createResponse(res, 200, { message: 'MFA is now disabled', enabled: false });
+        }
 
-            await prisma.user.update({
-                where: { id: req.user.id },
-                data: {
-                    mfaEnabled: false,
-                    mfaSecret: newSecret.secret,
-                    mfaRecoveryCodes: newCodes,
-                },
+        if (!mfa || !/[0-9]{6}/.test(mfa))
+            return createError(res, 403, {
+                code: 'mfa_required',
+                message: 'mfa required',
+                param: 'header:x-mfa',
+                type: 'authorization',
+            });
+        if (verifyToken(req.user.mfaSecret, mfa)?.delta !== 0 || verifyToken(req.user.mfaSecret, mfa)?.delta !== 1)
+            return createError(res, 403, {
+                code: 'invalid_mfa_token',
+                message: `Invalid MFA token was provided (delta ${verifyToken(req.user.mfaSecret, mfa)?.delta})`,
+                param: 'header:x-mfa',
+                type: 'authorization',
             });
 
-            return createResponse(res, 200, { message: 'MFA keys generated successfully', secret: newSecret, codes: newCodes });
-        }
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data: {
+                mfaEnabled: false,
+                mfaSecret: '',
+                mfaRecoveryCodes: [],
+            },
+        });
+
+        return createResponse(res, 200, { message: `MFA is now disabled` });
+    } else {
+        const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
+        const newCodes = Array.from({ length: 10 }, () => randomString(16));
+
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data: {
+                mfaEnabled: false,
+                mfaSecret: newSecret.secret,
+                mfaRecoveryCodes: newCodes,
+            },
+        });
+
+        return createResponse(res, 200, { message: 'MFA keys generated successfully', secret: newSecret, codes: newCodes });
     }
-);
+});
 
 router.patch(
     '/me/mfa/activate',
@@ -83,9 +77,7 @@ router.patch(
         }),
         'body'
     ),
-    authorize({
-        disableBearer: true,
-    }),
+    authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
         if (req.user.mfaSecret) {
             const mfa = req.headers['x-mfa'] as string;

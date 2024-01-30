@@ -8,7 +8,7 @@ import { Request, Response, Router } from 'express';
 import { getAvatarCode } from '@util/getAvatarCode';
 import { rateLimit } from '@middleware/ratelimit';
 import { z } from 'zod';
-import { BlogComment, BlogPost, User } from '@prisma/client';
+import { BlogComment, BlogPost } from '@prisma/client';
 
 const router = Router();
 

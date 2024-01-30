@@ -9,6 +9,8 @@ import createResponse from '@util/createResponse';
 import { validate } from '@util/schema';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
+import parseEmail from '@util/emails/parser';
+
 interface UserAvatar extends User {
     avatar: string;
 }
@@ -62,13 +64,14 @@ router.patch(
             },
         });
 
-        // TODO: Attach HTML to email
-        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: user.email,
             subject: 'Your Nove Account has been deleted',
-            html: `Your account has been deleted because of ${req.body.reason}`,
+            html: await parseEmail('accountDeleted', user.pubkey, {
+                username: user.username,
+                reason: req.body.reason,
+            }),
         });
 
         await prisma.user.delete({ where: { id } });
@@ -103,13 +106,14 @@ router.post(
             },
         });
 
-        // TODO: HTML to email
-        //! Filter req.body.reason for malicious HTML code due to XSS vulnerability. Although it's not currently as important as other things. Keep in mind that we should change it in the near future. (we can use DOMPurify to sanitize it)
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: user.email,
             subject: 'Your Nove Account has been disabled',
-            html: `Your account has been disabled because of ${req.body.reason}`,
+            html: await parseEmail('accountDeleted', user.pubkey, {
+                username: user.username,
+                reason: req.body.reason,
+            }),
         });
 
         await prisma.user.update({ where: { id }, data: { disabled: true } });
@@ -137,12 +141,13 @@ router.delete('/users/:id/disable', authorize({ disableBearer: true, requireMfa:
         },
     });
 
-    //TODO: HTML to email
     await transporter.sendMail({
         from: process.env.MAIL_USERNAME,
         to: user.email,
         subject: 'Your Nove account is active again',
-        html: `Your account has been re-enabled`,
+        html: await parseEmail('accountEnabled', user.pubkey, {
+            username: user.username,
+        }),
     });
 
     await prisma.user.update({ where: { id }, data: { disabled: false } });

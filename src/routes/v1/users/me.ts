@@ -21,9 +21,7 @@ router.get(
     //     ipCount: 500,
     //     keyCount: 800,
     // }),
-    authorize({
-        requiredScopes: ['account.read.basic'],
-    }),
+    authorize({ requiredScopes: ['account.read.basic'] }),
     async (req: Request, res: Response) => {
         const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
 
@@ -57,12 +55,7 @@ router.patch(
         }),
         'body'
     ),
-    authorize({
-        requiredScopes: ['account.write.basic'],
-        // TODO: Add scopes for each field
-        // TODO: Remove this line and actually implement patching user data by OAuth apps (???, for what? ~ wnm210)
-        disableBearer: true,
-    }),
+    authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
@@ -106,9 +99,7 @@ router.patch(
     //     ipCount: 50,
     //     keyCount: 75,
     // }),
-    authorize({
-        requiredScopes: ['account.write.avatar'],
-    }),
+    authorize({ disableBearer: true }),
     multerUploadSingle(),
     validate(z.object({ file: z.any() })),
     async (req: Request, res: Response) => {

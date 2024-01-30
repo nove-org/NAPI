@@ -10,8 +10,7 @@ import createResponse from '@util/createResponse';
 import nodemailer from 'nodemailer';
 import { UserEmailChange } from '@prisma/client';
 import { rateLimit } from '@middleware/ratelimit';
-import parseHTML from '@util/emails/parser';
-import * as pgp from 'openpgp';
+import parseEmail from '@util/emails/parser';
 
 const router = Router();
 
@@ -60,41 +59,27 @@ router.post(
             },
         });
 
-        let html: string = parseHTML('emailReset', {
-            username: req.user.username,
-            napi: process.env.NAPI_URL,
-            email: data.codeOldMail,
-            frontend: process.env.FRONTEND_URL,
-            content: 'Someone requested to change your Nove account e-mail.',
-        });
-
-        if (req.user.pubkey)
-            try {
-                html = (await pgp.encrypt({
-                    message: await pgp.createMessage({ text: html }),
-                    encryptionKeys: await pgp.readKey({ armoredKey: req.user.pubkey }),
-                })) as string;
-            } catch {
-                html = `<h1>COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY</h1><br /><br />` + html;
-            }
-
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.user.email,
-            subject: 'Confirm requested e-mail address change',
-            html,
+            subject: 'Confirm requested email address change',
+            html: await parseEmail('emailReset', req.user.pubkey, {
+                username: req.user.username,
+                napi: process.env.NAPI_URL,
+                email: data.codeOldMail,
+                content: 'Someone requested to change your Nove account email.',
+            }),
         });
 
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: newEmail,
-            subject: 'Confirm requested e-mail address change',
-            html: parseHTML('emailReset', {
+            subject: 'Confirm requested email address change',
+            html: await parseEmail('emailReset', undefined, {
                 username: req.user.username,
                 napi: process.env.NAPI_URL,
                 email: data.codeNewMail,
-                frontend: process.env.FRONTEND_URL,
-                content: 'Someone requested to change their Nove account address to this e-mail.',
+                content: 'Someone requested to change their Nove account address to this email.',
             }),
         });
     }
