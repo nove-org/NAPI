@@ -1,0 +1,13 @@
+Hello, {username}!
+
+{content}
+In order to approve that request follow the link below. If it wasn't you, you can safely ignore this message.
+
+Confirm email change: {napi}/v1/users/confirmEmailChange?code={email}"
+
+--
+Nove
+
+We create free as in freedom, open-source, privacy-respecting software for everyday use.
+Website: {frontend}
+Privacy Policy: {frontend}/privacy

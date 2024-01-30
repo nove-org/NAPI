@@ -64,8 +64,7 @@ router.post(
             username: req.user.username,
             napi: process.env.NAPI_URL,
             email: data.codeOldMail,
-            frontend: process.env.FRONTEND_URL,
-            content: 'Someone requested to change your Nove account e-mail.',
+            content: 'Someone requested to change your Nove account email.',
         });
 
         if (req.user.pubkey)
@@ -75,26 +74,25 @@ router.post(
                     encryptionKeys: await pgp.readKey({ armoredKey: req.user.pubkey }),
                 })) as string;
             } catch {
-                html = `<h1>COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY</h1><br /><br />` + html;
+                html = `COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY\n\n` + html;
             }
 
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.user.email,
-            subject: 'Confirm requested e-mail address change',
+            subject: 'Confirm requested email address change',
             html,
         });
 
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: newEmail,
-            subject: 'Confirm requested e-mail address change',
+            subject: 'Confirm requested email address change',
             html: parseHTML('emailReset', {
                 username: req.user.username,
                 napi: process.env.NAPI_URL,
                 email: data.codeNewMail,
-                frontend: process.env.FRONTEND_URL,
-                content: 'Someone requested to change their Nove account address to this e-mail.',
+                content: 'Someone requested to change their Nove account address to this email.',
             }),
         });
     }

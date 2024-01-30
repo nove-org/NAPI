@@ -65,7 +65,6 @@ router.post(
             username: user.username,
             napi: process.env.NAPI_URL,
             code: data.code,
-            frontend: process.env.FRONTEND_URL,
         });
 
         if (user.pubkey)
@@ -75,7 +74,7 @@ router.post(
                     encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
                 })) as string;
             } catch {
-                html = `<h1>COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY</h1><br /><br />` + html;
+                html = `COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY\n\n` + html;
             }
 
         await transporter.sendMail({

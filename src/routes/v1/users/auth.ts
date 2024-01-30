@@ -127,9 +127,8 @@ router.post(
 
             let html: string = parseHTML('securityAlert', {
                 username: user.username,
-                country: location.data.region_name ? `${location.data.country}, ${location.data.region_name}` : `Somewhere in ${location.data.country}`,
+                country: location.data.region_name ? `${location.data.country}, ${location.data.region_name}` : `somewhere in ${location.data.country}`,
                 ip: req.ip,
-                frontend: process.env.FRONTEND_URL,
             });
 
             if (user.pubkey)
@@ -139,7 +138,7 @@ router.post(
                         encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
                     })) as string;
                 } catch {
-                    html = `<h1>COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY</h1><br /><br />` + html;
+                    html = `COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY\n\n` + html;
                 }
 
             await transporter.sendMail({
@@ -246,7 +245,6 @@ router.post(
                 username: user.username,
                 napi: process.env.NAPI_URL,
                 verificationCode,
-                frontend: process.env.FRONTEND_URL,
             }),
         });
     }
