@@ -10,9 +10,8 @@ import { randomString } from '@util/crypto';
 import prisma, { maskUserMe, getUniqueKey } from '@util/prisma';
 import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
-import parseHTML from '@util/emails/parser';
+import parseEmail from '@util/emails/parser';
 import { encryptWithToken } from '@util/tokenEncryption';
-import * as pgp from 'openpgp';
 
 const router = Router();
 
@@ -61,27 +60,15 @@ router.post(
             },
         });
 
-        let html: string = parseHTML('passwordReset', {
-            username: user.username,
-            napi: process.env.NAPI_URL,
-            code: data.code,
-        });
-
-        if (user.pubkey)
-            try {
-                html = (await pgp.encrypt({
-                    message: await pgp.createMessage({ text: html }),
-                    encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
-                })) as string;
-            } catch {
-                html = `COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY\n\n` + html;
-            }
-
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.body.email,
             subject: 'Password reset requested',
-            html,
+            html: await parseEmail('passwordReset', user.pubkey, {
+                username: user.username,
+                napi: process.env.NAPI_URL,
+                code: data.code,
+            }),
         });
     }
 );

@@ -1,7 +1,9 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { sanitize } from 'isomorphic-dompurify';
+import * as pgp from 'openpgp';
 
-export default function parseHTML(fileName: string, vars?: object) {
+export default async function parseEmail(fileName: string, pubkey?: string, vars?: object) {
     let file: string = readFileSync(join(__dirname, `../../../src/emails/${fileName}.txt`)).toString();
 
     if (vars)
@@ -9,5 +11,17 @@ export default function parseHTML(fileName: string, vars?: object) {
             file = file.replaceAll('{' + key + '}', value);
         }
 
-    return file.replaceAll('{frontend}', process.env.FRONTEND_URL as string);
+    file = sanitize(file.replaceAll('{frontend}', process.env.FRONTEND_URL as string));
+
+    if (pubkey)
+        try {
+            file = (await pgp.encrypt({
+                message: await pgp.createMessage({ text: file }),
+                encryptionKeys: await pgp.readKey({ armoredKey: pubkey }),
+            })) as string;
+        } catch {
+            file = `COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY\n\n` + file;
+        }
+
+    return file;
 }

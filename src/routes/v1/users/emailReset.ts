@@ -10,8 +10,7 @@ import createResponse from '@util/createResponse';
 import nodemailer from 'nodemailer';
 import { UserEmailChange } from '@prisma/client';
 import { rateLimit } from '@middleware/ratelimit';
-import parseHTML from '@util/emails/parser';
-import * as pgp from 'openpgp';
+import parseEmail from '@util/emails/parser';
 
 const router = Router();
 
@@ -60,35 +59,23 @@ router.post(
             },
         });
 
-        let html: string = parseHTML('emailReset', {
-            username: req.user.username,
-            napi: process.env.NAPI_URL,
-            email: data.codeOldMail,
-            content: 'Someone requested to change your Nove account email.',
-        });
-
-        if (req.user.pubkey)
-            try {
-                html = (await pgp.encrypt({
-                    message: await pgp.createMessage({ text: html }),
-                    encryptionKeys: await pgp.readKey({ armoredKey: req.user.pubkey }),
-                })) as string;
-            } catch {
-                html = `COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY\n\n` + html;
-            }
-
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: req.user.email,
             subject: 'Confirm requested email address change',
-            html,
+            html: await parseEmail('emailReset', req.user.pubkey, {
+                username: req.user.username,
+                napi: process.env.NAPI_URL,
+                email: data.codeOldMail,
+                content: 'Someone requested to change your Nove account email.',
+            }),
         });
 
         await transporter.sendMail({
             from: process.env.MAIL_USERNAME,
             to: newEmail,
             subject: 'Confirm requested email address change',
-            html: parseHTML('emailReset', {
+            html: await parseEmail('emailReset', undefined, {
                 username: req.user.username,
                 napi: process.env.NAPI_URL,
                 email: data.codeNewMail,

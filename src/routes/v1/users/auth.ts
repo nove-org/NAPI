@@ -14,9 +14,8 @@ import { validate } from '@util/schema';
 import axios from 'axios';
 import { createLoginDevice } from '@util/createLoginDevice';
 import { rateLimit } from '@middleware/ratelimit';
-import parseHTML from '@util/emails/parser';
 import { decryptWithToken, encryptWithToken } from '@util/tokenEncryption';
-import * as pgp from 'openpgp';
+import parseEmail from '@util/emails/parser';
 
 const router = Router();
 
@@ -125,27 +124,15 @@ router.post(
                 responseType: 'json',
             });
 
-            let html: string = parseHTML('securityAlert', {
-                username: user.username,
-                country: location.data.region_name ? `${location.data.country}, ${location.data.region_name}` : `somewhere in ${location.data.country}`,
-                ip: req.ip,
-            });
-
-            if (user.pubkey)
-                try {
-                    html = (await pgp.encrypt({
-                        message: await pgp.createMessage({ text: html }),
-                        encryptionKeys: await pgp.readKey({ armoredKey: user.pubkey }),
-                    })) as string;
-                } catch {
-                    html = `COULD NOT ENCRYPT EMAIL, PLAIN TEXT FALLBACK - SOMETHING IS WRONG WITH YOUR PGP KEY\n\n` + html;
-                }
-
             await transporter.sendMail({
                 from: process.env.MAIL_USERNAME,
                 to: user.email,
                 subject: 'New login location detected',
-                html,
+                html: await parseEmail('securityAlert', user.pubkey, {
+                    username: user.username,
+                    country: location.data.region_name ? `${location.data.country}, ${location.data.region_name}` : `somewhere in ${location.data.country}`,
+                    ip: req.ip,
+                }),
             });
         }
     }
@@ -241,7 +228,7 @@ router.post(
             from: process.env.MAIL_USERNAME,
             to: req.body.email,
             subject: 'Confirm your e-mail to create Nove account',
-            html: parseHTML('confirmEmail', {
+            html: await parseEmail('confirmEmail', user.pubkey, {
                 username: user.username,
                 napi: process.env.NAPI_URL,
                 verificationCode,
