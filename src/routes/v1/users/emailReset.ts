@@ -21,7 +21,7 @@ router.post(
         keyCount: 10,
     }),
     authorize({ disableBearer: true, checkMfaCode: true }),
-    validate(z.object({ newEmail: z.string() })),
+    validate(z.object({ newEmail: z.string().min(5).max(128).email() })),
     async (req: Request, res: Response) => {
         const { newEmail } = req.body;
 
