@@ -61,7 +61,7 @@ router.patch(
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
         if (req.body.bio?.length) data['bio'] = req.body.bio;
-        if (req.body.website?.length) data['website'] = req.body.website;
+        if (req.body.website?.length) data['website'] = req.body.website !== 'https://nove.team/delete' ? req.body.website : ''; // implement a better way to set variables to '' (empty string)
         if (req.body.pubkey?.length) {
             const pubkey = req.body.pubkey as string;
 
