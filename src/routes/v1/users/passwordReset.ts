@@ -1,7 +1,6 @@
 import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
-import nodemailer from 'nodemailer';
 import { z } from 'zod';
 import { authorize } from '@middleware/auth';
 import createError from '@util/createError';
@@ -10,8 +9,8 @@ import { randomString } from '@util/crypto';
 import prisma, { maskUserMe, getUniqueKey } from '@util/prisma';
 import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
-import parseEmail from '@util/emails/parser';
 import { encryptWithToken } from '@util/tokenEncryption';
+import emailSender from '@util/emails/sender';
 
 const router = Router();
 
@@ -21,7 +20,7 @@ router.post(
         ipCount: 3,
         keyCount: 5,
     }),
-    validate(z.object({ email: z.string(), newPassword: z.string() })),
+    validate(z.object({ email: z.string().min(5).max(128).email(), newPassword: z.string() })),
     async (req: Request, res: Response) => {
         const { email, newPassword } = req.body;
 
@@ -46,30 +45,15 @@ router.post(
             },
         });
 
-        createResponse(res, 200, { success: true });
-
-        const transporter = nodemailer.createTransport({
-            host: process.env.MAIL_HOST,
-            port: 465,
-            tls: {
-                rejectUnauthorized: false,
-            },
-            auth: {
-                user: process.env.MAIL_USERNAME,
-                pass: process.env.MAIL_PASSWORD,
-            },
-        });
-
-        await transporter.sendMail({
-            from: process.env.MAIL_USERNAME,
-            to: req.body.email,
+        const message = await emailSender({
+            user,
             subject: 'Password reset requested',
-            html: await parseEmail('passwordReset', user.pubkey, {
-                username: user.username,
-                napi: process.env.NAPI_URL,
-                code: data.code,
-            }),
+            file: { name: 'passwordReset', pubkey: true, vars: { username: user.username, napi: process.env.NAPI_URL, code: data.code } },
         });
+
+        if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
+
+        createResponse(res, 200, { success: true });
     }
 );
 

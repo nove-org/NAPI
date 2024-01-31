@@ -2,7 +2,6 @@ import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
-import nodemailer from 'nodemailer';
 import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
 import createError from '@util/createError';
 import createResponse from '@util/createResponse';
@@ -15,7 +14,7 @@ import axios from 'axios';
 import { createLoginDevice } from '@util/createLoginDevice';
 import { rateLimit } from '@middleware/ratelimit';
 import { decryptWithToken, encryptWithToken } from '@util/tokenEncryption';
-import parseEmail from '@util/emails/parser';
+import emailSender from '@util/emails/sender';
 
 const router = Router();
 
@@ -108,31 +107,22 @@ router.post(
         const device = devices.find((dev) => decryptWithToken(dev.ip, user!.token) === req.ip);
         createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, user);
         if (!device && user.activityNotify) {
-            const transporter = nodemailer.createTransport({
-                host: process.env.MAIL_HOST,
-                port: 465,
-                tls: {
-                    rejectUnauthorized: false,
-                },
-                auth: {
-                    user: process.env.MAIL_USERNAME,
-                    pass: process.env.MAIL_PASSWORD,
-                },
-            });
-
             let location = await axios.get(`https://ifconfig.net/json?ip=${req.ip}`, {
                 responseType: 'json',
             });
 
-            await transporter.sendMail({
-                from: process.env.MAIL_USERNAME,
-                to: user.email,
+            await emailSender({
+                user,
                 subject: 'New login location detected',
-                html: await parseEmail('securityAlert', user.pubkey, {
-                    username: user.username,
-                    country: location.data.region_name ? `${location.data.country}, ${location.data.region_name}` : `somewhere in ${location.data.country}`,
-                    ip: req.ip,
-                }),
+                file: {
+                    name: 'securityAlert',
+                    pubkey: true,
+                    vars: {
+                        username: user.username,
+                        country: location.data.region_name ? `${location.data.country}, ${location.data.region_name}` : `somewhere in ${location.data.country}`,
+                        ip: req.ip,
+                    },
+                },
             });
         }
     }
@@ -210,30 +200,16 @@ router.post(
                 tokenHash: hashSync(generatedToken, genSaltSync()),
             },
         });
-        createResponse(res, 200, { ...maskUserMe(user), token: generatedToken });
 
-        const transporter = nodemailer.createTransport({
-            host: process.env.MAIL_HOST,
-            port: 465,
-            tls: {
-                rejectUnauthorized: false,
-            },
-            auth: {
-                user: process.env.MAIL_USERNAME,
-                pass: process.env.MAIL_PASSWORD,
-            },
-        });
-
-        await transporter.sendMail({
-            from: process.env.MAIL_USERNAME,
-            to: req.body.email,
+        const message = await emailSender({
+            user,
             subject: 'Confirm your e-mail to create Nove account',
-            html: await parseEmail('confirmEmail', user.pubkey, {
-                username: user.username,
-                napi: process.env.NAPI_URL,
-                verificationCode,
-            }),
+            file: { name: 'confirmEmail', pubkey: true, vars: { username: user.username, napi: process.env.NAPI_URL, verificationCode } },
         });
+
+        if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
+
+        createResponse(res, 200, { ...maskUserMe(user), token: generatedToken });
     }
 );
 

@@ -6,10 +6,9 @@ import { User } from '@prisma/client';
 import { getAvatarCode } from '@util/getAvatarCode';
 import createError from '@util/createError';
 import createResponse from '@util/createResponse';
+import emailSender from '@util/emails/sender';
 import { validate } from '@util/schema';
 import { z } from 'zod';
-import nodemailer from 'nodemailer';
-import parseEmail from '@util/emails/parser';
 
 interface UserAvatar extends User {
     avatar: string;
@@ -38,89 +37,49 @@ router.get('/users', authorize({ disableBearer: true, requireMfa: true }), autho
     return createResponse(res, 200, users);
 });
 
-router.patch(
-    '/users/:id/delete',
-    authorize({ disableBearer: true, requireMfa: true }),
-    authorizeAdmin,
-    validate(z.object({ reason: z.string() })),
-    async (req: Request, res: Response) => {
-        const { id } = req.params;
+router.patch('/users/:id/delete', authorize({ disableBearer: true, requireMfa: true }), authorizeAdmin, validate(z.object({ reason: z.string() })), async (req: Request, res: Response) => {
+    const { id } = req.params;
 
-        const user = await prisma.user.findFirst({ where: { id } });
+    const user = await prisma.user.findFirst({ where: { id } });
 
-        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
+    if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
 
-        if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', param: 'body:reason', type: 'validation' });
+    if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', param: 'body:reason', type: 'validation' });
 
-        const transporter = nodemailer.createTransport({
-            host: process.env.MAIL_HOST,
-            port: 465,
-            tls: {
-                rejectUnauthorized: false,
-            },
-            auth: {
-                user: process.env.MAIL_USERNAME,
-                pass: process.env.MAIL_PASSWORD,
-            },
-        });
+    const message = await emailSender({
+        user,
+        subject: 'Your Nove Account has been deleted',
+        file: { name: 'accountDeleted', pubkey: true, vars: { username: user.username, reason: req.body.reason } },
+    });
 
-        await transporter.sendMail({
-            from: process.env.MAIL_USERNAME,
-            to: user.email,
-            subject: 'Your Nove Account has been deleted',
-            html: await parseEmail('accountDeleted', user.pubkey, {
-                username: user.username,
-                reason: req.body.reason,
-            }),
-        });
+    if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
 
-        await prisma.user.delete({ where: { id } });
+    await prisma.user.delete({ where: { id } });
 
-        return createResponse(res, 200, { success: true });
-    }
-);
+    return createResponse(res, 200, { success: true });
+});
 
-router.post(
-    '/users/:id/disable',
-    authorize({ disableBearer: true, requireMfa: true }),
-    authorizeAdmin,
-    validate(z.object({ reason: z.string() })),
-    async (req: Request, res: Response) => {
-        const { id } = req.params;
+router.post('/users/:id/disable', authorize({ disableBearer: true, requireMfa: true }), authorizeAdmin, validate(z.object({ reason: z.string() })), async (req: Request, res: Response) => {
+    const { id } = req.params;
 
-        const user = await prisma.user.findFirst({ where: { id } });
+    const user = await prisma.user.findFirst({ where: { id } });
 
-        if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
+    if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
 
-        if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', param: 'body:reason', type: 'validation' });
+    if (!req.body.reason?.length) return createError(res, 400, { code: 'invalid_reason', message: 'You have to provide a reason', param: 'body:reason', type: 'validation' });
 
-        const transporter = nodemailer.createTransport({
-            host: process.env.MAIL_HOST,
-            port: 465,
-            tls: {
-                rejectUnauthorized: false,
-            },
-            auth: {
-                user: process.env.MAIL_USERNAME,
-                pass: process.env.MAIL_PASSWORD,
-            },
-        });
+    const message = await emailSender({
+        user,
+        subject: 'Your Nove Account has been disabled',
+        file: { name: 'accountDisabled', pubkey: true, vars: { username: user.username, reason: req.body.reason } },
+    });
 
-        await transporter.sendMail({
-            from: process.env.MAIL_USERNAME,
-            to: user.email,
-            subject: 'Your Nove Account has been disabled',
-            html: await parseEmail('accountDeleted', user.pubkey, {
-                username: user.username,
-                reason: req.body.reason,
-            }),
-        });
+    if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
 
-        await prisma.user.update({ where: { id }, data: { disabled: true } });
+    await prisma.user.update({ where: { id }, data: { disabled: true } });
 
-        return createResponse(res, 200, { success: true });
-    }
-);
+    return createResponse(res, 200, { success: true });
+});
 
 router.delete('/users/:id/disable', authorize({ disableBearer: true, requireMfa: true }), authorizeAdmin, async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -129,26 +88,13 @@ router.delete('/users/:id/disable', authorize({ disableBearer: true, requireMfa:
 
     if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', param: 'param:id', type: 'validation' });
 
-    const transporter = nodemailer.createTransport({
-        host: process.env.MAIL_HOST,
-        port: 465,
-        tls: {
-            rejectUnauthorized: false,
-        },
-        auth: {
-            user: process.env.MAIL_USERNAME,
-            pass: process.env.MAIL_PASSWORD,
-        },
+    const message = await emailSender({
+        user,
+        subject: 'Your Nove account has been reactivated',
+        file: { name: 'accountEnabled', pubkey: true, vars: { username: user.username } },
     });
 
-    await transporter.sendMail({
-        from: process.env.MAIL_USERNAME,
-        to: user.email,
-        subject: 'Your Nove account is active again',
-        html: await parseEmail('accountEnabled', user.pubkey, {
-            username: user.username,
-        }),
-    });
+    if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
 
     await prisma.user.update({ where: { id }, data: { disabled: false } });
 
