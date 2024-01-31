@@ -31,7 +31,7 @@ export default async function emailSender({
             from: process.env.MAIL_USERNAME,
             to: emailOverride || user.email,
             subject,
-            html: await parseEmail(file.name, file.pubkey ? user.pubkey : undefined, file.vars),
+            text: await parseEmail(file.name, file.pubkey ? user.pubkey : undefined, file.vars),
         });
     } catch {
         logger.error('something went wrong while sending an email for ' + user.id);
