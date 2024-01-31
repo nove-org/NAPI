@@ -14,6 +14,7 @@ model User {
   id               String   @id @default(uuid())
   email            String   @unique
   bio              String
+  website          String   @default("")
   username         String   @unique
   language         String
   password         String
