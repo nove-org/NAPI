@@ -52,6 +52,7 @@ router.patch(
             profilePublic: z.boolean().optional(),
             activityNotify: z.boolean().optional(),
             pubkey: z.string().min(1).optional(),
+            website: z.string().min(7).url().optional(),
         }),
         'body'
     ),
@@ -60,6 +61,7 @@ router.patch(
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
         if (req.body.bio?.length) data['bio'] = req.body.bio;
+        if (req.body.website?.length) data['website'] = req.body.website !== 'https://nove.team/delete' ? req.body.website : ''; // implement a better way to set variables to '' (empty string)
         if (req.body.pubkey?.length) {
             const pubkey = req.body.pubkey as string;
 
@@ -195,8 +197,7 @@ router.post(
 
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'authorization' });
 
-        if (!compareSync(password, user.password))
-            return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
+        if (!compareSync(password, user.password)) return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
 
         await prisma.user.delete({ where: { id: user.id } });
 

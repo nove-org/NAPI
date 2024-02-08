@@ -7,10 +7,9 @@ import { getUniqueKey } from '@util/prisma';
 import { randomString } from '@util/crypto';
 import createError from '@util/createError';
 import createResponse from '@util/createResponse';
-import nodemailer from 'nodemailer';
-import { UserEmailChange } from '@prisma/client';
+import { User, UserEmailChange } from '@prisma/client';
 import { rateLimit } from '@middleware/ratelimit';
-import parseEmail from '@util/emails/parser';
+import emailSender from '@util/emails/sender';
 
 const router = Router();
 
@@ -21,7 +20,7 @@ router.post(
         keyCount: 10,
     }),
     authorize({ disableBearer: true, checkMfaCode: true }),
-    validate(z.object({ newEmail: z.string() })),
+    validate(z.object({ newEmail: z.string().min(5).max(128).email() })),
     async (req: Request, res: Response) => {
         const { newEmail } = req.body;
 
@@ -45,43 +44,30 @@ router.post(
             },
         });
 
+        const messageToOld = await emailSender({
+            user: req.user as User,
+            subject: 'Confirm requested email address change',
+            file: {
+                name: 'emailReset',
+                pubkey: true,
+                vars: { username: req.user.username, napi: process.env.NAPI_URL, email: data.codeOldMail, content: 'Someone requested to change your Nove account email.' },
+            },
+        });
+
+        const messageToNew = await emailSender({
+            user: req.user as User,
+            subject: 'Confirm requested email address change',
+            file: {
+                name: 'emailReset',
+                pubkey: false,
+                vars: { username: req.user.username, napi: process.env.NAPI_URL, email: data.codeNewMail, content: 'Someone requested to change their Nove account address to this email.' },
+            },
+            emailOverride: newEmail,
+        });
+
+        if (!messageToOld || !messageToNew) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
+
         createResponse(res, 200, { success: true });
-
-        const transporter = nodemailer.createTransport({
-            host: process.env.MAIL_HOST,
-            port: 465,
-            tls: {
-                rejectUnauthorized: false,
-            },
-            auth: {
-                user: process.env.MAIL_USERNAME,
-                pass: process.env.MAIL_PASSWORD,
-            },
-        });
-
-        await transporter.sendMail({
-            from: process.env.MAIL_USERNAME,
-            to: req.user.email,
-            subject: 'Confirm requested email address change',
-            html: await parseEmail('emailReset', req.user.pubkey, {
-                username: req.user.username,
-                napi: process.env.NAPI_URL,
-                email: data.codeOldMail,
-                content: 'Someone requested to change your Nove account email.',
-            }),
-        });
-
-        await transporter.sendMail({
-            from: process.env.MAIL_USERNAME,
-            to: newEmail,
-            subject: 'Confirm requested email address change',
-            html: await parseEmail('emailReset', undefined, {
-                username: req.user.username,
-                napi: process.env.NAPI_URL,
-                email: data.codeNewMail,
-                content: 'Someone requested to change their Nove account address to this email.',
-            }),
-        });
     }
 );
 

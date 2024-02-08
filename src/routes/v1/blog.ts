@@ -97,6 +97,8 @@ router.get(
         return createResponse(res, 200, {
             authorUsername: user.username,
             authorAvatar: `${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp`,
+            authorBio: user.profilePublic ? user.bio : null,
+            authorWebsite: user.profilePublic ? user.website : null,
             comments,
             ...post,
         });
