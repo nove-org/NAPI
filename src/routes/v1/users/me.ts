@@ -46,13 +46,13 @@ router.patch(
                 .max(24)
                 .regex(/[a-zA-Z0-9._-]{3,24}$/g)
                 .optional(),
-            bio: z.string().min(1).max(256).optional(),
+            bio: z.union([z.string().length(0), z.string().min(1).max(256)]).optional(),
             language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).optional(),
             trackActivity: z.boolean().optional(),
             profilePublic: z.boolean().optional(),
             activityNotify: z.boolean().optional(),
-            pubkey: z.string().min(1).optional(),
-            website: z.string().min(7).url().optional(),
+            pubkey: z.string().optional(),
+            website: z.union([z.string().length(0), z.string().min(7).url()]).optional(),
         }),
         'body'
     ),
@@ -60,24 +60,24 @@ router.patch(
     async (req: Request, res: Response) => {
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
-        if (req.body.bio?.length) data['bio'] = req.body.bio;
-        if (req.body.website?.length) data['website'] = req.body.website !== 'https://nove.team/delete' ? req.body.website : ''; // implement a better way to set variables to '' (empty string)
-        if (req.body.pubkey?.length) {
-            const pubkey = req.body.pubkey as string;
+        if (req.body.bio !== undefined) data['bio'] = req.body.bio;
+        if (req.body.website !== undefined) data['website'] = req.body.website; // implement a better way to set variables to '' (empty string)
+        if (req.body.pubkey !== undefined) {
+            const pubkey = (req.body.pubkey as string).trim();
 
-            if (!(pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----\n') && pubkey.endsWith('\n-----END PGP PUBLIC KEY BLOCK-----')) && pubkey !== 'false')
+            if (!(pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----\n') && pubkey.endsWith('\n-----END PGP PUBLIC KEY BLOCK-----')) && pubkey !== '')
                 return createError(res, 403, { code: 'invalid_pgp_key', message: 'Please provide a valid PGP key', param: 'body:pubkey', type: 'validation' });
 
-            data['pubkey'] = pubkey !== 'false' ? req.body.pubkey : '';
+            data['pubkey'] = req.body.pubkey;
         }
-        if (req.body.username?.length) {
+        if (req.body.username !== undefined) {
             const user = await prisma.user.findFirst({ where: { username: req.body.username } });
 
             if (user) return createError(res, 409, { code: 'username_taken', message: 'This username is already taken', param: 'body:username', type: 'validation' });
 
             data['username'] = req.body.username;
         }
-        if (req.body.language?.length) data['language'] = req.body.language;
+        if (req.body.language !== undefined) data['language'] = req.body.language;
         if (typeof req.body.trackActivity === 'boolean') {
             data['trackActivity'] = req.body.trackActivity;
 
