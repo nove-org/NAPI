@@ -61,7 +61,7 @@ router.patch(
         let data: Prisma.XOR<Prisma.UserUpdateInput, Prisma.UserUncheckedUpdateInput> = {};
 
         if (req.body.bio !== undefined) data['bio'] = req.body.bio;
-        if (req.body.website !== undefined) data['website'] = req.body.website; // implement a better way to set variables to '' (empty string)
+        if (req.body.website !== undefined) data['website'] = req.body.website;
         if (req.body.pubkey !== undefined) {
             const pubkey = (req.body.pubkey as string).trim();
 
