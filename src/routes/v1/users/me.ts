@@ -199,6 +199,13 @@ router.post(
 
         if (!compareSync(password, user.password)) return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
 
+        // TODO: onDelete collapse
+        await prisma.userEmailChange.deleteMany({ where: { userId: user.id } });
+        await prisma.recovery.deleteMany({ where: { userId: user.id } });
+        await prisma.trackedDevices.deleteMany({ where: { userId: user.id } });
+        await prisma.blogComment.deleteMany({ where: { authorId: user.id } });
+        await prisma.blogPost.deleteMany({ where: { authorId: user.id } });
+
         await prisma.user.delete({ where: { id: user.id } });
 
         createResponse(res, 200, { success: true });
