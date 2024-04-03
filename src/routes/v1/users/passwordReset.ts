@@ -20,27 +20,26 @@ router.post(
         ipCount: 3,
         keyCount: 5,
     }),
-    validate(z.object({ email: z.string().min(5).max(128).email(), newPassword: z.string() })),
+    validate(z.object({ email: z.string().min(5).max(128).email(), newPassword: z.string().min(1) })),
     async (req: Request, res: Response) => {
         const { email, newPassword } = req.body;
 
+        if (passwordStrength(newPassword).id < 2) return createError(res, 400, { code: 'weak_password', message: 'new password is too weak', param: 'body:newPassword', type: 'validation' });
+
         const user = await prisma.user.findFirst({ where: { email } });
+        if (!user) return createResponse(res, 200, { success: true });
 
-        if (!user) return createError(res, 404, { code: 'invalid_email', message: 'Account with this email address was not found', param: 'body:email', type: 'validation' });
+        if (newPassword === user.email || newPassword === user.username)
+            return createError(res, 400, { code: 'weak_password', message: 'new password is too weak', param: 'body:newPassword', type: 'validation' });
 
-        if (passwordStrength(newPassword).id < 2 || newPassword === user.email || newPassword === user.username)
-            return createError(res, 400, {
-                code: 'weak_password',
-                message: 'new password is too weak',
-                param: 'body:newPassword',
-                type: 'validation',
-            });
+        const code = await getUniqueKey(prisma.recovery, 'code', randomString);
 
-        const data = await prisma.recovery.create({
+        await prisma.recovery.deleteMany({ where: { userId: user.id } });
+        await prisma.recovery.create({
             data: {
                 newPassword: hashSync(newPassword, genSaltSync()),
                 userId: user.id,
-                code: await getUniqueKey(prisma.recovery, 'code', randomString),
+                code: hashSync(code, genSaltSync()),
                 expiresAt: new Date(Date.now() + 86400000),
             },
         });
@@ -48,9 +47,8 @@ router.post(
         const message = await emailSender({
             user,
             subject: 'Password reset requested',
-            file: { name: 'passwordReset', pubkey: true, vars: { username: user.username, napi: process.env.NAPI_URL, code: data.code } },
+            file: { name: 'passwordReset', pubkey: true, vars: { username: user.username, uid: user.id, napi: process.env.NAPI_URL, code } },
         });
-
         if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
 
         createResponse(res, 200, { success: true });
@@ -63,30 +61,22 @@ router.post(
         ipCount: 5,
         keyCount: 10,
     }),
-    validate(z.object({ password: z.string().min(1).max(128), code: z.string().min(1) })),
+    validate(z.object({ userId: z.string().min(1), password: z.string().min(1).max(128), code: z.string().min(1) })),
     async (req: Request, res: Response) => {
-        const { password, code } = req.body;
+        const { userId, password, code } = req.body;
 
-        const recovery = await prisma.recovery.findFirst({ where: { code } });
-
+        const recovery = await prisma.recovery.findFirst({ where: { userId } });
         if (!recovery) return createError(res, 400, { code: 'invalid_code', message: 'Invalid password recovery code was provided ', param: 'query:code', type: 'validation' });
-
         if (recovery.expiresAt.getTime() < Date.now()) {
             await prisma.recovery.delete({ where: { code: recovery.code } });
             return createError(res, 400, { code: 'invalid_code', message: 'Invalid password recovery code was provided ', param: 'query:code', type: 'validation' });
         }
+        if (!compareSync(code, recovery.code)) return createError(res, 400, { code: 'invalid_code', message: 'Invalid password recovery code was provided ', param: 'query:code', type: 'validation' });
+        if (!compareSync(password, recovery.newPassword))
+            return createError(res, 400, { code: 'invalid_password', message: 'You must re-enter your new password to confirm the change', param: 'body:password', type: 'validation' });
 
         const user = await prisma.user.findFirst({ where: { id: recovery.userId } });
-
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'validation' });
-
-        if (!compareSync(password, recovery.newPassword))
-            return createError(res, 400, {
-                code: 'invalid_password',
-                message: 'You must re-enter your correct new password to confirm the change',
-                param: 'body:password',
-                type: 'validation',
-            });
 
         const token = randomString(48);
 

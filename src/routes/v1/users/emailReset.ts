@@ -10,6 +10,7 @@ import createResponse from '@util/createResponse';
 import { User, UserEmailChange } from '@prisma/client';
 import { rateLimit } from '@middleware/ratelimit';
 import emailSender from '@util/emails/sender';
+import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 
 const router = Router();
 
@@ -25,22 +26,17 @@ router.post(
         const { newEmail } = req.body;
 
         const emailUser = await prisma.user.findFirst({ where: { email: newEmail } });
+        if (emailUser) return createError(res, 409, { code: 'invalid_email', message: 'You cannot use this email', param: 'body:newEmail', type: 'validation' });
 
-        if (emailUser)
-            return createError(res, 409, {
-                code: 'invalid_email',
-                message: 'You cannot use this email',
-                param: 'body:newEmail',
-                type: 'validation',
-            });
+        const code = { old: await getUniqueKey(prisma.userEmailChange, 'codeOldMail', randomString), new: await getUniqueKey(prisma.userEmailChange, 'codeOldMail', randomString) };
 
         const data = await prisma.userEmailChange.create({
             data: {
                 newEmail: newEmail,
                 userId: req.user.id,
                 expiresAt: new Date(Date.now() + 86400000),
-                codeNewMail: await getUniqueKey(prisma.userEmailChange, 'codeNewMail', randomString),
-                codeOldMail: await getUniqueKey(prisma.userEmailChange, 'codeOldMail', randomString),
+                codeNewMail: hashSync(code.new, genSaltSync()),
+                codeOldMail: hashSync(code.old, genSaltSync()),
             },
         });
 
@@ -50,7 +46,7 @@ router.post(
             file: {
                 name: 'emailReset',
                 pubkey: true,
-                vars: { username: req.user.username, napi: process.env.NAPI_URL, email: data.codeOldMail, content: 'Someone requested to change your Nove account email.' },
+                vars: { username: req.user.username, uid: req.user.id, napi: process.env.NAPI_URL, email: code.old, content: 'Someone requested to change your Nove account email.' },
             },
         });
 
@@ -60,7 +56,13 @@ router.post(
             file: {
                 name: 'emailReset',
                 pubkey: false,
-                vars: { username: req.user.username, napi: process.env.NAPI_URL, email: data.codeNewMail, content: 'Someone requested to change their Nove account address to this email.' },
+                vars: {
+                    username: req.user.username,
+                    uid: req.user.id,
+                    napi: process.env.NAPI_URL,
+                    email: code.new,
+                    content: 'Someone requested to change their Nove account address to this email.',
+                },
             },
             emailOverride: newEmail,
         });
@@ -77,47 +79,34 @@ router.get(
         ipCount: 5,
         keyCount: 10,
     }),
+    validate(z.object({ userId: z.string().min(1), code: z.string().min(1) }), 'query'),
     async (req: Request, res: Response) => {
-        const code = req.query.code as string;
+        const { userId, code } = req.query as { userId: string; code: string };
 
-        const newEmailObject = await prisma.userEmailChange.findFirst({
-            where: {
-                OR: [{ codeNewMail: code }, { codeOldMail: code }],
-            },
-        });
+        const newEmailObject = await prisma.userEmailChange.findFirst({ where: { userId } });
+        if (!newEmailObject) return createError(res, 404, { code: 'invalid_code', message: 'Invalid email change code was provided', param: 'query:code', type: 'authorization' });
 
-        if (!newEmailObject)
-            return createError(res, 404, {
-                code: 'invalid_code',
-                message: 'Invalid email change code was provided',
-                param: 'query:code',
-                type: 'authorization',
-            });
-
-        if (code === newEmailObject.codeNewMail)
+        if (compareSync(code, newEmailObject.codeNewMail))
             await prisma.userEmailChange.update({
                 where: { id: newEmailObject.id },
                 data: { codeNewMail: '' },
             });
-        if (code === newEmailObject.codeOldMail)
+        else if (compareSync(code, newEmailObject.codeOldMail))
             await prisma.userEmailChange.update({
                 where: { id: newEmailObject.id },
                 data: { codeOldMail: '' },
             });
+        else return createError(res, 404, { code: 'invalid_code', message: 'Invalid email change code was provided', param: 'query:code', type: 'authorization' });
 
         const newData = (await prisma.userEmailChange.findFirst({ where: { id: newEmailObject.id } })) as UserEmailChange;
-
-        if (!newData.codeNewMail.length && !newData.codeOldMail.length) {
-            await prisma.userEmailChange.delete({
-                where: { id: newEmailObject.id },
-            });
-
+        if (!newData.codeNewMail && !newData.codeOldMail) {
+            await prisma.userEmailChange.delete({ where: { id: newEmailObject.id } });
             await prisma.user.update({ where: { id: req.user.id }, data: { email: newEmailObject.newEmail } });
 
             return createResponse(res, 200, { success: true });
         }
 
-        return createResponse(res, 200, { message: `You have to also verify your ${code === newEmailObject.codeNewMail ? 'old' : 'new'} e-mail` });
+        return createResponse(res, 200, { message: `You also have to verify your ${code === newEmailObject.codeNewMail ? 'old' : 'new'} email` });
     }
 );
 
