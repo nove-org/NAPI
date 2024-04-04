@@ -33,7 +33,7 @@
         "micromatch": "^4.0.5",
         "multer": "^1.4.5-lts.1",
         "node-2fa": "^2.0.3",
-        "nodemailer": "^6.9.4",
+        "nodemailer": "^6.9.9",
         "openpgp": "^5.11.0",
         "sass": "^1.58.3",
         "ua-parser-js": "^1.0.35",
