@@ -6,6 +6,7 @@ import routes from './routes';
 import checkEnv from './utils/env';
 import logger from './utils/logger';
 import prisma from './utils/prisma';
+import { execSync } from 'child_process';
 checkEnv();
 
 const app = express();
@@ -13,7 +14,7 @@ app.use(express.json());
 app.use(
     cors({
         origin: '*',
-    })
+    }),
 );
 app.use(express.static('src/static'));
 app.set('view engine', 'ejs');
@@ -29,7 +30,7 @@ app.get('/', (_req: Request, res: Response) => {
         },
         meta: {
             timestamp: new Date().toISOString(),
-            version: process.env.VERSION,
+            version: process.env.VERSION + '-' + execSync('git rev-parse --short HEAD').toString().trim(),
             server: process.env.SERVER,
         },
     });
