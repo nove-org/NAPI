@@ -1,28 +1,28 @@
 import { Request, Response } from 'express';
+import { RATELIMIT_IP_WHITELIST } from '@util/CONSTS';
 import erl, { Options } from 'express-rate-limit';
 import createError from '@util/createError';
+import { randomString } from '@util/crypto';
 
 // TODO: implement https://www.npmjs.com/package/rate-limit-redis
 const DEFAULT_ERL_OPTIONS: Partial<Options> = {
-    windowMs: 15 * 60 * 1000,
-    max: 100,
+    windowMs: 10 * 60 * 1000,
+    limit: 500,
     standardHeaders: true,
     legacyHeaders: false,
     message: (req: Request, res: Response) => {
         createError(res, 429, {
             code: 'rate_limit',
-            message: 'too many requests, please try again later',
+            message: 'Too many requests, please try again later.',
             type: 'misc',
         });
     },
+    // TODO: fix permissionLevel check (req.user is always undefined)
     skip: (req: Request, res: Response) => (req.user ? req.user.permissionLevel == 2 : false),
 };
 
-const keyLimiterGenerator = (req: Request) => req.headers['authorization'] || '';
-const ipLimiterGenerator = (req: Request) => req.ip;
-
-const keyLimiter = erl({ keyGenerator: keyLimiterGenerator, ...DEFAULT_ERL_OPTIONS });
-const ipLimiter = erl({ keyGenerator: ipLimiterGenerator, ...DEFAULT_ERL_OPTIONS });
+const keyLimiterGenerator = (req: Request) => req.headers['authorization']?.split(' ')[1] || (RATELIMIT_IP_WHITELIST.includes(req.ip) ? randomString(48) : req.ip);
+const ipLimiterGenerator = (req: Request) => (RATELIMIT_IP_WHITELIST.includes(req.ip) ? randomString(48) : req.ip);
 
 export function rateLimit(
     options: Partial<{
@@ -30,22 +30,23 @@ export function rateLimit(
         ipCount: number;
         keyTime: number;
         ipTime: number;
-    }> = {}
+    }> = {},
 ) {
-    let out = [keyLimiter, ipLimiter];
+    let out = [];
     if (options.keyCount || options.keyTime)
         out[0] = erl({
             keyGenerator: keyLimiterGenerator,
             ...DEFAULT_ERL_OPTIONS,
             windowMs: options.keyTime || DEFAULT_ERL_OPTIONS.windowMs,
-            max: options.keyCount || DEFAULT_ERL_OPTIONS.max,
+            limit: options.keyCount || DEFAULT_ERL_OPTIONS.limit,
         });
     if (options.ipCount || options.ipTime)
         out[1] = erl({
             keyGenerator: ipLimiterGenerator,
             ...DEFAULT_ERL_OPTIONS,
             windowMs: options.ipTime || DEFAULT_ERL_OPTIONS.windowMs,
-            max: options.ipCount || DEFAULT_ERL_OPTIONS.max,
+            limit: options.ipCount || DEFAULT_ERL_OPTIONS.limit,
         });
+
     return out;
 }
