@@ -1,5 +1,6 @@
 // SOURCE: https://github.com/JuzioMiecio520/CaT/blob/main/server/src/utils/createResponse.ts
 
+import { execSync } from 'child_process';
 import { Response } from 'express';
 
 export type HTTPStatus =
@@ -23,7 +24,7 @@ export default function createResponse(res: Response, status: HTTPStatus, body: 
         },
         meta: {
             timestamp: new Date().toISOString(),
-            version: process.env.VERSION,
+            version: process.env.VERSION + '-' + execSync('git rev-parse --short HEAD').toString().trim(),
             server: process.env.SERVER,
         },
     });

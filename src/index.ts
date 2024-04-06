@@ -37,7 +37,7 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 app.use((_req, res, _next) => {
-    return createError(res, 404, { code: 'not_found', message: 'This page does not exist', type: 'authorization' });
+    return createError(res, 404, { code: 'not_found', message: 'This page does not exist', type: 'client_error' });
 });
 
 prisma
