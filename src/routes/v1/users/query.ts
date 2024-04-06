@@ -13,8 +13,8 @@ const router = Router();
 router.get(
     '/:id',
     rateLimit({
-        ipCount: 300,
-        keyCount: 200,
+        ipCount: 50,
+        keyCount: 50,
     }),
     async (req: Request, res: Response) => {
         const { id } = req.params;
@@ -31,14 +31,14 @@ router.get(
             ...maskUserQuery(user),
             avatar: `${process.env.NAPI_URL}/v1/users/${user.id}/avatar.webp?v=${updatedAtCode}`,
         });
-    }
+    },
 );
 
 router.get(
     '/:id/avatar.webp',
     rateLimit({
-        ipCount: 300,
-        keyCount: 200,
+        ipCount: 500,
+        keyCount: 500,
     }),
     async (req: Request, res: Response) => {
         const { id } = req.params;
@@ -52,7 +52,7 @@ router.get(
         const path = existsSync(`${STORAGE_PATH}/${id}.webp`) ? `${STORAGE_PATH}/${id}.webp` : `${join(STORAGE_PATH, '..')}/defaults/AVATAR.webp`;
 
         return res.sendFile(path);
-    }
+    },
 );
 
 export default router;

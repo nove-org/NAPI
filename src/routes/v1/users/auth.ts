@@ -21,14 +21,14 @@ const router = Router();
 router.post(
     '/login',
     rateLimit({
-        ipCount: 25,
-        keyCount: 40,
+        ipCount: 30,
+        keyCount: 30,
     }),
     validate(
         z.object({
             username: z.string().min(1).max(64),
             password: z.string().min(1).max(128),
-        })
+        }),
     ),
     async (req: Request, res: Response) => {
         let user = await prisma.user.findFirst({
@@ -125,14 +125,14 @@ router.post(
                 },
             });
         }
-    }
+    },
 );
 
 router.post(
     '/register',
     rateLimit({
         ipCount: 10,
-        keyCount: 15,
+        keyCount: 10,
     }),
     validate(
         z.object({
@@ -145,7 +145,7 @@ router.post(
                 .optional(),
             password: z.string().min(8).max(128),
             language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).min(1).max(5).optional(),
-        })
+        }),
     ),
     async (
         req: Request<
@@ -158,7 +158,7 @@ router.post(
                 language?: string;
             }
         >,
-        res: Response
+        res: Response,
     ) => {
         if (await prisma.user.count({ where: { email: req.body.email } }))
             return createError(res, 409, {
@@ -210,14 +210,14 @@ router.post(
         if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
 
         createResponse(res, 200, { ...maskUserMe(user), token: generatedToken });
-    }
+    },
 );
 
 router.get(
     '/verifyEmail',
     rateLimit({
-        ipCount: 2,
-        keyCount: 3,
+        ipCount: 20,
+        keyCount: 20,
     }),
     async (req: Request, res: Response) => {
         const code = req.query.code as string;
@@ -241,7 +241,7 @@ router.get(
         });
 
         return res.redirect(`${process.env.FRONTEND_URL}/account`);
-    }
+    },
 );
 
 export default router;

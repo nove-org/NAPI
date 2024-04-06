@@ -12,10 +12,10 @@ const router = Router();
 
 router.get(
     '/authorize',
-    // rateLimit({
-    //     ipCount: 500,
-    //     keyCount: 750,
-    // }),
+    rateLimit({
+        ipCount: 6000,
+        keyCount: 2000,
+    }),
     validate(
         z.object({
             client_id: z.string().min(1).max(64),
@@ -24,7 +24,7 @@ router.get(
             scope: z.string().min(1).max(1024),
             state: z.string().min(1).max(256).optional(),
         }),
-        'query'
+        'query',
     ),
     async (req: Request, res: Response) => {
         const client = await prisma.oAuth_App.findFirst({
@@ -42,15 +42,15 @@ router.get(
             client,
             scope: req.query.scope?.toString().split(' ') || [],
         });
-    }
+    },
 );
 
 router.post(
     '/authorize',
-    // rateLimit({
-    //     ipCount: 500,
-    //     keyCount: 750,
-    // }),
+    rateLimit({
+        ipCount: 6000,
+        keyCount: 2000,
+    }),
     authorize({
         disableBearer: true,
     }),
@@ -58,7 +58,7 @@ router.post(
         z.object({
             client_id: z.string().min(1).max(64),
             scope: z.string().min(1).max(1024),
-        })
+        }),
     ),
     async (req: Request, res: Response) => {
         const client = await prisma.oAuth_App.findFirst({
@@ -79,15 +79,15 @@ router.post(
         createResponse(res, 200, {
             code: code.code,
         });
-    }
+    },
 );
 
 router.post(
     '/token',
-    // rateLimit({
-    //     ipCount: 500,
-    //     keyCount: 750,
-    // }),
+    rateLimit({
+        ipCount: 10000,
+        keyCount: 5000,
+    }),
     validate(
         z.object({
             client_id: z.string().min(1).max(64),
@@ -98,7 +98,7 @@ router.post(
             grant_type: z.string().min(1).max(1024),
             client_secret: z.string().min(1).max(1024),
         }),
-        'query'
+        'query',
     ),
     async (req: Request, res: Response) => {
         // * I set TOKEN_LIFETIME for 30 days because I think that's pretty optimal date and allows users to stay signed in for 30 days.
@@ -126,8 +126,7 @@ router.post(
                 },
             });
             if (!code) return createError(res, 400, { code: 'invalid_code', message: 'Invalid code was provided', param: 'query:code', type: 'validation' });
-            if (code.app_id !== client.client_id)
-                return createError(res, 400, { code: 'invalid_code', message: 'Invalid code was provided', param: 'query:code', type: 'validation' });
+            if (code.app_id !== client.client_id) return createError(res, 400, { code: 'invalid_code', message: 'Invalid code was provided', param: 'query:code', type: 'validation' });
             if (code.scopes.join(' ') !== req.query.scope?.toString())
                 return createError(res, 400, { code: 'invalid_scope', message: 'Invalid scope was provided', param: 'query:scope', type: 'validation' });
 
@@ -161,8 +160,7 @@ router.post(
                     refresh_token: req.query.refresh_token?.toString() || '',
                 },
             });
-            if (!authorization)
-                return createError(res, 400, { code: 'invalid_refresh_token', message: 'Invalid refresh token was provided', param: 'query:refresh_token', type: 'validation' });
+            if (!authorization) return createError(res, 400, { code: 'invalid_refresh_token', message: 'Invalid refresh token was provided', param: 'query:refresh_token', type: 'validation' });
             if (authorization.app_id !== client.client_id)
                 return createError(res, 400, { code: 'invalid_refresh_token', message: 'Invalid refresh token was provided', param: 'query:refresh_token', type: 'validation' });
             if (authorization.scopes.join(' ') !== req.query.scope?.toString())
@@ -191,7 +189,7 @@ router.post(
                 refresh_token: authorization.refresh_token,
             });
         } else return createError(res, 400, { code: 'invalid_token', message: 'You have to provide a code orp refresh_token', param: 'query:code', type: 'validation' });
-    }
+    },
 );
 
 export default router;

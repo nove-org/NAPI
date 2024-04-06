@@ -17,8 +17,8 @@ const router = Router();
 router.post(
     '/emailReset',
     rateLimit({
-        ipCount: 5,
-        keyCount: 10,
+        ipCount: 12,
+        keyCount: 3,
     }),
     authorize({ disableBearer: true, checkMfaCode: true }),
     validate(z.object({ newEmail: z.string().min(5).max(128).email() })),
@@ -70,14 +70,14 @@ router.post(
         if (!messageToOld || !messageToNew) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
 
         createResponse(res, 200, { success: true });
-    }
+    },
 );
 
 router.get(
     '/confirmEmailChange',
     rateLimit({
-        ipCount: 5,
-        keyCount: 10,
+        ipCount: 12,
+        keyCount: 3,
     }),
     validate(z.object({ userId: z.string().min(1), code: z.string().min(1) }), 'query'),
     async (req: Request, res: Response) => {
@@ -107,7 +107,7 @@ router.get(
         }
 
         return createResponse(res, 200, { message: `You also have to verify your ${code === newEmailObject.codeNewMail ? 'old' : 'new'} email` });
-    }
+    },
 );
 
 export default router;

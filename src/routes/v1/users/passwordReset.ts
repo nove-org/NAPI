@@ -17,8 +17,8 @@ const router = Router();
 router.post(
     '/passwordRecovery',
     rateLimit({
-        ipCount: 3,
-        keyCount: 5,
+        ipCount: 12,
+        keyCount: 3,
     }),
     validate(z.object({ email: z.string().min(5).max(128).email(), newPassword: z.string().min(1) })),
     async (req: Request, res: Response) => {
@@ -52,14 +52,14 @@ router.post(
         if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
 
         createResponse(res, 200, { success: true });
-    }
+    },
 );
 
 router.post(
     '/passwordKey',
     rateLimit({
-        ipCount: 5,
-        keyCount: 10,
+        ipCount: 12,
+        keyCount: 3,
     }),
     validate(z.object({ userId: z.string().min(1), password: z.string().min(1).max(128), code: z.string().min(1) })),
     async (req: Request, res: Response) => {
@@ -92,14 +92,14 @@ router.post(
         await prisma.trackedDevices.deleteMany({ where: { userId: user.id } });
 
         return createResponse(res, 200, { success: true, token, ...maskUserMe(user) });
-    }
+    },
 );
 
 router.patch(
     '/password',
     rateLimit({
-        ipCount: 5,
-        keyCount: 10,
+        ipCount: 12,
+        keyCount: 3,
     }),
     validate(z.object({ oldPassword: z.string().min(1).max(128), newPassword: z.string().min(8).max(128) })),
     authorize({
@@ -147,7 +147,7 @@ router.patch(
         await prisma.trackedDevices.deleteMany({ where: { userId: user.id } });
 
         return createResponse(res, 200, { success: true, token, ...maskUserMe(user) });
-    }
+    },
 );
 
 export default router;

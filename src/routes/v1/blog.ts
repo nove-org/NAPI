@@ -24,10 +24,10 @@ interface PostAuthor extends BlogPost {
 
 router.get(
     '/',
-    // rateLimit({
-    //     ipCount: 250,
-    //     keyCount: 100,
-    // }),
+    rateLimit({
+        ipCount: 300,
+        keyCount: 100,
+    }),
     async (req: Request, res: Response) => {
         const prismaPosts = await prisma.blogPost.findMany({ orderBy: { createdAt: 'desc' } });
 
@@ -46,29 +46,39 @@ router.get(
         }
 
         return createResponse(res, 200, posts);
-    }
+    },
 );
 
-router.post('/create', authorize({ disableBearer: true }), authorizeAdmin, validate(z.object({ text: z.string(), title: z.string() })), async (req: Request, res: Response) => {
-    const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
+router.post(
+    '/create',
+    rateLimit({
+        ipCount: 30,
+        keyCount: 10,
+    }),
+    authorize({ disableBearer: true }),
+    authorizeAdmin,
+    validate(z.object({ text: z.string(), title: z.string() })),
+    async (req: Request, res: Response) => {
+        const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
 
-    const newPost = await prisma.blogPost.create({
-        data: {
-            authorId: req.user.id,
-            text: req.body.text,
-            title: req.body.title,
-        },
-    });
+        const newPost = await prisma.blogPost.create({
+            data: {
+                authorId: req.user.id,
+                text: req.body.text,
+                title: req.body.title,
+            },
+        });
 
-    return createResponse(res, 200, newPost);
-});
+        return createResponse(res, 200, newPost);
+    },
+);
 
 router.get(
     '/:id',
-    // rateLimit({
-    //     ipCount: 200,
-    //     keyCount: 100,
-    // }),
+    rateLimit({
+        ipCount: 150,
+        keyCount: 50,
+    }),
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
@@ -102,11 +112,15 @@ router.get(
             comments,
             ...post,
         });
-    }
+    },
 );
 
 router.patch(
     '/:id',
+    rateLimit({
+        ipCount: 30,
+        keyCount: 10,
+    }),
     authorize({ disableBearer: true }),
     authorizeAdmin,
     validate(
@@ -114,7 +128,7 @@ router.patch(
             text: z.string().optional(),
             title: z.string().optional(),
             allow_comments: z.boolean().optional(),
-        })
+        }),
     ),
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
@@ -131,26 +145,35 @@ router.patch(
         });
 
         return createResponse(res, 200, updatedPost);
-    }
+    },
 );
 
-router.delete('/:id', authorize({ disableBearer: true }), authorizeAdmin, async (req: Request, res: Response) => {
-    const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
+router.delete(
+    '/:id',
+    rateLimit({
+        ipCount: 30,
+        keyCount: 10,
+    }),
+    authorize({ disableBearer: true }),
+    authorizeAdmin,
+    async (req: Request, res: Response) => {
+        const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
 
-    if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
+        if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
-    await prisma.blogPost.delete({ where: { id: post.id } });
+        await prisma.blogPost.delete({ where: { id: post.id } });
 
-    await prisma.blogComment.deleteMany({ where: { blogPostId: post.id } });
+        await prisma.blogComment.deleteMany({ where: { blogPostId: post.id } });
 
-    return createResponse(res, 200, { success: true });
-});
+        return createResponse(res, 200, { success: true });
+    },
+);
 
 router.post(
     '/:id/comment',
     rateLimit({
-        // ipCount: 3,
-        keyCount: 3,
+        ipCount: 30,
+        keyCount: 10,
     }),
     authorize({ disableBearer: true }),
     validate(z.object({ text: z.string().min(2).max(400) })),
@@ -168,14 +191,14 @@ router.post(
         });
 
         return createResponse(res, 200, comment);
-    }
+    },
 );
 
 router.patch(
     '/:id/comment/:comment_id',
     rateLimit({
-        // ipCount: 100,
-        keyCount: 100,
+        ipCount: 75,
+        keyCount: 25,
     }),
     authorize({ disableBearer: true }),
     validate(z.object({ text: z.string().min(2).max(400) })),
@@ -193,14 +216,14 @@ router.patch(
         const newComment = await prisma.blogComment.update({ where: { id: comment.id }, data: { text: req.body.text } });
 
         return createResponse(res, 200, newComment);
-    }
+    },
 );
 
 router.delete(
     '/:id/comment/:comment_id',
     rateLimit({
-        // ipCount: 100,
-        keyCount: 100,
+        ipCount: 150,
+        keyCount: 50,
     }),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
@@ -218,7 +241,7 @@ router.delete(
         await prisma.blogComment.delete({ where: { id: req.params.comment_id } });
 
         return createResponse(res, 200, { success: true });
-    }
+    },
 );
 
 export default router;

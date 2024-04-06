@@ -12,15 +12,16 @@ import prisma, { maskUserMe, maskUserOAuth } from '@util/prisma';
 import { validate } from '@util/schema';
 import { getAvatarCode } from '@util/getAvatarCode';
 import { decryptWithToken } from '@util/tokenEncryption';
+import { rateLimit } from '@middleware/ratelimit';
 
 const router = Router();
 
 router.get(
     '/me',
-    // rateLimit({
-    //     ipCount: 500,
-    //     keyCount: 800,
-    // }),
+    rateLimit({
+        ipCount: 3000,
+        keyCount: 1000,
+    }),
     authorize({ requiredScopes: ['account.read.basic'] }),
     async (req: Request, res: Response) => {
         const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
@@ -29,15 +30,15 @@ router.get(
 
         if (req.oauth) return createResponse(res, 200, maskUserOAuth(user, req.oauth));
         else createResponse(res, 200, maskUserMe(user));
-    }
+    },
 );
 
 router.patch(
     '/me',
-    // rateLimit({
-    //     ipCount: 75,
-    //     keyCount: 100,
-    // }),
+    rateLimit({
+        ipCount: 1000,
+        keyCount: 500,
+    }),
     validate(
         z.object({
             username: z
@@ -54,7 +55,6 @@ router.patch(
             pubkey: z.string().optional(),
             website: z.union([z.string().length(0), z.string().min(7).url()]).optional(),
         }),
-        'body'
     ),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
@@ -92,15 +92,15 @@ router.patch(
         });
 
         return createResponse(res, 200, maskUserMe(newUser));
-    }
+    },
 );
 
 router.patch(
     '/me/avatar',
-    // rateLimit({
-    //     ipCount: 50,
-    //     keyCount: 75,
-    // }),
+    rateLimit({
+        ipCount: 9,
+        keyCount: 3,
+    }),
     authorize({ disableBearer: true }),
     multerUploadSingle(),
     validate(z.object({ file: z.any() })),
@@ -118,15 +118,15 @@ router.patch(
         const newUser = await prisma.user.update({ where: { id: req.user.id }, data: { updatedAt: new Date() } });
 
         return createResponse(res, 200, maskUserMe(newUser));
-    }
+    },
 );
 
 router.get(
     '/me/activity',
-    // rateLimit({
-    //     ipCount: 100,
-    //     keyCount: 150,
-    // }),
+    rateLimit({
+        ipCount: 1500,
+        keyCount: 500,
+    }),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
         if (!(await prisma.user.findFirst({ where: { id: req.user.id } }))?.trackActivity)
@@ -160,15 +160,15 @@ router.get(
         });
 
         createResponse(res, 200, devices);
-    }
+    },
 );
 
 router.get(
     '/me/connections',
-    // rateLimit({
-    //     ipCount: 100,
-    //     keyCount: 150,
-    // }),
+    rateLimit({
+        ipCount: 1500,
+        keyCount: 500,
+    }),
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
         const oauth2 = await prisma.oAuth_Authorization.findMany({ where: { user_id: req.user.id }, include: { app: true } });
@@ -177,17 +177,17 @@ router.get(
         createResponse(
             res,
             200,
-            oauth2.map((x) => removeProps(x, ['token', 'refresh_token', 'app.client_secret']))
+            oauth2.map((x) => removeProps(x, ['token', 'refresh_token', 'app.client_secret'])),
         );
-    }
+    },
 );
 
 router.post(
     '/me/delete',
-    // rateLimit({
-    //     ipCount: 3,
-    //     keyCount: 5,
-    // }),
+    rateLimit({
+        ipCount: 9,
+        keyCount: 3,
+    }),
     validate(z.object({ password: z.string().min(1).max(128) })),
     authorize({ disableBearer: true, checkMfaCode: true }),
     async (req: Request, res: Response) => {
@@ -209,7 +209,7 @@ router.post(
         await prisma.user.delete({ where: { id: user.id } });
 
         createResponse(res, 200, { success: true });
-    }
+    },
 );
 
 export default router;
