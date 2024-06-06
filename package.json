@@ -1,8 +1,12 @@
 {
     "name": "napi",
+    "description": "Main API project for all Nove products - authorization, version management, feature flags and more.",
     "version": "1.1.0",
-    "author": "nove-org",
     "license": "AGPL-3.0-only",
+    "author": {
+        "name": "Nove Group",
+        "url": "https://nove.team"
+    },
     "scripts": {
         "dev": "yarn run dev:sass & yarn run -s nodemon -e ts,json -x \"yarn run -s build && yarn run -s start\" -w \"./src\"",
         "dev:sass": "sass --watch src/sass:src/static/css --style=compressed",
