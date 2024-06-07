@@ -1,13 +1,5 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
 name: Build NAPI from source
-
-on:
-    push:
-        branches: ['main']
-    pull_request:
-        branches: ['main']
+on: [push, pull_request]
 
 jobs:
     build:
@@ -15,18 +7,18 @@ jobs:
 
         strategy:
             matrix:
-                node-version: [20.x, 21.x]
-                # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+                node-version: [21.x, 22.x]
 
         steps:
-            - uses: actions/checkout@v3
+            - name: Repository checkout
+              uses: actions/checkout@v4
             - name: Setup Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: ${{ matrix.node-version }}
                   cache: 'yarn'
-            - name: Prepare repository packages
+            - name: Install dependencies
               run: yarn
-            - name: Compile the project
+            - name: Compile sources
               run: yarn build
 
