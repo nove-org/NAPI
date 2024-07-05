@@ -7,6 +7,7 @@ import prisma, { getUniqueKey } from '@util/prisma';
 import { validate } from '@util/schema';
 import { rateLimit } from '@middleware/ratelimit';
 import createError from '@util/createError';
+import { genSaltSync, hashSync } from 'bcrypt';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ router.get(
                 client_id: req.query.client_id?.toString() || '',
             },
         });
-        if (!client) return res.status(400).send('invalid client_id');
+        if (!client) return createError(res, 400, { code: 'invalid_client_id', message: 'Invalid client Id parameter was provided', param: 'query:client_id', type: 'validation' });
         if (!client.redirect_uris.includes(req.query.redirect_uri as string))
             return createError(res, 400, { code: 'invalid_redirect_uri', message: 'Invalid redirection URL was provided', param: 'query:redirect_uri', type: 'validation' });
         if (req.query.response_type !== 'code')
@@ -76,9 +77,8 @@ router.post(
                 user_id: req.user.id,
             },
         });
-        createResponse(res, 200, {
-            code: code.code,
-        });
+
+        createResponse(res, 200, { code: code.code });
     },
 );
 
@@ -101,9 +101,8 @@ router.post(
         'query',
     ),
     async (req: Request, res: Response) => {
-        // * I set TOKEN_LIFETIME for 30 days because I think that's pretty optimal date and allows users to stay signed in for 30 days.
-        // * As by this change we can use OAuth2 system properly in our applications.
         // TODO: If a user doesn't want the app to access their data they should be able to revoke app authorization.
+        // TODO: Add support for refresh_token outside of NAPI then change to 1 hour
         const TOKEN_LIFETIME = 30 * 24 * 60 * 60 * 1000;
 
         const client = await prisma.oAuth_App.findFirst({
@@ -166,10 +165,6 @@ router.post(
             if (authorization.scopes.join(' ') !== req.query.scope?.toString())
                 return createError(res, 400, { code: 'invalid_scope', message: 'Invalid scope was provided', param: 'query:scope', type: 'validation' });
 
-            authorization.token = randomString(64);
-            authorization.token_expires = new Date(Date.now() + TOKEN_LIFETIME);
-            authorization.refresh_token = randomString(64);
-
             authorization = await prisma.oAuth_Authorization.update({
                 where: {
                     id: authorization.id,
@@ -188,7 +183,7 @@ router.post(
                 scope: encodeURIComponent(authorization.scopes.join(' ')),
                 refresh_token: authorization.refresh_token,
             });
-        } else return createError(res, 400, { code: 'invalid_token', message: 'You have to provide a code orp refresh_token', param: 'query:code', type: 'validation' });
+        } else return createError(res, 400, { code: 'invalid_token', message: 'You have to provide a code or refresh_token', param: 'query:code', type: 'validation' });
     },
 );
 
