@@ -61,9 +61,10 @@ export function maskUserQuery(user: User) {
         'profilePublic',
         'activityNotify',
         'pubkey',
+        'disabled'
     ];
 
-    if (!profilePublic) mask.push('bio', 'language', 'createdAt');
+    if (!profilePublic) mask.push('bio', 'language', 'website', 'createdAt');
 
     return removeProps(user, mask);
 }
