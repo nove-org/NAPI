@@ -21,8 +21,8 @@ const DEFAULT_ERL_OPTIONS: Partial<Options> = {
     skip: (req: Request, res: Response) => (req.user ? req.user.permissionLevel == 2 : false),
 };
 
-const keyLimiterGenerator = (req: Request) => req.headers['authorization']?.split(' ')[1] || (RATELIMIT_IP_WHITELIST.includes(req.ip) ? randomString(48) : req.ip);
-const ipLimiterGenerator = (req: Request) => (RATELIMIT_IP_WHITELIST.includes(req.ip) ? randomString(48) : req.ip);
+const keyLimiterGenerator = (req: Request) => req.headers['authorization']?.split(' ')[1] || (RATELIMIT_IP_WHITELIST.includes(req.ip as string) ? randomString(48) : (req.ip as string));
+const ipLimiterGenerator = (req: Request) => (RATELIMIT_IP_WHITELIST.includes(req.ip as string) ? randomString(48) : (req.ip as string));
 
 export function rateLimit(
     options: Partial<{

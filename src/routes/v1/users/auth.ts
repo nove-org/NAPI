@@ -103,11 +103,12 @@ router.post(
         createResponse(res, 200, { ...maskUserMe(user), token: decryptedToken });
 
         user.token = decryptedToken;
+        const ip = req.ip as string;
         const devices = await prisma.trackedDevices.findMany({ where: { userId: user.id } });
-        const device = devices.find((dev) => decryptWithToken(dev.ip, user!.token) === req.ip);
-        createLoginDevice(req.ip || 'Could not resolve device IP', req.headers['user-agent'] as string, user);
+        const device = devices.find((dev) => decryptWithToken(dev.ip, user!.token) === ip);
+        createLoginDevice(ip, req.headers['user-agent'] as string, user);
         if (!device && user.activityNotify) {
-            let location = await axios.get(`https://ifconfig.net/json?ip=${req.ip}`, {
+            let location = await axios.get(`https://ifconfig.net/json?ip=${ip}`, {
                 responseType: 'json',
             });
 
@@ -119,8 +120,12 @@ router.post(
                     pubkey: true,
                     vars: {
                         username: user.username,
-                        country: location.data.region_name ? `${location.data.country}, ${location.data.region_name}` : `somewhere in ${location.data.country}`,
-                        ip: req.ip,
+                        country: location?.data?.country
+                            ? location?.data?.region_name
+                                ? `${location.data.country}, ${location.data.region_name}`
+                                : `somewhere in ${location.data.country}`
+                            : 'somewhere (no location data)',
+                        ip,
                     },
                 },
             });
