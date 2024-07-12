@@ -32,15 +32,13 @@ router.get(
         const prismaPosts = await prisma.blogPost.findMany({ orderBy: { createdAt: 'desc' } });
 
         let posts: PostAuthor[] = [];
-
         for (const element of prismaPosts) {
-            const postUser = await prisma.user.findUnique({ where: { id: element.authorId } });
-
-            if (!postUser) return;
+            const postAuthor = await prisma.user.findUnique({ where: { id: element.authorId } });
+            if (!postAuthor) return;
 
             posts.push({
-                authorUsername: postUser.username,
-                authorAvatar: `${process.env.NAPI_URL}/v1/users/${postUser.id}/avatar.webp`,
+                authorUsername: postAuthor.username,
+                authorAvatar: `${process.env.NAPI_URL}/v1/users/${postAuthor.id}/avatar.webp`,
                 ...element,
             });
         }
@@ -57,7 +55,7 @@ router.post(
     }),
     authorize({ disableBearer: true }),
     authorizeAdmin,
-    validate(z.object({ text: z.string(), title: z.string() })),
+    validate(z.object({ text: z.string(), title: z.string(), header: z.string().url(), commentsAllowed: z.boolean().default(true) })),
     async (req: Request, res: Response) => {
         const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
 
@@ -66,6 +64,8 @@ router.post(
                 authorId: req.user.id,
                 text: req.body.text,
                 title: req.body.title,
+                header: req.body.header,
+                commentsAllowed: req.body.commentsAllowed,
             },
         });
 
@@ -81,20 +81,16 @@ router.get(
     }),
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
-
         if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
         const user = await prisma.user.findUnique({ where: { id: post.authorId } });
-
         if (!user) return createError(res, 404, { code: 'invalid_post', message: 'User that posted this does not exist anymore', param: 'params:id', type: 'validation' });
 
         const prismaComments = await prisma.blogComment.findMany({ where: { blogPostId: post.id } });
 
         let comments: CommentAuthor[] = [];
-
         for (const element of prismaComments) {
             const commentUser = await prisma.user.findUnique({ where: { id: element.authorId } });
-
             if (!commentUser) return;
 
             comments.push({
@@ -127,7 +123,8 @@ router.patch(
         z.object({
             text: z.string().optional(),
             title: z.string().optional(),
-            allow_comments: z.boolean().optional(),
+            header: z.string().url().optional(),
+            commentsAllowed: z.boolean().optional(),
         }),
     ),
     async (req: Request, res: Response) => {
@@ -140,7 +137,8 @@ router.patch(
             data: {
                 text: req.body.text ? req.body.text : post.text,
                 title: req.body.title ? req.body.title : post.title,
-                commentsAllowed: typeof req.body?.allow_comments === 'boolean' ? req.body.allow_comments : post.commentsAllowed,
+                header: req.body.header ? req.body.header : post.header,
+                commentsAllowed: typeof req.body?.commentsAllowed === 'boolean' ? req.body.commentsAllowed : post.commentsAllowed,
             },
         });
 
@@ -158,11 +156,9 @@ router.delete(
     authorizeAdmin,
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
-
         if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
         await prisma.blogPost.delete({ where: { id: post.id } });
-
         await prisma.blogComment.deleteMany({ where: { blogPostId: post.id } });
 
         return createResponse(res, 200, { success: true });
@@ -179,7 +175,6 @@ router.post(
     validate(z.object({ text: z.string().min(2).max(400) })),
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
-
         if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
         const comment = await prisma.blogComment.create({
@@ -204,13 +199,10 @@ router.patch(
     validate(z.object({ text: z.string().min(2).max(400) })),
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
-
         if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
         const comment = await prisma.blogComment.findFirst({ where: { blogPostId: post.id, id: req.params.comment_id } });
-
         if (!comment) return createError(res, 404, { code: 'invalid_comment', message: 'This comment does not exist', param: 'params:comment_id', type: 'validation' });
-
         if (comment.authorId !== req.user.id) return createError(res, 403, { code: 'insufficient_permissions', message: 'You can only edit your comments', type: 'validation' });
 
         const newComment = await prisma.blogComment.update({ where: { id: comment.id }, data: { text: req.body.text } });
@@ -228,13 +220,10 @@ router.delete(
     authorize({ disableBearer: true }),
     async (req: Request, res: Response) => {
         const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
-
         if (!post) return createError(res, 404, { code: 'invalid_post', message: 'This post does not exist', param: 'params:id', type: 'validation' });
 
         const comment = await prisma.blogComment.findFirst({ where: { blogPostId: post.id, id: req.params.comment_id } });
-
         if (!comment) return createError(res, 404, { code: 'invalid_comment', message: 'This comment does not exist', param: 'params:comment_id', type: 'validation' });
-
         if (comment.authorId !== req.user.id && req.user.permissionLevel !== 2)
             return createError(res, 403, { code: 'insufficient_permissions', message: 'You can only delete your comments', type: 'validation' });
 

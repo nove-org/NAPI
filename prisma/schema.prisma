@@ -120,6 +120,7 @@ model BlogPost {
   authorId        String
   text            String
   title           String
+  header          String        @default("")
   commentsAllowed Boolean       @default(true)
   comments        BlogComment[]
 
