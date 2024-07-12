@@ -55,7 +55,7 @@ router.post(
     }),
     authorize({ disableBearer: true }),
     authorizeAdmin,
-    validate(z.object({ text: z.string(), title: z.string(), header: z.string().url(), commentsAllowed: z.boolean().default(true) })),
+    validate(z.object({ text: z.string(), title: z.string(), header: z.string().url(), headerAlt: z.string(), commentsAllowed: z.boolean().default(true) })),
     async (req: Request, res: Response) => {
         const updatedAtCode = getAvatarCode(new Date(req.user.updatedAt));
 
@@ -65,6 +65,7 @@ router.post(
                 text: req.body.text,
                 title: req.body.title,
                 header: req.body.header,
+                headerAlt: req.body.headerAlt,
                 commentsAllowed: req.body.commentsAllowed,
             },
         });
@@ -124,6 +125,7 @@ router.patch(
             text: z.string().optional(),
             title: z.string().optional(),
             header: z.string().url().optional(),
+            headerAlt: z.string().optional(),
             commentsAllowed: z.boolean().optional(),
         }),
     ),
@@ -138,6 +140,7 @@ router.patch(
                 text: req.body.text ? req.body.text : post.text,
                 title: req.body.title ? req.body.title : post.title,
                 header: req.body.header ? req.body.header : post.header,
+                headerAlt: req.body.headerAlt ? req.body.headerAlt : post.headerAlt,
                 commentsAllowed: typeof req.body?.commentsAllowed === 'boolean' ? req.body.commentsAllowed : post.commentsAllowed,
             },
         });
