@@ -1,5 +1,5 @@
 name: Build NAPI from source
-on: [push, pull_request]
+on: [push]
 
 jobs:
     build:
