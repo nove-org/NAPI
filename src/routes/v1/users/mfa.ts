@@ -42,7 +42,7 @@ router.patch(
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-            if (verifyToken(req.user.mfaSecret, mfa)?.delta === 0 || verifyToken(req.user.mfaSecret, mfa)?.delta === 1)
+            if (!(verifyToken(req.user.mfaSecret, mfa)?.delta === 0 || verifyToken(req.user.mfaSecret, mfa)?.delta === 1))
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: `Invalid MFA token was provided (e:${verifyToken(req.user.mfaSecret, mfa)?.delta || '-'})`,
@@ -121,7 +121,7 @@ router.patch(
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-            if (verifyToken(req.user.mfaSecret, mfa)?.delta === 0 || verifyToken(req.user.mfaSecret, mfa)?.delta === 1)
+            if (!(verifyToken(req.user.mfaSecret, mfa)?.delta === 0 || verifyToken(req.user.mfaSecret, mfa)?.delta === 1))
                 return createError(res, 403, {
                     code: 'invalid_mfa_token',
                     message: `Invalid MFA token was provided (e:${verifyToken(req.user.mfaSecret, mfa)?.delta || '-'})`,
