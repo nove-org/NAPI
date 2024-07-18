@@ -53,7 +53,7 @@ function authorize({
             if (!authorization)
                 return createError(res, 401, { code: 'invalid_authorization_token', message: 'Provided access token is invalid.', param: 'header:authorization', type: 'authorization' });
             if (authorization.token_expires < new Date())
-                return createError(res, 401, { code: 'invalid_authorization_token', message: 'Provided access token has expired.', param: 'header:authorization', type: 'authorization' });
+                return createError(res, 401, { code: 'expired_authorization_token', message: 'Provided access token has expired.', param: 'header:authorization', type: 'authorization' });
             if (!checkPermissions(authorization.scopes, requiredScopes))
                 return createError(res, 403, { code: 'insufficient_permissions', message: 'insufficient permissions', param: 'header:authorization', type: 'authorization' });
 
@@ -127,7 +127,7 @@ function authorize({
                 if (!(/([0-9]{6})/.test(mfa) ? verifyToken(user.mfaSecret, mfa)?.delta === 0 || verifyToken(user.mfaSecret, mfa)?.delta === 1 : user.mfaRecoveryCodes?.includes(mfa)))
                     return createError(res, 403, {
                         code: 'invalid_mfa_token',
-                        message: `Invalid MFA token was provided (delta ${verifyToken(user.mfaSecret, mfa)?.delta})`,
+                        message: `Invalid MFA token was provided (e:${verifyToken(req.user.mfaSecret, mfa)?.delta || 'o'})`,
                         param: 'header:x-mfa',
                         type: 'authorization',
                     });
