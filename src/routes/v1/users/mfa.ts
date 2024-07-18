@@ -59,7 +59,7 @@ router.patch(
                 },
             });
 
-            return createResponse(res, 200, { message: `MFA is now disabled` });
+            return createResponse(res, 200, { message: `MFA is now disabled`, enabled: false });
         } else {
             const newSecret = generateSecret({ name: 'Nove Account', account: req.user.username });
             const newCodes = Array.from({ length: 10 }, () => randomString(16));
@@ -73,7 +73,7 @@ router.patch(
                 },
             });
 
-            return createResponse(res, 200, { message: 'MFA keys generated successfully', secret: newSecret, codes: newCodes });
+            return createResponse(res, 200, { message: 'MFA keys generated successfully', enabled: false, secret: newSecret, codes: newCodes });
         }
     },
 );
@@ -136,7 +136,7 @@ router.patch(
                 },
             });
 
-            return createResponse(res, 200, { message: 'MFA is now enabled' });
+            return createResponse(res, 200, { message: 'MFA is now enabled', enabled: true });
         } else
             return createError(res, 403, {
                 code: 'mfa_not_enabled',
