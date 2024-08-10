@@ -17,8 +17,8 @@
                     <img src="/data/logo.png" width="64" height="64" alt="Nove logo" />
                     <h1>Authorize <%= client.name %></h1>
 
-                    <p>
-                        By <% if(client.isVerified) { %>
+                    <p title="<% if (client.isVerified) { %>Verified app<% } %>">
+                        By <% if (client.isVerified) { %>
                         <svg width="12" height="12" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M95 21L36.3647 80L6 49.4464" stroke="currentColor" stroke-width="14" />
                         </svg>
@@ -41,7 +41,12 @@
 
                 <div class="buttons">
                     <button id="reject">Reject</button>
-                    <button id="approve">Grant access</button>
+                    <button id="approve">
+                        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="16" height="16" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M 20.292969 5.2929688 L 9 16.585938 L 4.7070312 12.292969 L 3.2929688 13.707031 L 9 19.414062 L 21.707031 6.7070312 L 20.292969 5.2929688 z"></path>
+                        </svg>
+                        Grant access
+                    </button>
                 </div>
             </section>
         </main>
