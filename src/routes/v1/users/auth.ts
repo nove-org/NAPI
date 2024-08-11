@@ -2,7 +2,7 @@ import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { passwordStrength } from 'check-password-strength';
 import { Request, Response, Router } from 'express';
 import { z } from 'zod';
-import { AVAILABLE_LANGUAGES_REGEX } from '@util/CONSTS';
+import { AVAILABLE_LANGUAGES_REGEX, RATELIMIT_IP_WHITELIST } from '@util/CONSTS';
 import createError from '@util/createError';
 import createResponse from '@util/createResponse';
 import { randomString } from '@util/crypto';
@@ -28,6 +28,7 @@ router.post(
         z.object({
             username: z.string().min(1).max(64),
             password: z.string().min(1).max(128),
+            address: z.string().optional().min(7).max(15)
         }),
     ),
     async (req: Request, res: Response) => {
@@ -103,7 +104,8 @@ router.post(
         createResponse(res, 200, { ...maskUserMe(user), token: decryptedToken });
 
         user.token = decryptedToken;
-        const ip = req.ip as string;
+        let ip = req.ip as string;
+        if (RATELIMIT_IP_WHITELIST.includes(ip) && req.body.address) ip = req.body.address;
         const devices = await prisma.trackedDevices.findMany({ where: { userId: user.id } });
         const device = devices.find((dev) => decryptWithToken(dev.ip, user!.token) === ip);
         createLoginDevice(ip, req.headers['user-agent'] as string, user);
