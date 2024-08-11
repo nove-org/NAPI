@@ -28,7 +28,7 @@ router.post(
         z.object({
             username: z.string().min(1).max(64),
             password: z.string().min(1).max(128),
-            address: z.string().optional().min(7).max(15)
+            address: z.string().min(7).max(15).optional()
         }),
     ),
     async (req: Request, res: Response) => {
