@@ -1,0 +1,12 @@
+Witaj, {username}!
+
+Twoje akcje doprowadziły do usunięcia twojego konta Nove!
+
+Powód: {reason}
+
+--
+Nove
+
+Tworzymy wolne (jako wolność), otwartoźródłowe i respektujące prywatność oprogramowanie do codziennego użytku.
+Strona internetowa: {frontend}
+Polityka prywatności: {frontend}/privacy

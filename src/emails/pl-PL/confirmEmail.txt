@@ -1,0 +1,13 @@
+Witaj!
+
+Twój adres email został podany podczas tworzenia nowego konta Nove.
+Aby potwierdzić tę czynność kliknij w link poniżej. Jeśli to nie ty, możesz zignorować tą wiadomość.
+
+Kliknij tutaj aby potwierdzić: {napi}/v1/users/verifyEmail?code={verificationCode}
+
+--
+Nove
+
+Tworzymy wolne (jako wolność), otwartoźródłowe i respektujące prywatność oprogramowanie do codziennego użytku.
+Strona internetowa: {frontend}
+Polityka prywatności: {frontend}/privacy

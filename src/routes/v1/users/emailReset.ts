@@ -42,7 +42,6 @@ router.post(
 
         const messageToOld = await emailSender({
             user: req.user as User,
-            subject: 'Confirm requested email address change',
             file: {
                 name: 'emailReset',
                 pubkey: true,
@@ -52,7 +51,6 @@ router.post(
 
         const messageToNew = await emailSender({
             user: req.user as User,
-            subject: 'Confirm requested email address change',
             file: {
                 name: 'emailReset',
                 pubkey: false,

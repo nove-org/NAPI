@@ -1,0 +1,13 @@
+Witaj, {username}!
+
+Ktoś własnie zalogował się do twojego konta Nove z {country} i o adresie IP {ip}.
+Jeśli to ty, możesz zignorować tą wiadomość. W przeciwnym wypadku, zmień swoje hasło jak najszybciej.
+
+Zmień swoje hasło: {frontend}/account/security
+
+--
+Nove
+
+Tworzymy wolne (jako wolność), otwartoźródłowe i respektujące prywatność oprogramowanie do codziennego użytku.
+Strona internetowa: {frontend}
+Polityka prywatności: {frontend}/privacy

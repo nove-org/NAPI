@@ -1,0 +1,13 @@
+Hello, {username}!
+
+Someone just logged in to your Nove account from {country} with IP address {ip}.
+If it was you, don't worry, you can safely ignore this e-mail. Otherwise, we advise you to change your password immediately
+
+Change your password: {frontend}/account/security
+
+--
+Nove
+
+We create free as in freedom, open-source, privacy-respecting software for everyday use.
+Website: {frontend}
+Privacy Policy: {frontend}/privacy

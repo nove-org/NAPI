@@ -1,0 +1,10 @@
+Hello, {username}!
+
+Your account has been enabled!
+
+--
+Nove
+
+We create free as in freedom, open-source, privacy-respecting software for everyday use.
+Website: {frontend}
+Privacy: {frontend}/privacy

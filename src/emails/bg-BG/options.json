@@ -1,0 +1,10 @@
+{
+    "addressName": "Nove Account",
+    "accountDeleted": "Your Nove account has been deleted",
+    "accountDisabled": "Your Nove account has been disabled",
+    "accountEnabled": "Your Nove account has been enabled",
+    "confirmEmail": "Confirm your email address to create new Nove account",
+    "emailReset": "Confirm email address change",
+    "passwordReset": "Password reset has been requested",
+    "securityAlert": "New login location has been detected"
+}

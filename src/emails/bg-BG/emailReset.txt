@@ -1,7 +1,7 @@
 Hello, {username}!
 
-{content}
-In order to approve that request follow the link below. If it wasn't you, you can safely ignore this message.
+Someone is trying to change email address associated with {username}'s account.
+In order to approve that request follow the link below.
 
 Confirm email change: {napi}/v1/users/confirmEmailChange?code={email}&ref={uid}"
 
@@ -10,4 +10,4 @@ Nove
 
 We create free as in freedom, open-source, privacy-respecting software for everyday use.
 Website: {frontend}
-Privacy Policy: {frontend}/privacy
+Privacy: {frontend}/privacy

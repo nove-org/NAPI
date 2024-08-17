@@ -207,7 +207,6 @@ router.post(
         await prisma.oAuth_Code.deleteMany({ where: { user_id: user.id } });
         await prisma.user.delete({ where: { id: user.id } });
 
-        console.log('delete user ' + req.user.id);
         createResponse(res, 200, { success: true });
     },
 );

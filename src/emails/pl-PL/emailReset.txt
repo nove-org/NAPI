@@ -1,0 +1,13 @@
+Witaj, {username}!
+
+Ktoś próbuje zmienić adres email powiązany z kontem {username}.
+Aby potwierdzić tę czynność kliknij w link poniżej.
+
+Potwierdź zmiane adresu email: {napi}/v1/users/confirmEmailChange?code={email}&ref={uid}"
+
+--
+Nove
+
+Tworzymy wolne (jako wolność), otwartoźródłowe i respektujące prywatność oprogramowanie do codziennego użytku.
+Strona internetowa: {frontend}
+Polityka prywatności: {frontend}/privacy

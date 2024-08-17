@@ -1,0 +1,13 @@
+Witaj, {username}!
+
+Wyłączyliśmy twoje konto Nove!
+Możesz się do nas odezwać po więcej informacji oraz co zrobić aby je odzyskać.
+
+Powód: {reason}
+
+--
+Nove
+
+Tworzymy wolne (jako wolność), otwartoźródłowe i respektujące prywatność oprogramowanie do codziennego użytku.
+Strona internetowa: {frontend}
+Polityka prywatności: {frontend}/privacy

@@ -1,0 +1,10 @@
+Witaj, {username}!
+
+Twoje konto zostało włączone!
+
+--
+Nove
+
+Tworzymy wolne (jako wolność), otwartoźródłowe i respektujące prywatność oprogramowanie do codziennego użytku.
+Strona internetowa: {frontend}
+Polityka prywatności: {frontend}/privacy

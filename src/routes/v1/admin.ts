@@ -67,7 +67,6 @@ router.patch(
 
         const message = await emailSender({
             user,
-            subject: 'Your Nove Account has been deleted',
             file: { name: 'accountDeleted', pubkey: true, vars: { username: user.username, reason: req.body.reason } },
         });
 
@@ -99,7 +98,6 @@ router.post(
 
         const message = await emailSender({
             user,
-            subject: 'Your Nove Account has been disabled',
             file: { name: 'accountDisabled', pubkey: true, vars: { username: user.username, reason: req.body.reason } },
         });
 
@@ -128,7 +126,6 @@ router.delete(
 
         const message = await emailSender({
             user,
-            subject: 'Your Nove account has been reactivated',
             file: { name: 'accountEnabled', pubkey: true, vars: { username: user.username } },
         });
 

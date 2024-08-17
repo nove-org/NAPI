@@ -1,0 +1,13 @@
+Hello, {username}!
+
+We have disabled your Nove account!
+You can reach out to us for more information and what to do to get your account back.
+
+Reason: {reason}
+
+--
+Nove
+
+We create free as in freedom, open-source, privacy-respecting software for everyday use.
+Website: {frontend}
+Privacy: {frontend}/privacy

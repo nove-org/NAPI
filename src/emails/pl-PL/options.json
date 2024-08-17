@@ -1,0 +1,10 @@
+{
+    "addressName": "Konto Nove",
+    "accountDeleted": "Twoje konto Nove zostało usunięte",
+    "accountDisabled": "Twoje konto Nove zostało wyłączone",
+    "accountEnabled": "Twoje konto Nove zostało włączone",
+    "confirmEmail": "Potwierdź swój adres email aby stworzyć nowe konto Nove",
+    "emailReset": "Potwierdź próbę zmiany adresu email",
+    "passwordReset": "Potwierdź próbę zmiany hasła do twojego konta Nove",
+    "securityAlert": "Wykryto nową próbę logowania na twoje konto Nove"
+}

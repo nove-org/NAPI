@@ -28,7 +28,7 @@ router.post(
         z.object({
             username: z.string().min(1).max(64),
             password: z.string().min(1).max(128),
-            address: z.string().min(7).max(15).optional()
+            address: z.string().min(7).max(15).optional(),
         }),
     ),
     async (req: Request, res: Response) => {
@@ -116,7 +116,6 @@ router.post(
 
             await emailSender({
                 user,
-                subject: 'New login location detected',
                 file: {
                     name: 'securityAlert',
                     pubkey: true,
@@ -151,22 +150,10 @@ router.post(
                 .regex(/[a-zA-Z0-9._-]{3,24}$/g)
                 .optional(),
             password: z.string().min(8).max(128),
-            language: z.string().regex(AVAILABLE_LANGUAGES_REGEX).min(1).max(5).optional(),
+            language: z.string().min(5).max(5).optional(),
         }),
     ),
-    async (
-        req: Request<
-            {},
-            {},
-            {
-                email: string;
-                username: string;
-                password: string;
-                language?: string;
-            }
-        >,
-        res: Response,
-    ) => {
+    async (req: Request, res: Response) => {
         if (await prisma.user.count({ where: { email: req.body.email } }))
             return createError(res, 409, {
                 code: 'email_taken',
@@ -202,7 +189,7 @@ router.post(
                 password: hashSync(req.body.password, genSaltSync()),
                 bio: "Hey, I'm new here!",
                 emailVerifyCode: verificationCode,
-                language: req.body.language || 'en-US',
+                language: req.body.language && AVAILABLE_LANGUAGES_REGEX.test(req.body.language) ? req.body.language : 'en-US',
                 token: encryptWithToken(generatedToken, req.body.password),
                 tokenHash: hashSync(generatedToken, genSaltSync()),
             },
@@ -210,11 +197,12 @@ router.post(
 
         const message = await emailSender({
             user,
-            subject: 'Confirm your e-mail to create Nove account',
-            file: { name: 'confirmEmail', pubkey: true, vars: { username: user.username, napi: process.env.NAPI_URL, verificationCode } },
+            file: { name: 'confirmEmail', pubkey: true, vars: { username: req.body.username, napi: process.env.NAPI_URL, verificationCode } },
         });
-
-        if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
+        if (!message) {
+            await prisma.user.delete({ where: { id: user.id } });
+            return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
+        }
 
         createResponse(res, 200, { ...maskUserMe(user), token: generatedToken });
     },

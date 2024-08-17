@@ -46,7 +46,6 @@ router.post(
 
         const message = await emailSender({
             user,
-            subject: 'Password reset requested',
             file: { name: 'passwordReset', pubkey: true, vars: { username: user.username, uid: user.id, napi: process.env.NAPI_URL, code } },
         });
         if (!message) return createError(res, 500, { code: 'could_not_send_mail', message: 'Something went wrong while sending an email message', type: 'internal_error' });
