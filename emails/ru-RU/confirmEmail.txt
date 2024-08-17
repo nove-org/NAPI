@@ -1,0 +1,13 @@
+Hello!
+
+Your email address was provided while creating a new Nove account.
+In order to confirm that request please follow the link below. If it wasn't you, you can ignore this message.
+
+Click here to confirm: {napi}/v1/users/verifyEmail?code={verificationCode}
+
+--
+Nove
+
+We create free as in freedom, open-source, privacy-respecting software for everyday use.
+Website: {frontend}
+Privacy: {frontend}/privacy

@@ -1,0 +1,12 @@
+Hello, {username}!
+
+Your actions lead to removal of your account!
+
+Reason: {reason}
+
+--
+Nove
+
+We create free as in freedom, open-source, privacy-respecting software for everyday use.
+Website: {frontend}
+Privacy: {frontend}/privacy
