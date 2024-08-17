@@ -194,9 +194,7 @@ router.post(
         const { password } = req.body;
 
         const user = await prisma.user.findFirst({ where: { id: req.user.id } });
-
         if (!user) return createError(res, 404, { code: 'invalid_user', message: 'This user does not exist', type: 'authorization' });
-
         if (!compareSync(password, user.password)) return createError(res, 401, { code: 'invalid_password', message: 'Invalid password was provided', param: 'body:password', type: 'validation' });
 
         // TODO: onDelete collapse
@@ -205,9 +203,11 @@ router.post(
         await prisma.trackedDevices.deleteMany({ where: { userId: user.id } });
         await prisma.blogComment.deleteMany({ where: { authorId: user.id } });
         await prisma.blogPost.deleteMany({ where: { authorId: user.id } });
-
+        await prisma.oAuth_Authorization.deleteMany({ where: { user_id: user.id } });
+        await prisma.oAuth_Code.deleteMany({ where: { user_id: user.id } });
         await prisma.user.delete({ where: { id: user.id } });
 
+        console.log('delete user ' + req.user.id);
         createResponse(res, 200, { success: true });
     },
 );
