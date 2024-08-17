@@ -28,7 +28,10 @@ export default async function emailSender({
         });
 
         await transporter.sendMail({
-            from: process.env.MAIL_USERNAME,
+            from: {
+                name: 'Nove Account',
+                address: process.env.MAIL_USERNAME,
+            },
             to: emailOverride || user.email,
             subject,
             text: await parseEmail(file.name, file.pubkey ? user.pubkey : undefined, file.vars),
