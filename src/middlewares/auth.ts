@@ -76,7 +76,6 @@ function authorize({
                     param: 'header:x-mfa',
                     type: 'authorization',
                 });
-
             if (/([a-zA-Z0-9]{16})/.test(mfa))
                 authorization.user = await prisma.user.update({
                     where: {
@@ -116,8 +115,8 @@ function authorize({
 
             if (!user.verified) return createError(res, 401, { code: 'verify_email', message: 'this account is not verified', param: 'header:authorization', type: 'authorization' });
 
-            if (requireMfa || checkMfaCode) {
-                if ((requireMfa ? !user.mfaEnabled : false) || !mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa))
+            if (requireMfa || (checkMfaCode && user.mfaEnabled)) {
+                if (!user.mfaEnabled || !mfa || !/([0-9]{6})|([a-zA-Z0-9]{16})/.test(mfa))
                     return createError(res, 403, {
                         code: 'mfa_required',
                         message: 'mfa required',
