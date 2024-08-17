@@ -8,11 +8,11 @@ export default async function parseEmail(fileName: string, language: string, pub
     let file: string;
     let options: JSON;
     try {
-        file = readFileSync(join(__dirname, `../../../src/emails/${language}/${fileName}.txt`)).toString();
-        options = JSON.parse(readFileSync(join(__dirname, `../../../src/emails/${language}/options.json`)).toString());
+        file = readFileSync(join(__dirname, `../../../emails/${language}/${fileName}.txt`)).toString();
+        options = JSON.parse(readFileSync(join(__dirname, `../../../emails/${language}/options.json`)).toString());
     } catch {
-        file = readFileSync(join(__dirname, `../../../src/emails/en-US/${fileName}.txt`)).toString();
-        options = JSON.parse(readFileSync(join(__dirname, `../../../src/emails/en-US/options.json`)).toString());
+        file = readFileSync(join(__dirname, `../../../emails/en-US/${fileName}.txt`)).toString();
+        options = JSON.parse(readFileSync(join(__dirname, `../../../emails/en-US/options.json`)).toString());
     }
 
     if (vars)
