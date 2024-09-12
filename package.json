@@ -36,7 +36,7 @@
         "fs-extra": "^11.2.0",
         "isomorphic-dompurify": "^2.13.0",
         "lodash": "^4.17.21",
-        "micromatch": "^4.0.7",
+        "micromatch": "^4.0.8",
         "multer": "^1.4.5-lts.1",
         "node-2fa": "^2.0.3",
         "nodemailer": "^6.9.14",
