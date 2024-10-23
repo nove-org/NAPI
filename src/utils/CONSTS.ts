@@ -5,3 +5,4 @@ export const AVAILABLE_LANGUAGES = ['pl-PL', 'en-US', 'en-GB', 'nl-NL', 'fr-FR',
 export const AVAILABLE_LANGUAGES_REGEX = new RegExp(`^(${AVAILABLE_LANGUAGES.join('|')})$`);
 
 export const RATELIMIT_IP_WHITELIST: string[] = ['195.117.15.124'];
+export const SOURCE_CODE: string = 'https://git.nove.team/nove-org/NAPI';

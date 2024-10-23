@@ -27,6 +27,7 @@ export default function checkEnv() {
         EXPLICIT_DISABLE_CONSOLE_LOG: yup.boolean().default(false),
         VERSION: yup.string(),
         SERVER: yup.string().default('test'),
+        MODIFIED_SOURCE: yup.string(),
     });
     try {
         schema.validateSync(process.env);

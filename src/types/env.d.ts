@@ -19,6 +19,7 @@ declare global {
             EXPLICIT_DISABLE_CONSOLE_LOG: boolean;
             VERSION: string;
             SERVER: string;
+            MODIFIED_SOURCE?: string;
         }
     }
 }

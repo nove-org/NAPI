@@ -2,6 +2,7 @@
 
 import { execSync } from 'child_process';
 import { Response } from 'express';
+import { SOURCE_CODE } from './CONSTS';
 
 export type HTTPStatus =
     | 400 // Bad Request
@@ -54,22 +55,31 @@ export interface HTTPErrorBody {
 }
 
 export default function createError(res: Response, status: HTTPStatus, error: HTTPErrorBody) {
+    const modifiedSource = process.env.MODIFIED_SOURCE;
+    let meta: { timestamp: string; version: string; server: string; source: string; modifiedSource?: string } = {
+        timestamp: new Date().toISOString(),
+        version: process.env.VERSION + '-' + execSync('git rev-parse --short HEAD').toString().trim(),
+        server: process.env.SERVER,
+        source: SOURCE_CODE,
+    };
+    if (modifiedSource)
+        meta = {
+            ...meta,
+            modifiedSource,
+        };
+
     res.status(status).send({
         status: status,
         body: {
             error: {
                 code: error.code,
-                doc_url: `https://VERYREALURL.DOESNTEXIST/docs/api/errors/${error.type}#${error.code}`,
+                // doc_url: `https://VERYREALURL.DOESNTEXIST/docs/api/errors/${error.type}#${error.code}`,
                 message: error.message,
                 param: error.param || null,
                 type: error.type,
                 details: error.details || null,
             },
         },
-        meta: {
-            timestamp: new Date().toISOString(),
-            version: process.env.VERSION + '-' + execSync('git rev-parse --short HEAD').toString().trim(),
-            server: process.env.SERVER,
-        },
+        meta,
     });
 }

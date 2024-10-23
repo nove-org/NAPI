@@ -2,6 +2,8 @@
 
 import { execSync } from 'child_process';
 import { Response } from 'express';
+import { SOURCE_CODE } from './CONSTS';
+import { StringSchema } from 'yup';
 
 export type HTTPStatus =
     | 200 // OK
@@ -16,16 +18,25 @@ export type HTTPStatus =
     | 226; // IM Used
 
 export default function createResponse(res: Response, status: HTTPStatus, body: any) {
+    const modifiedSource = process.env.MODIFIED_SOURCE;
+    let meta: { timestamp: string; version: string; server: string; source: string; modifiedSource?: string } = {
+        timestamp: new Date().toISOString(),
+        version: process.env.VERSION + '-' + execSync('git rev-parse --short HEAD').toString().trim(),
+        server: process.env.SERVER,
+        source: SOURCE_CODE,
+    };
+    if (modifiedSource)
+        meta = {
+            ...meta,
+            modifiedSource,
+        };
+
     res.status(status).send({
         status: status,
         body: {
             error: null,
             data: body,
         },
-        meta: {
-            timestamp: new Date().toISOString(),
-            version: process.env.VERSION + '-' + execSync('git rev-parse --short HEAD').toString().trim(),
-            server: process.env.SERVER,
-        },
+        meta,
     });
 }

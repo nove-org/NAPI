@@ -24,6 +24,7 @@ import checkEnv from './utils/env';
 import logger from './utils/logger';
 import prisma from './utils/prisma';
 import { execSync } from 'child_process';
+import { SOURCE_CODE } from '@util/CONSTS';
 checkEnv();
 
 const app = express();
@@ -38,6 +39,20 @@ app.set('view engine', 'ejs');
 app.set('views', 'src/views');
 app.set('trust proxy', true);
 app.use('/', routes);
+
+const modifiedSource = process.env.MODIFIED_SOURCE;
+let meta: { timestamp: string; version: string; server: string; source: string; modifiedSource?: string } = {
+    timestamp: new Date().toISOString(),
+    version: process.env.VERSION + '-' + execSync('git rev-parse --short HEAD').toString().trim(),
+    server: process.env.SERVER,
+    source: SOURCE_CODE,
+};
+if (modifiedSource)
+    meta = {
+        ...meta,
+        modifiedSource,
+    };
+
 app.get('/', (_req: Request, res: Response) => {
     res.json({
         status: 200,
@@ -45,11 +60,7 @@ app.get('/', (_req: Request, res: Response) => {
             error: null,
             message: 'For more information on how to use the API place check proper documentation (https://git.nove.team/nove-org/NAPI/wiki)',
         },
-        meta: {
-            timestamp: new Date().toISOString(),
-            version: process.env.VERSION + '-' + execSync('git rev-parse --short HEAD').toString().trim(),
-            server: process.env.SERVER,
-        },
+        meta,
     });
 });
 
